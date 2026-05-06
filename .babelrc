@@ -1,0 +1,19 @@
+{
+  "presets": [
+      [
+        "@babel/preset-env", {
+          "targets": {
+            "node": "current"
+          },
+          "useBuiltIns": "entry",
+          "corejs": "3.8"
+        }
+      ]
+    ],
+    "env": {
+      "dev": {
+        "sourceMaps": "inline",
+        "retainLines": true
+      }
+    }
+}

@@ -1,0 +1,96 @@
+import { Container } from 'typedi';
+import LoggerInstance from './logger';
+import { redisClient } from '../connection/redis-client';
+
+
+// Partner Modules
+import * as PartnerModelHandler from '../db/handler/partners';
+import * as PartnerBrandingModelHandler from '../db/handler/partners_branding';
+import * as PartnerCustomScriptsModelHandler from '../db/handler/partners_custom_scripts';
+import * as PartnerSessionModelHandler from '../db/handler/partner_sessions';
+
+// User + Workspace Modules
+import * as UserModelHandler from '../db/handler/users';
+import * as WorkspaceModelHandler from '../db/handler/workspaces';
+import * as UserWorkspaceMappingModelHandler from '../db/handler/user_workspace_mappings';
+import * as UserSessionModelHandler from '../db/handler/user_sessions';
+
+// Billing Modules
+import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
+import * as WorkspaceSubscriptionModelHandler from '../db/handler/workspace_subscriptions';
+import * as WorkspaceSubscriptionItemsModelHandler from '../db/handler/workspace_subscription_items';
+import * as WorkspaceSubscriptionLogsModelHandler from '../db/handler/workspace_subscription_logs';
+
+
+// services
+import * as AwsService from '../services/aws/aws_service';
+import * as StripeAPIServices from '../services/stripe/stripeApi';
+import * as PartnerStripeAPIServices from '../services/stripe/partnerStripeApi';
+import * as GoogleApiServices from '../services/esp_provides/google/google.api';
+import * as MicrosoftApiServices from '../services/esp_provides/microsoft/microsoft.api';
+
+// utils
+import * as TokenHandler from '../utils/tokenHandler';
+import * as MailerInstance from '../utils/mailer';
+import * as PasswordHandler from '../utils/passwordHandler';
+import * as EmailVerificationHelper from '../utils/emailVerification';
+import * as OtpGeneratorHelper from '../utils/otpGenerator';
+import * as APIKeyGenerator from '../utils/api_key_generator';
+import * as StringHelper from '../utils/string-helper';
+import * as DetectESPHelper from '../utils/detectEsp';
+
+/**
+ * Functionalilty used to set the container services
+ * @returns {null} it returns null
+ */
+const injectorInstance = async() => {
+  try {
+    Container.set('logger', LoggerInstance);
+    Container.set('redisClient', redisClient);
+
+    // DB Handler
+    // ---- Partners ----
+    Container.set('PartnerModelHandler', PartnerModelHandler);
+    Container.set('PartnerBrandingModelHandler', PartnerBrandingModelHandler);
+    Container.set('PartnerCustomScriptsModelHandler', PartnerCustomScriptsModelHandler);
+    Container.set('PartnerSessionModelHandler', PartnerSessionModelHandler);
+
+    // ---- Users / Workspace ----
+    Container.set('UserModelHandler', UserModelHandler);
+    Container.set('WorkspaceModelHandler', WorkspaceModelHandler);
+    Container.set('UserWorkspaceMappingModelHandler', UserWorkspaceMappingModelHandler);
+    Container.set('UserSessionModelHandler', UserSessionModelHandler);
+
+    // ---- Billing / Subscription ----
+    Container.set('WorkspacePlanDetailsModelHandler', WorkspacePlanDetailsModelHandler);
+    Container.set('WorkspaceSubscriptionModelHandler', WorkspaceSubscriptionModelHandler);
+    Container.set('WorkspaceSubscriptionItemsModelHandler', WorkspaceSubscriptionItemsModelHandler);
+    Container.set('WorkspaceSubscriptionLogsModelHandler', WorkspaceSubscriptionLogsModelHandler);
+
+
+    // Services
+    Container.set('AwsService', AwsService);
+    Container.set('StripeAPIServices', StripeAPIServices);
+    Container.set('PartnerStripeAPIServices', PartnerStripeAPIServices);
+    Container.set('GoogleApiServices', GoogleApiServices);
+    Container.set('MicrosoftApiServices', MicrosoftApiServices);
+
+    // utils
+    Container.set('TokenHandler', TokenHandler);
+    Container.set('MailerInstance', MailerInstance);
+    Container.set('PasswordHandler', PasswordHandler);
+    Container.set('EmailVerificationHelper', EmailVerificationHelper);
+    Container.set('OtpGeneratorHelper', OtpGeneratorHelper);
+    Container.set('APIKeyGenerator', APIKeyGenerator);
+    Container.set('StringHelper', StringHelper);
+    Container.set('DetectESPHelper', DetectESPHelper);
+
+
+    return;
+  } catch (err) {
+    LoggerInstance.error('🔥 Error on dependency injector instance loader: %o', err);
+    throw new Error(err);
+  }
+};
+
+export default injectorInstance;

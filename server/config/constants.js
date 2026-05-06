@@ -1,0 +1,291 @@
+import { isUndefined } from 'lodash';
+import dotenv from 'dotenv';
+
+if (!process.env.NODE_ENV || process.env.NODE_ENV === 'LOCAL') {
+  const envFound = dotenv.config();
+  if (!isUndefined(envFound.error)) {
+    throw new Error('⚠️  Couldn\'t find .env file  ⚠️');
+  }
+} else {
+  dotenv.config({
+    path: '',
+  });
+}
+
+export const ENVIRONMENT = process.env.NODE_ENV || 'LOCAL';
+
+export const CORS = {
+  ALLOWED_DOMAINS: process.env.ALLOWED_DOMAINS,
+};
+
+export const BE_URL = process.env.BE_URL;
+export const IS_PRODUCTION = process.env.NODE_ENV === 'PROD';
+export const SALT_WORK_FACTOR = 12;
+
+export const SES_FROM_MAIL = process.env.SES_FROM_MAIL;
+
+export const DB = {
+  NAME: process.env.DB_NAME,
+  HOST: process.env.DB_URI_HOST,
+  PORT: process.env.DB_PORT,
+  USER_NAME: process.env.DB_USER_NAME,
+  PASSWORD: process.env.DB_PASSWORD,
+  DIALECT: 'postgres',
+  LOGGING: true,
+  CONNECTED: 'DATABASE CONNECTED SUCCESSFULLY',
+  TRANSACTION_TYPE: 'IMMEDIATE',
+  TRUST_SERVER: true,
+};
+
+export const READ_REPLICA_DB = [
+  {
+    host: process.env.READ_REPLICA_DB_URI_HOST_1 || process.env.DB_URI_HOST,
+    port: process.env.DB_PORT,
+    username: process.env.DB_USER_NAME,
+    password: process.env.DB_PASSWORD,
+  }
+];
+
+export const HASURA_ROLES = {
+  ADMIN: 'admin',
+  USERS: 'users',
+  PARTNERS: 'partners',
+  TEAM_MEMBERS: 'team_members',
+  clients: 'clients',
+};
+
+export const APP = {
+  LISTEN: 'MAIN SERVICE IS LISTENING TO THE PORT: ',
+};
+
+export const JWT = {
+  SECRET_KEY: process.env.JWT_SECRET_KEY,
+  REFRESH_TOKEN_SECRET_KEY: process.env.JWT_REFRESH_TOKEN_SECRET_KEY,
+  ACCESS_TOKEN_EXPIRY: '60m',
+  ACCESS_TOKEN_EXPIRY_IN_SECONDS: 60 * 60,
+  REFRESH_TOKEN_EXPIRY: '60d',
+  REFRESH_TOKEN_EXPIRY_IN_SECONDS: 60 * 60 * 24 * 60,
+};
+
+export const API = {
+  PREFIX: '/api',
+};
+
+export const JWT_ALLOWED_URLS = {
+  '/health': true,
+  '/api/auth/login': true,
+  '/api/auth/magic-link-login': true,
+  '/api/auth/cs-admin-login': true,
+  '/api/auth/signup': true,
+  '/api/auth/forget-password': true,
+  '/api/auth/reset-password': true,
+  '/api/auth/verify-user': true,
+  '/api/auth/resend-verify-link': true,
+  // partners
+  '/api/partners/login': true,
+  '/api/partners/signup': true,
+  '/api/partners/customers/login': true,
+  '/api/partners/refresh-token': true,
+  '/api/partners/logout': true,
+  '/api/partners/branding/public': true,
+  '/api/partners/custom-scripts/public': true,
+  // Rate limit ADMIN use
+  '/api/auth/redis/api-stats-leader-board': true,
+  '/api/auth/redis/api-limit-by-apikey': true,
+  '/api/auth/redis/set-user-custom-rate-limit': true,
+
+  // scalar api docs for whitelabel clients
+  '/custom-whitelabel-api-docs': true,
+
+  // google oauth for mailboxes
+  '/api/mailboxes/google/oauth-callback': true,
+  // mailboxes outlook oauth
+  '/api/mailboxes/outlook/oauth-callback': true,
+};
+
+
+export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
+  '/api/auth/login': true,
+  '/api/auth/magic-link-login': true,
+  '/api/auth/cs-admin-login': true,
+  '/api/auth/signup': true,
+  '/api/auth/early-access': true,
+  '/api/auth/verify-user': true,
+  '/api/auth/resend-verify-link': true,
+  '/api/auth/forget-password': true,
+  '/api/auth/reset-password': true,
+  '/api/auth/update-password': true,
+  '/api/auth/update-user-details': true,
+  '/api/subscription/subscribe': true,
+  '/api/subscription/unsubscribe': true,
+  '/api/subscription/new-portal-session': true,
+
+  // Rate limit ADMIN use
+  '/api/auth/redis/api-stats-leader-board': true,
+  '/api/auth/redis/api-limit-by-apikey': true,
+  '/api/auth/redis/set-user-custom-rate-limit': true,
+  '/json-docs': true,
+
+  // mailboxes google oauth
+  '/api/mailboxes/google/oauth-callback': true,
+  // mailboxes outlook oauth
+  '/api/mailboxes/outlook/oauth-callback': true,
+};
+
+export const RESTRICTED_API_URLS = [
+];
+
+export const USER_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  DELETED: 'deleted',
+  INVITED: 'invited',
+};
+
+export const PARTNER_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  SUSPENDED: 'suspended',
+};
+
+export const STRIPE_PAY_KEY = process.env.STRIPE_PAY_KEY;
+
+export const PORT = process.env.PORT;
+
+export const PLAN_TYPE = {
+  TRIAL_PLAN: 'TRIAL_PLAN',
+  STARTER_PLAN: 'STARTER_PLAN',
+  GROWTH_PLAN: 'GROWTH_PLAN',
+  ESSENTIAL_PLAN: 'ESSENTIAL_PLAN',
+  ENTERPRISE_PLAN: 'ENTERPRISE_PLAN',
+  PARTNER_PLAN: 'PARTNER_PLAN',
+};
+
+export const PLAN_TYPE_API_ACCESS = {
+  TRIAL_PLAN: false,
+  STARTER_PLAN: false,
+  GROWTH_PLAN: true,
+  ESSENTIAL_PLAN: true,
+  ENTERPRISE_PLAN: true,
+  PRO_PLAN: true,
+  PARTNER_PLAN: true
+};
+
+export const CUSTOM_PLAN_QUANTITY = {
+  TRIAL_PLAN: false,
+  STARTER_PLAN: false,
+  GROWTH_PLAN: false,
+  ESSENTIAL_PLAN: false,
+  ENTERPRISE_PLAN: true,
+  PARTNER_PLAN: true
+};
+
+export const PLAN_PRICE_ID_MAP = {
+  STARTER_PLAN: IS_PRODUCTION ? 'price_1TGcmTSH8JhoP1shJNAPzMfd' : 'price_1TGcb1SH8JhoP1sh1tnWaTEf',
+  GROWTH_PLAN: IS_PRODUCTION ? 'price_1TGcmZSH8JhoP1shoLSLAhQs' : 'price_1TGce8SH8JhoP1shyCGeFuYC',
+  ESSENTIAL_PLAN: IS_PRODUCTION ? 'price_1TGcmcSH8JhoP1shA9RG08ce' : 'price_1TGcgTSH8JhoP1sh2IoDsMaM',
+  ENTERPRISE_PLAN: IS_PRODUCTION ? 'price_1TGcmeSH8JhoP1shOB6BaULx' : 'price_1TGcjLSH8JhoP1shp8qiH1xM',
+  PARTNER_PLAN: IS_PRODUCTION ? 'price_1TGcmiSH8JhoP1shTsXutuZN' : 'price_1TGcldSH8JhoP1shlgm3M8I6',
+};
+
+export const INDIA_PLAN_PRICE_ID_MAP = {
+  STARTER_PLAN: IS_PRODUCTION ? 'price_1TGcmTSH8JhoP1shs9w1AAWV' : 'price_1TGcbpSH8JhoP1shEJezMqQn',
+  GROWTH_PLAN: IS_PRODUCTION ? 'price_1TGcmZSH8JhoP1shvDAMtun3' : 'price_1TGce8SH8JhoP1sh7UTyK4GO',
+  ESSENTIAL_PLAN: IS_PRODUCTION ? 'price_1TGcmcSH8JhoP1shycxW02kR' : 'price_1TGcgTSH8JhoP1shZgBMahSk',
+  ENTERPRISE_PLAN: IS_PRODUCTION ? 'price_1TGcmeSH8JhoP1sh1BfT6924' : 'price_1TGcjLSH8JhoP1shKDMTZKnX',
+  PARTNER_PLAN: IS_PRODUCTION ? 'price_1TGcmiSH8JhoP1shmx4XAUaS' : 'price_1TGcm3SH8JhoP1shahWBhIJv',
+};
+
+export const STRIPE_GST_TAX_ID = IS_PRODUCTION ? 'txr_1Rkgu4SH8JhoP1shBteolayc' : 'txr_1Ri8P1SH8JhoP1shSDsIUYDz';
+
+export const USD_INR_VALUE = 94;
+
+export const FRONTEND_URL = process.env.FRONTEND_URL;
+
+export const AWS_CONFIG = {
+  AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION,
+  SW_AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+  SW_AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+  DEPLOY_EMAIL_SERVER_SQS_URL: process.env.DEPLOY_EMAIL_SERVER_SQS_URL,
+};
+
+export const escapeSequelizeQueryText = (value) => value.replace(/'/g, '\'\'').replace(/\$/g, '$$$$');
+
+// RATE LIMITTER REDIS CONFIG
+export const REDIS_CONFIG = {
+  REDIS_CONNECTION_NAME: 'api-limits',
+  REDIS_USERNAME: process.env.REDIS_USERNAME || 'default',
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD || '',
+  REDIS_HOST: process.env.REDIS_HOST || 'localhost',
+  REDIS_PORT: process.env.REDIS_PORT || 6379,
+};
+
+export const RATE_LIMITER_CONFIG = {
+  // RATE LIMITTER MIDDLEWARE CONFIG
+  MAX_REQUESTS_PER_MINUTE: process.env.MAX_REQUESTS_PER_MINUTE || 60,
+  WINDOW_SIZE_IN_MINUTES: process.env.WINDOW_SIZE_IN_MINUTES || 1,
+  RESTRICTED_API_MAX_REQUESTS_PER_MINUTE: 10,
+};
+
+export const WORKSPACE_API_CACHE = 'workspace_api_cache:';
+export const PARTNER_ORIGIN_CACHE = 'partner_origin_cache:';
+export const PARTNER_BRANDING_CACHE = 'partner_branding:';
+export const PARTNER_PAYMENT_CACHE = 'partner_payment:';
+
+export const USER_CUSTOM_RATE_LIMIT_PREFIX = 'user_custom_rate_limit:';
+
+export const GOOGLE_CONFIG = {
+  CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  // https://developers.google.com/gmail/api/auth/scopes
+  MAIL_SCOPE: [
+    'https://mail.google.com/',
+    'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/userinfo.email'
+  ],
+  REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+};
+
+// MIcrosoft OAuth Config
+export const MICROSOFT_CONFIG = {
+  CLIENT_ID: process.env.MS_CLIENT_ID,
+  CLIENT_SECRET: process.env.MS_CLIENT_SECRET,
+  REDIRECT_URI: process.env.MS_REDIRECT_URI,
+
+  AUTHORITY: 'https://login.microsoftonline.com/common',
+
+  MAIL_SCOPE: [
+    'openid',
+    'profile',
+    'email',
+    'offline_access',
+    'User.Read',
+    'Mail.Read',
+    'Mail.ReadWrite',
+    'Mail.Send'
+  ]
+};
+
+export const AWS_WARMUP_REGION_SQS_URL_MAP = {
+  'us-east-1': 'https://sqs.us-east-1.amazonaws.com/454953019380/skysenders-warmup-messages',
+  'us-east-2': 'https://sqs.us-east-2.amazonaws.com/454953019380/skysenders-warmup-messages',
+  'us-west-1': 'https://sqs.us-west-1.amazonaws.com/454953019380/skysenders-warmup-messages',
+};
+
+export const AWS_WARMUP_SQS_REGIONS = [
+  'us-east-1',
+  'us-east-2',
+  'us-west-1',
+];
+
+export const AWS_IMAP_REGION_SQS_URL_MAP = {
+  'us-east-1': 'https://sqs.us-east-1.amazonaws.com/454953019380/skysenders-track-reply',
+  'us-east-2': 'https://sqs.us-east-2.amazonaws.com/454953019380/skysenders-track-reply',
+  'us-west-1': 'https://sqs.us-west-1.amazonaws.com/454953019380/skysenders-track-reply',
+};
+
+export const AWS_IMAP_SQS_REGIONS = [
+  'us-east-1',
+  'us-east-2',
+  'us-west-1',
+];
