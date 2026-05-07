@@ -13,7 +13,7 @@ const updateUserTokenDataBasedonRoute = (req, tokenData) => {
   req.user = tokenData.user;
   // set workspace id
   req.workspace = {
-    id: req.header['x-workspace-id'],
+    id: req.headers['x-workspace-id'],
     partner_id: tokenData.user.partner_id
   };
   return;

@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { PARTNER_ORIGIN_CACHE, PARTNER_BRANDING_CACHE } from '../../config/constants';
+import { TRIM_ORIGIN_DOMAIN, PARTNER_ORIGIN_CACHE, PARTNER_BRANDING_CACHE } from '../../config/constants';
 
 /**
  * Functionality used to create a new partner in the database
@@ -34,7 +34,7 @@ export const createPartner = async(req, res) => {
     }
 
     // remove the https:// from the url
-    partnerData.customer_portal_domain_url = partnerData.customer_portal_domain_url.replace(/(^\w+:|^)\/\//, '').replace(/\/$/, '');
+    partnerData.customer_portal_domain_url = TRIM_ORIGIN_DOMAIN(partnerData.customer_portal_domain_url);
     redisClient.set(`${PARTNER_ORIGIN_CACHE}${partnerData.customer_portal_domain_url}`, newPartner.id);
 
     // Create default branding

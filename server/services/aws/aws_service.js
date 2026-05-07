@@ -156,6 +156,47 @@ export const getPartnerBrandingFavIconUrl = async(partnerId, fileName, contentTy
   }
 };
 
+
+// Function to create a signed URL for an S3 object
+export const getWorkspaceBrandingLogoUrl = async(partnerId, workspaceId, fileName, contentType = 'application/zip', expiresIn = 3600) => {
+  // Set up the PutObjectCommand with ContentType and ACL
+  const command = new PutObjectCommand({
+    Bucket: 'outreach-partners-asserts',
+    Key: `workspace-branding/${partnerId}/workspace/${workspaceId}/logo/${Math.random().toString(36).substring(2, 8)}/${fileName}`,
+    ContentType: contentType, // Set content type as application/zip
+    ACL: 'public-read', // Make the object publicly accessible
+  });
+
+  try {
+    // Generate the signed URL for the put operation
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    return signedUrl;
+  } catch (error) {
+    console.error('Error creating signed URL for workspace logo:', error);
+    throw error;
+  }
+};
+
+// Function to create a signed URL for an S3 object
+export const getUserProfileLogoUrl = async(partnerId, userId, fileName, contentType = 'application/zip', expiresIn = 3600) => {
+  // Set up the PutObjectCommand with ContentType and ACL
+  const command = new PutObjectCommand({
+    Bucket: 'outreach-partners-asserts',
+    Key: `user-profile/${partnerId}/user/${userId}/logo/${Math.random().toString(36).substring(2, 8)}/${fileName}`,
+    ContentType: contentType, // Set content type as application/zip
+    ACL: 'public-read', // Make the object publicly accessible
+  });
+
+  try {
+    // Generate the signed URL for the put operation
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    return signedUrl;
+  } catch (error) {
+    console.error('Error creating signed URL for user profile logo:', error);
+    throw error;
+  }
+};
+
 const lambdaClients = new Map();
 
 const getLambdaClient = (region) => {

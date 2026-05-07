@@ -73,14 +73,16 @@ export const API = {
 
 export const JWT_ALLOWED_URLS = {
   '/health': true,
-  '/api/auth/login': true,
-  '/api/auth/magic-link-login': true,
-  '/api/auth/cs-admin-login': true,
-  '/api/auth/signup': true,
-  '/api/auth/forget-password': true,
-  '/api/auth/reset-password': true,
-  '/api/auth/verify-user': true,
-  '/api/auth/resend-verify-link': true,
+  '/api/users/login': true,
+  '/api/users/magic-link-login': true,
+  '/api/users/cs-admin-login': true,
+  '/api/users/signup': true,
+  '/api/users/refresh-token': true,
+  '/api/users/logout': true,
+  '/api/users/forget-password': true,
+  '/api/users/reset-password': true,
+  '/api/users/verify-user': true,
+  '/api/users/resend-verify-link': true,
   // partners
   '/api/partners/login': true,
   '/api/partners/signup': true,
@@ -90,9 +92,9 @@ export const JWT_ALLOWED_URLS = {
   '/api/partners/branding/public': true,
   '/api/partners/custom-scripts/public': true,
   // Rate limit ADMIN use
-  '/api/auth/redis/api-stats-leader-board': true,
-  '/api/auth/redis/api-limit-by-apikey': true,
-  '/api/auth/redis/set-user-custom-rate-limit': true,
+  '/api/workspaces/redis/api-stats-leader-board': true,
+  '/api/workspaces/redis/api-limit-by-apikey': true,
+  '/api/workspaces/redis/set-user-custom-rate-limit': true,
 
   // scalar api docs for whitelabel clients
   '/custom-whitelabel-api-docs': true,
@@ -105,25 +107,25 @@ export const JWT_ALLOWED_URLS = {
 
 
 export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
-  '/api/auth/login': true,
-  '/api/auth/magic-link-login': true,
-  '/api/auth/cs-admin-login': true,
-  '/api/auth/signup': true,
-  '/api/auth/early-access': true,
-  '/api/auth/verify-user': true,
-  '/api/auth/resend-verify-link': true,
-  '/api/auth/forget-password': true,
-  '/api/auth/reset-password': true,
-  '/api/auth/update-password': true,
-  '/api/auth/update-user-details': true,
+  '/api/users/login': true,
+  '/api/users/magic-link-login': true,
+  '/api/users/cs-admin-login': true,
+  '/api/users/signup': true,
+  '/api/users/early-access': true,
+  '/api/users/verify-user': true,
+  '/api/users/resend-verify-link': true,
+  '/api/users/forget-password': true,
+  '/api/users/reset-password': true,
+  '/api/users/update-password': true,
+  '/api/users/update-user-details': true,
   '/api/subscription/subscribe': true,
   '/api/subscription/unsubscribe': true,
   '/api/subscription/new-portal-session': true,
 
   // Rate limit ADMIN use
-  '/api/auth/redis/api-stats-leader-board': true,
-  '/api/auth/redis/api-limit-by-apikey': true,
-  '/api/auth/redis/set-user-custom-rate-limit': true,
+  '/api/workspaces/redis/api-stats-leader-board': true,
+  '/api/workspaces/redis/api-limit-by-apikey': true,
+  '/api/workspaces/redis/set-user-custom-rate-limit': true,
   '/json-docs': true,
 
   // mailboxes google oauth
@@ -146,6 +148,31 @@ export const PARTNER_STATUS = {
   ACTIVE: 'active',
   INACTIVE: 'inactive',
   SUSPENDED: 'suspended',
+};
+
+export const PARTNER_CUSTOM_SCRIPTS_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+};
+
+export const WORKSPACE_USER_ROLE = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MEMBER: 'member',
+  CLIENT: 'client',
+};
+
+export const WORKSPACE_USER_ROLE_PERMISSION = {
+  ADMIN: 'admin',
+  WRITE: 'write',
+  READ: 'read',
+};
+
+export const WORKSPACE_USER_MAPPING_STATUS = {
+  INVITATION_PENDING: 'invitation_pending',
+  INVITATION_ACCEPTED: 'invitation_accepted',
+  INVITATION_EXPIRED: 'invitation_expired',
+  DELETED: 'deleted',
 };
 
 export const STRIPE_PAY_KEY = process.env.STRIPE_PAY_KEY;
@@ -231,8 +258,11 @@ export const WORKSPACE_API_CACHE = 'workspace_api_cache:';
 export const PARTNER_ORIGIN_CACHE = 'partner_origin_cache:';
 export const PARTNER_BRANDING_CACHE = 'partner_branding:';
 export const PARTNER_PAYMENT_CACHE = 'partner_payment:';
+export const DEFAULT_PARTNER_ID = 1;
 
-export const USER_CUSTOM_RATE_LIMIT_PREFIX = 'user_custom_rate_limit:';
+export const TRIM_ORIGIN_DOMAIN = (origin = '') => origin.replace(/(^\w+:|^)\/\//, '').replace(/\/$/, '');
+
+export const WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX = 'workspace_custom_rate_limit:';
 
 export const GOOGLE_CONFIG = {
   CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
@@ -289,3 +319,5 @@ export const AWS_IMAP_SQS_REGIONS = [
   'us-east-2',
   'us-west-1',
 ];
+
+export const AUTH_TOKEN = process.env.AUTH_TOKEN;

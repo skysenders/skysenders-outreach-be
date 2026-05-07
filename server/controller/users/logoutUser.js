@@ -7,34 +7,34 @@ import { StatusCodes } from 'http-status-codes';
  * @param {*} res response
  * @returns {Object} success message
  */
-export const logoutPartner = async(req, res) => {
+export const logoutUser = async(req, res) => {
 
-  const PartnerSessionModelHandler = Container.get('PartnerSessionModelHandler');
+  const UserSessionModelHandler = Container.get('UserSessionModelHandler');
   const logger = Container.get('logger');
 
   try {
     const { refresh_token: refreshToken } = req.body;
 
     // delete partner session from the database
-    logger.info('Attempting to log out partner with refresh token');
+    logger.info('Attempting to log out user with refresh token');
 
-    let revokedSession = await PartnerSessionModelHandler.revokePartnerSessionByToken(refreshToken);
+    let revokedSession = await UserSessionModelHandler.revokeUserSessionByToken(refreshToken);
 
-    // if the partner session is not found in the database, respond with not found
+    // if the user session is not found in the database, respond with not found
     if (!revokedSession) {
-      logger.error('Partner session with provided refresh token not found for logout');
+      logger.error('User session with provided refresh token not found for logout');
       return res
         .status(StatusCodes.NOT_FOUND)
-        .send({ message: 'Partner session not found' });
+        .send({ message: 'User session not found' });
     }
 
-    logger.info('Partner logged out successfully');
+    logger.info('User logged out successfully');
 
     // return success message
     return res.status(StatusCodes.OK).send({ message: 'Logged out successfully' });
 
   } catch (error) {
-    logger.error(`Error occurred during partner login: ${error.message}`);
+    logger.error(`Error occurred during user login: ${error.message}`);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .send({ message: `Server error: ${error.message}` });

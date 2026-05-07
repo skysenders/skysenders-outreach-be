@@ -3,6 +3,8 @@
 import Fastify from 'fastify';
 // routes
 import partners from './partners';
+import users from './users';
+import workspaces from './workspaces';
 
 // other imports
 import Logger from '../../loaders/logger';
@@ -118,6 +120,8 @@ export const registerRoutes = async(fastifyApp) => {
   // register auth
   // fastifyApp.register(auth, { prefix: '/api/auth' });
   fastifyApp.register(partners, { prefix: '/api/partners' });
+  fastifyApp.register(users, { prefix: '/api/users' });
+  fastifyApp.register(workspaces, { prefix: '/api/workspaces' });
 
   // register public v1 api routes
   // fastifyApp.register(domains, { prefix: '/api/v1/domains' });

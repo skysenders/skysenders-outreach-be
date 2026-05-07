@@ -24,7 +24,7 @@ export const verifyRefreshToken = (token) => {
  * @argument {partner} partner object
  * @returns {String} Token
  */
-export const generate = async(user, partner) => {
+export const generate = async(user) => {
   const logger = Container.get('logger');
   try {
     const payload = {
@@ -34,14 +34,12 @@ export const generate = async(user, partner) => {
         name: user.name,
         uuid: user.uuid,
         partner_id: user.partner_id,
-        partner_uuid: partner.uuid
       },
       type: 'user',
       'https://hasura.io/jwt/claims': {
         'x-hasura-allowed-roles': [ HASURA_ROLES.USERS ],
         'x-hasura-default-role': HASURA_ROLES.USERS,
-        'x-hasura-partner-id': `${partner.id || 0}`,
-        'x-hasura-partner-uuid': `${partner.uuid || 0}`,
+        'x-hasura-partner-id': `${user.partner_id || 0}`,
         'x-hasura-user-id': `${user.id || 0}`,
         'x-hasura-user-uuid': `${user.uuid || 0}`,
         'x-hasura-user-name': `${user.name || 0}`,

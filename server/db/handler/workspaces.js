@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { QueryTypes } from 'sequelize';
 import { db } from '../index';
 import { Container } from 'typedi';

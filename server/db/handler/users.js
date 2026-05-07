@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { db } from '../index';
 import { Container } from 'typedi';
 
@@ -32,7 +33,12 @@ export const getUserById = async(id) => {
 };
 
 export const createUser = async(data) => {
+  const PasswordHandler = Container.get('PasswordHandler');
   try {
+    // encrypt password if it exists
+    if (data.password) {
+      data.password = await PasswordHandler.encrypt(data.password);
+    }
     return await db.users.create(data);
   } catch (err) {
     const logger = Container.get('logger');
@@ -42,7 +48,12 @@ export const createUser = async(data) => {
 };
 
 export const updateUser = async(data, where) => {
+  const PasswordHandler = Container.get('PasswordHandler');
   try {
+    // encrypt password if it exists
+    if (data.password) {
+      data.password = await PasswordHandler.encrypt(data.password);
+    }
     const [_, updated] = await db.users.update(data, {
       where,
       returning: true,

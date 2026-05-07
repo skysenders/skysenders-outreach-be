@@ -74,7 +74,6 @@ export const partnerLogin = async(req, res) => {
     // return token and partner info
     return res
       .status(StatusCodes.OK)
-      .type('application/json')
       .send({ token, partner: partnerDBData });
 
   } catch (error) {

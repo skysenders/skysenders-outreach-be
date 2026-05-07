@@ -11,6 +11,8 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     password: DataTypes.TEXT,
     status: DataTypes.ENUM('active', 'inactive', 'deleted', 'invited'),
+    profile_url: DataTypes.STRING,
+    timezone: DataTypes.STRING,
 
     last_reset_password_date: DataTypes.DATE,
     last_sent_password_link_date: DataTypes.DATE,

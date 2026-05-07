@@ -1,7 +1,6 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
 import { PARTNER_STATUS } from '../../config/constants';
-import { update } from 'lodash';
 
 /**
  * Functionality used to refresh a partner's authentication token
@@ -68,7 +67,7 @@ export const refreshPartnerToken = async(req, res) => {
     logger.info('Token refreshed successfully for partner');
 
     // return token and partner info
-    return res.status(StatusCodes.OK).type('application/json').send(token);
+    return res.status(StatusCodes.OK).send(token);
 
   } catch (error) {
     logger.error(`Error occurred during partner login: ${error.message}`);
