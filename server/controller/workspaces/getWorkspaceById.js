@@ -1,16 +1,27 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
 
-export const updateWorkspaceGoals = async(req, res) => {
+export const getWorkspaceById = async(req, res) => {
   const logger = Container.get('logger');
 
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
     const { workspaceId } = req.params;
-    const { goals = [] } = req.body;
-
     const user = req.user;
+
+    // check if the user has access to workspace or not via cache
+    const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
+      userId: user.id,
+      workspaceId: workspaceId
+    });
+
+    if (!hasAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({
+        message: 'You are not authorized to access this workspace'
+      });
+    }
 
     // check workspace exists under partner
     const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
@@ -24,22 +35,10 @@ export const updateWorkspaceGoals = async(req, res) => {
       });
     }
 
-    // check if the user is the owner of the workspace
-    if (workspace.owner_user_id !== user.id) {
-      return res.status(StatusCodes.FORBIDDEN).send({
-        message: 'You are not authorized to update this workspace'
-      });
-    }
-
-    const updatedWorkspace = await WorkspaceModelHandler.updateWorkspace(
-      { goals },
-      { partner_id: user.tenant_id, id: workspaceId }
-    );
-
-    return res.status(StatusCodes.OK).send(updatedWorkspace);
+    return res.status(StatusCodes.OK).send(workspace);
 
   } catch (err) {
-    logger.error(`Error updating workspace goals: ${err.message}`);
+    logger.error(`Error fetching workspace: ${err.message}`);
     throw err;
   }
 };

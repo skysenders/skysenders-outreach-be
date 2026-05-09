@@ -22,6 +22,16 @@ export const addUserToWorkspace = async(data) => {
   }
 };
 
+export const bulkCreateUserToWorkspace = async(data) => {
+  try {
+    return await db.user_workspace_mappings.bulkCreate(data);
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error bulk creating user to workspace: ${err.message}`);
+    throw err;
+  }
+};
+
 export const updateWorkspaceMember = async(data, where) => {
   try {
     const [_, updated] = await db.user_workspace_mappings.update(data, {

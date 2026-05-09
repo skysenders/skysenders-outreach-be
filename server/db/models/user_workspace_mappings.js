@@ -8,8 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     workspace_id: DataTypes.INTEGER,
     user_id: DataTypes.INTEGER,
 
-    role: DataTypes.ENUM('super_admin', 'admin', 'member', 'client'),
-    permission: DataTypes.ENUM('read', 'write', 'admin'),
+    role: DataTypes.ENUM('SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'),
     status: DataTypes.ENUM(
       'invitation_pending',
       'invitation_accepted',

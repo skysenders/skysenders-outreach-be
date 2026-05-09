@@ -1,5 +1,5 @@
 import { Container } from 'typedi';
-import { WORKSPACE_USER_ROLE, WORKSPACE_USER_ROLE_PERMISSION, WORKSPACE_USER_MAPPING_STATUS } from '../../config/constants';
+import { WORKSPACE_USER_ROLE, WORKSPACE_USER_MAPPING_STATUS } from '../../config/constants';
 import { StatusCodes } from 'http-status-codes';
 
 export const createWorkspace = async(req, res) => {
@@ -7,6 +7,7 @@ export const createWorkspace = async(req, res) => {
 
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
   const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
+  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
     const {
@@ -25,7 +26,7 @@ export const createWorkspace = async(req, res) => {
 
     // check duplicate slug under same partner
     const existing = await WorkspaceModelHandler.getWorkspaceByWhere({
-      partner_id: user.partner_id,
+      partner_id: user.tenant_id,
       slug: normalizedSlug
     });
 
@@ -37,7 +38,7 @@ export const createWorkspace = async(req, res) => {
     const workspace = await WorkspaceModelHandler.createWorkspace({
       name,
       slug: normalizedSlug,
-      partner_id: user.partner_id,
+      partner_id: user.tenant_id,
       owner_user_id: user.id,
       logo_url: logoUrl,
       timezone,
@@ -46,13 +47,20 @@ export const createWorkspace = async(req, res) => {
     });
 
     // assign owner as super_admin
-    await UserWorkspaceMappingModelHandler.createUserWorkspaceMapping({
+    await UserWorkspaceMappingModelHandler.addUserToWorkspace({
       workspace_id: workspace.id,
       user_id: user.id,
       role: WORKSPACE_USER_ROLE.SUPER_ADMIN,
-      permission: WORKSPACE_USER_ROLE_PERMISSION.ADMIN,
       status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
+      invited_by: user.id,
       is_active: true
+    });
+
+    // create an entry in redis cache for super admin
+    await WorkspaceRedisCacheHelper.addWorkspaceAccess({
+      userId: user.id,
+      workspaceId: workspace.id,
+      role: WORKSPACE_USER_ROLE.SUPER_ADMIN
     });
 
     return res.status(StatusCodes.CREATED).send(workspace);

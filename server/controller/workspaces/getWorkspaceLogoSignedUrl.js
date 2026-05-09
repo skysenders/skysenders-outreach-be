@@ -8,7 +8,7 @@ export const getWorkspaceLogoSignedUrl = async(req, res) => {
 
   const { filename, content_type: contentType } = req.body;
   const workspaceId = req.params.workspaceId;
-  const partnerId = req.user.partner_id;
+  const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
 
   try {
     logger.info(`Generating signed URL for workspace logo for workspace ID: ${workspaceId}`);

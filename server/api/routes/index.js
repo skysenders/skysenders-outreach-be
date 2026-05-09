@@ -124,7 +124,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(workspaces, { prefix: '/api/workspaces' });
 
   // register public v1 api routes
-  // fastifyApp.register(domains, { prefix: '/api/v1/domains' });
+  fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
 
   // Custom Swagger route to set host dynamically
   fastify.get('/custom-whitelabel-api-docs', async(req) => {

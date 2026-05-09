@@ -23,6 +23,16 @@ export const getWorkspaceById = async(id) => {
   }
 };
 
+export const getWorkspaceByWhere = async(where) => {
+  try {
+    return await db.workspaces.findOne({ where, raw: true });
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error fetching one workspace: ${err.message}`);
+    throw err;
+  }
+};
+
 export const createWorkspace = async(data) => {
   try {
     return await db.workspaces.create(data);
@@ -74,13 +84,13 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
         w.slug,
         w.api_key,
         w.custom_api_rate_limit,
-        w.partner_id,
+        w.partner_id as tenant_id,
         jsonb_build_object(
           'id', u.id,
           'email', u.email,
           'name', u.name,
-          'partner_id', u.partner_id,
-          'workspace_id', w.workspace_id,
+          'tenant_id', u.partner_id,
+          'workspace_id', w.id
         ) AS user,
 
         jsonb_build_object(
@@ -96,7 +106,7 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
         ON u.id = w.owner_user_id
       LEFT JOIN workspace_plan_details pd
         ON pd.workspace_id = w.id
-      WHERE u.api_key = '${apiKey}';`,
+      WHERE w.api_key = '${apiKey}';`,
     { type: QueryTypes.SELECT });
 
     return workspaceData[0];

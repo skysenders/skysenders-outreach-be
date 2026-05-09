@@ -28,16 +28,17 @@ import * as StripeAPIServices from '../services/stripe/stripeApi';
 import * as PartnerStripeAPIServices from '../services/stripe/partnerStripeApi';
 import * as GoogleApiServices from '../services/esp_provides/google/google.api';
 import * as MicrosoftApiServices from '../services/esp_provides/microsoft/microsoft.api';
+import * as MailerInstance from '../services/email-service/send-email';
 
 // utils
 import * as TokenHandler from '../utils/tokenHandler';
-import * as MailerInstance from '../utils/mailer';
 import * as PasswordHandler from '../utils/passwordHandler';
 import * as EmailVerificationHelper from '../utils/emailVerification';
 import * as OtpGeneratorHelper from '../utils/otpGenerator';
 import * as APIKeyGenerator from '../utils/api_key_generator';
 import * as StringHelper from '../utils/string-helper';
 import * as DetectESPHelper from '../utils/detectEsp';
+import * as WorkspaceRedisCacheHelper from '../utils/redis-handler/redis-workspace-user-cache';
 
 /**
  * Functionalilty used to set the container services
@@ -84,7 +85,7 @@ const injectorInstance = async() => {
     Container.set('APIKeyGenerator', APIKeyGenerator);
     Container.set('StringHelper', StringHelper);
     Container.set('DetectESPHelper', DetectESPHelper);
-
+    Container.set('WorkspaceRedisCacheHelper', WorkspaceRedisCacheHelper);
 
     return;
   } catch (err) {

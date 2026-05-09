@@ -11,7 +11,7 @@ import { StatusCodes } from 'http-status-codes';
 export const generateNewAPIKey = async(req, res) => {
   try {
     const workspaceId = req.params.workspaceId;
-    const partnerId = req.user.partner_id;
+    const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
     const ownerUserId = req.user.id;
 
     const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');

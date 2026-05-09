@@ -75,3 +75,17 @@ export const parseMessageId = (messageId) => {
     return null;
   }
 };
+
+export const encodeToken = (data) => {
+
+  const json = JSON.stringify(data);
+
+  return Buffer.from(json).toString('base64url');
+};
+
+export const decodeToken = (token) => {
+
+  const json = Buffer.from(token, 'base64url').toString();
+
+  return JSON.parse(json);
+};

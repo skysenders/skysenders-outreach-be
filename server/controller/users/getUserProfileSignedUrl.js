@@ -8,7 +8,7 @@ export const getUserProfileSignedUrl = async(req, res) => {
 
   const { filename, content_type: contentType } = req.body;
   const userId = req.user.id;
-  const partnerId = req.user.partner_id;
+  const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
 
   try {
     logger.info(`Generating signed URL for user profile for user ID: ${userId}`);

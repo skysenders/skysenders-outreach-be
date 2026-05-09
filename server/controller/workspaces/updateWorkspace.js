@@ -20,7 +20,7 @@ export const updateWorkspace = async(req, res) => {
 
     // check workspace exists under partner
     const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
-      partner_id: user.partner_id,
+      partner_id: user.tenant_id,
       id: workspaceId,
     });
 
@@ -48,7 +48,7 @@ export const updateWorkspace = async(req, res) => {
     // make sure it is the owner of the workspace who is updating the workspace
     const updatedWorkspace = await WorkspaceModelHandler.updateWorkspace(
       updatePayload,
-      { partner_id: user.partner_id, id: workspaceId }
+      { partner_id: user.tenant_id, id: workspaceId }
     );
 
     return res.status(StatusCodes.OK).send(updatedWorkspace);

@@ -44,6 +44,7 @@ export default async function authRoutes(fastify) {
             },
             name: { type: 'string', maxLength: 100 },
             password: { type: 'string', maxLength: 30 },
+            token: { type: 'string' } // user invitation acceptance token
           },
         },
         response: {
@@ -61,6 +62,10 @@ export default async function authRoutes(fastify) {
                   status: { type: 'string' },
                   profile_url: { type: 'string' },
                   timezone: { type: 'string' },
+                  invited_accepted: { type: 'boolean' },
+                  invited_workspace_id: { type: 'number' },
+                  invited_workspace_role: { type: 'string' },
+                  invited_workspace_join_error: { type: 'string' },
                 },
               },
               token: {
@@ -240,10 +245,9 @@ export default async function authRoutes(fastify) {
         hide: true,
         querystring: {
           type: 'object',
-          required: ['partner_id', 'uuid'],
+          required: ['token'],
           properties: {
-            partner_id: { type: 'integer' },
-            uuid: { type: 'string', minLength: 36, maxLength: 36 }, // Assuming UUID is 36 characters
+            token: { type: 'string' },
           },
         },
         response: {
@@ -297,11 +301,10 @@ export default async function authRoutes(fastify) {
         hide: true,
         querystring: {
           type: 'object',
-          required: ['partner_id', 'uuid', 'otp'],
+          required: ['token', 'otp'],
           properties: {
-            partner_id: { type: 'integer' },
-            uuid: { type: 'string', minLength: 36, maxLength: 36 }, // Assuming UUID is 36 characters
-            otp: { type: 'string', minLength: 6, maxLength: 9 }, // Assuming UUID is 36 characters
+            token: { type: 'string' },
+            otp: { type: 'string', minLength: 6, maxLength: 9 },
           },
         },
         response: {
@@ -443,11 +446,10 @@ export default async function authRoutes(fastify) {
         hide: true,
         body: {
           type: 'object',
-          required: ['partner_id', 'uuid', 'new_password'],
+          required: ['token', 'new_password'],
           properties: {
-            partner_id: { type: 'integer' },
-            uuid: { type: 'string', minLength: 36, maxLength: 36 }, // Assuming UUID is 36 characters
-            new_password: { type: 'string', maxLength: 30 }, // Assuming UUID is 36 characters
+            token: { type: 'string' },
+            new_password: { type: 'string', maxLength: 30 },
           },
         },
         response: {

@@ -1,7 +1,7 @@
 import { Container } from 'typedi';
 import { isEmpty } from 'lodash';
 import { StatusCodes } from 'http-status-codes';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, USER_STATUS, FRONTEND_URL } from '../../config/constants';
+import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, USER_STATUS, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME } from '../../config/constants';
 
 /**
  * Functionality used to log in a user
@@ -18,7 +18,7 @@ export const userLogin = async(req, res) => {
     const redisClient = Container.get('redisClient');
     const logger = Container.get('logger');
 
-    const { email, password } = req.body;
+    const { password } = req.body;
 
     // find the partner_id based on the req.origin
     let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
@@ -28,6 +28,8 @@ export const userLogin = async(req, res) => {
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }
+    // normalize email to lowercase
+    const email = req.body.email.toLowerCase().trim();
 
     // check if user exists in the database
     let userDBData = await UserModelHandler.getUserByWhere({
@@ -107,11 +109,22 @@ export const userMagicLinkLogin = async(req, res) => {
     const TokenHandler = Container.get('TokenHandler');
     const UserModelHandler = Container.get('UserModelHandler');
     const UserSessionModelHandler = Container.get('UserSessionModelHandler');
+    const StringHelper = Container.get('StringHelper');
+
+    // encode the token to handle special characters in the token
+    const decodedToken = StringHelper.decodeToken(req.query.token);
+
+    // throw error if token does not have partner_id and uuid
+    if (!decodedToken.partner_id || !decodedToken.uuid) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send({ message: 'Invalid token' });
+    }
 
     // check if user exists in the database
     let userDBData = await UserModelHandler.getUserByWhere({
-      partner_id: req.query.partner_id,
-      uuid: req.query.uuid,
+      partner_id: decodedToken.partner_id,
+      uuid: decodedToken.uuid,
     });
 
     // if the user is not found in the database, respond with user not found
@@ -175,6 +188,7 @@ export const resendUserActivationLink = async(req, res) => {
     const UserModelHandler = Container.get('UserModelHandler');
     const MailerInstance = Container.get('MailerInstance');
     const redisClient = Container.get('redisClient');
+    const StringHelper = Container.get('StringHelper');
     const logger = Container.get('logger');
 
     // find the partner_id based on the req.origin
@@ -186,7 +200,9 @@ export const resendUserActivationLink = async(req, res) => {
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }
 
-    const { email } = req.body;
+    // normalize email to lowercase
+    const email = req.body.email.toLowerCase().trim();
+
     let user = await UserModelHandler.getUserByWhere({
       partner_id: partnerId,
       email,
@@ -210,29 +226,25 @@ export const resendUserActivationLink = async(req, res) => {
       });
     }
 
-    const emailInput = {
-      from: 'Ramesh from Sky Senders <ramesh@skysendershq.com>',
-      toAddress: user.email,
-      subject: 'Welcome to SkySenders, here’s your OTP to log in!',
-      html: `<html>
-    <head>
-      <title>Verify Email | Skysenders</title>
-    </head>
-    <body>
-      <div>
-        <p><b>${user.signup_otp}</b> is your SkySenders OTP code.</p>
-        <p>
-            Alternatively, you can verify your account automatically by clicking the link
-            <a href="${FRONTEND_URL}/user-verification?partner_id=${partnerId}&uuid=${user.uuid}&otp=${user.signup_otp}">here</a>.
-        </p>
-        <p>If you did not sign up for this account, you can safely ignore this email.</p>
-     </div>
-    </body>
-</html>`,
-    };
+    // fetch partner email details from the redis cache
+    const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${partnerId}`);
+    const parsedPartnerEmailDetails = JSON.parse(partnerEmailDetails || '{}');
 
-    // resend welcome email
-    MailerInstance.sendMail(emailInput);
+    const token = StringHelper.encodeToken({ partner_id: partnerId, uuid: user.uuid});
+
+    // send welcome email
+    MailerInstance.sendMail({
+      partnerId,
+      type: EMAIL_TEMPLATE_NAME.SIGNUP,
+      to: user.email,
+      cc: [],
+      data: {
+        otp_code: user.signup_otp,
+        otp_expiry_minutes: 30,
+        token,
+        ...parsedPartnerEmailDetails
+      }
+    });
 
     // send success response to UI
     return res
@@ -256,12 +268,23 @@ export const verifyUserByUuid = async(req, res) => {
     const TokenHandler = Container.get('TokenHandler');
     const UserModelHandler = Container.get('UserModelHandler');
     const UserSessionModelHandler = Container.get('UserSessionModelHandler');
+    const StringHelper = Container.get('StringHelper');
 
-    const { uuid, otp, partner_id: partnerId } = req.query;
+    // encode the token to handle special characters in the token
+    const decodedToken = StringHelper.decodeToken(req.query.token);
+
+    // throw error if token does not have partner_id and uuid
+    if (!decodedToken.partner_id || !decodedToken.uuid) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send({ message: 'Invalid token' });
+    }
+
+    const { otp } = req.query;
 
     const user = await UserModelHandler.getUserByWhere({
-      partner_id: partnerId,
-      uuid,
+      partner_id: decodedToken.partner_id,
+      uuid: decodedToken.uuid,
     });
 
     if (isEmpty(user)) {

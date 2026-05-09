@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, FRONTEND_URL } from '../../config/constants';
+import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME } from '../../config/constants';
 
 /**
  * Functionality used send otp to a mail for resetting password
@@ -10,12 +10,12 @@ import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, FRONTEND_
  */
 export const forgotPassword = async(req, res) => {
   try {
-    const { email } = { ...req.body };
 
     const UserModelHandler = Container.get('UserModelHandler');
     const MailerInstance = Container.get('MailerInstance');
     const redisClient = Container.get('redisClient');
     const logger = Container.get('logger');
+    const StringHelper = Container.get('StringHelper');
 
     // find the partner_id based on the req.origin
     let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
@@ -25,6 +25,9 @@ export const forgotPassword = async(req, res) => {
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }
+
+    // normalize email to lowercase
+    const email = req.body.email.toLowerCase().trim();
 
     const user = await UserModelHandler.getUserByWhere({
       partner_id: partnerId,
@@ -41,26 +44,24 @@ export const forgotPassword = async(req, res) => {
       { last_sent_password_link_date: new Date().toISOString() },
       { id: user.id });
 
-    const emailInput = {
-      from: 'Ramesh from Sky Senders <ramesh@skysendershq.com>',
-      toAddress: email,
-      subject: 'Reset your password',
-      html: `<html>
-    <head>
-      <title>Reset Password | Skysenders</title>
-    </head>
-    <body>
-      <div>
-        <p>
-          Please click 👉 <a href="${FRONTEND_URL}/reset-password?partner_id=${partnerId}&uuid=${user.uuid}">here</a> to reset your password
-        </p>
-     </div>
-    </body>
-</html>`,
-    };
+    // fetch partner email details from the redis cache
+    const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${partnerId}`);
+    const parsedPartnerEmailDetails = JSON.parse(partnerEmailDetails || '{}');
 
-    // send reset password email
-    MailerInstance.sendMail(emailInput);
+    const token = StringHelper.encodeToken({ partner_id: partnerId, uuid: user.uuid});
+
+    // send welcome email
+    MailerInstance.sendMail({
+      partnerId,
+      type: EMAIL_TEMPLATE_NAME.FORGOT_PASSWORD,
+      to: user.email,
+      cc: [],
+      data: {
+        reset_link_expiry_minutes: 30,
+        token,
+        ...parsedPartnerEmailDetails
+      }
+    });
 
     return res
       .status(StatusCodes.OK)
@@ -81,12 +82,23 @@ export const forgotPassword = async(req, res) => {
 export const resetPassword = async(req, res) => {
   const UserModelHandler = Container.get('UserModelHandler');
   try {
-    const { partner_id: partnerId, uuid, new_password: newPassword } = { ...req.body };
+    const { token, new_password: newPassword } = { ...req.body };
+
+    // decode the token to get partner_id and uuid
+    const StringHelper = Container.get('StringHelper');
+    const decodedToken = StringHelper.decodeToken(token);
+
+    // throw error if token does not have partner_id and uuid
+    if (!decodedToken.partner_id || !decodedToken.uuid) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send({ message: 'Invalid token' });
+    }
 
     // check if the user exist
     const user = await await UserModelHandler.getUserByWhere({
-      partner_id: partnerId,
-      uuid,
+      partner_id: decodedToken.partner_id,
+      uuid: decodedToken.uuid,
     });
 
     if (user) {

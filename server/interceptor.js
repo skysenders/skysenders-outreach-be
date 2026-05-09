@@ -14,7 +14,7 @@ const updateUserTokenDataBasedonRoute = (req, tokenData) => {
   // set workspace id
   req.workspace = {
     id: req.headers['x-workspace-id'],
-    partner_id: tokenData.user.partner_id
+    tenant_id: tokenData.user.tenant_id // tenant_id is used as partner_id in the token
   };
   return;
 };
@@ -82,7 +82,7 @@ export const verifyToken = async(req, res) => {
         plan_name: workspace?.plan_details?.plan_name,
         plan_end_date: workspace?.plan_details?.plan_end_date,
 
-        partner_id: workspace?.partner_id,
+        tenant_id: workspace?.tenant_id, // tenant_id is used as partner_id in the token
       };
 
       req.user = workspace.user;

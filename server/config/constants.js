@@ -156,16 +156,12 @@ export const PARTNER_CUSTOM_SCRIPTS_STATUS = {
 };
 
 export const WORKSPACE_USER_ROLE = {
-  SUPER_ADMIN: 'super_admin',
-  ADMIN: 'admin',
-  MEMBER: 'member',
-  CLIENT: 'client',
-};
-
-export const WORKSPACE_USER_ROLE_PERMISSION = {
-  ADMIN: 'admin',
-  WRITE: 'write',
-  READ: 'read',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  INBOX_MANAGER: 'INBOX_MANAGER',
+  VIEWER: 'VIEWER',
+  CLIENT: 'CLIENT'
 };
 
 export const WORKSPACE_USER_MAPPING_STATUS = {
@@ -173,6 +169,7 @@ export const WORKSPACE_USER_MAPPING_STATUS = {
   INVITATION_ACCEPTED: 'invitation_accepted',
   INVITATION_EXPIRED: 'invitation_expired',
   DELETED: 'deleted',
+  LEFT: 'left',
 };
 
 export const STRIPE_PAY_KEY = process.env.STRIPE_PAY_KEY;
@@ -257,6 +254,7 @@ export const RATE_LIMITER_CONFIG = {
 export const WORKSPACE_API_CACHE = 'workspace_api_cache:';
 export const PARTNER_ORIGIN_CACHE = 'partner_origin_cache:';
 export const PARTNER_BRANDING_CACHE = 'partner_branding:';
+export const PARTNER_EMAIL_SETTINGS_CACHE = 'partner_email_settings:';
 export const PARTNER_PAYMENT_CACHE = 'partner_payment:';
 export const DEFAULT_PARTNER_ID = 1;
 
@@ -321,3 +319,11 @@ export const AWS_IMAP_SQS_REGIONS = [
 ];
 
 export const AUTH_TOKEN = process.env.AUTH_TOKEN;
+
+export const EMAIL_TEMPLATE_NAME = {
+  SIGNUP: 'signup',
+  FORGOT_PASSWORD: 'forgotPassword',
+  SUBSCRIPTION_FAILURE: 'subscriptionFailure',
+  INVITE_EXISTING_TEAM_MEMBER: 'inviteExistingTeamMember',
+  INVITE_NEW_TEAM_MEMBER: 'inviteNewTeamMember'
+};
