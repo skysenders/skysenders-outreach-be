@@ -130,7 +130,8 @@ export const registerRoutes = async(fastifyApp) => {
   fastify.get('/custom-whitelabel-api-docs', async(req) => {
     const originalSpec = fastify.swagger();
     const spec = JSON.parse(JSON.stringify(originalSpec)); // deep clone
-    const host = req.query.hostname;
+    // const host = req.query.hostname;
+    const host = 'apiruntime.com';
     if (host) {
       spec.host = host; // safely modify per request
       // change the contact info

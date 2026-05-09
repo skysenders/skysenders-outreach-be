@@ -22,8 +22,6 @@ export const BE_URL = process.env.BE_URL;
 export const IS_PRODUCTION = process.env.NODE_ENV === 'PROD';
 export const SALT_WORK_FACTOR = 12;
 
-export const SES_FROM_MAIL = process.env.SES_FROM_MAIL;
-
 export const DB = {
   NAME: process.env.DB_NAME,
   HOST: process.env.DB_URI_HOST,
@@ -230,7 +228,6 @@ export const AWS_CONFIG = {
   AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION,
   SW_AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
   SW_AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
-  DEPLOY_EMAIL_SERVER_SQS_URL: process.env.DEPLOY_EMAIL_SERVER_SQS_URL,
 };
 
 export const escapeSequelizeQueryText = (value) => value.replace(/'/g, '\'\'').replace(/\$/g, '$$$$');

@@ -1,5 +1,4 @@
 import { Container } from 'typedi';
-import { SES_FROM_MAIL } from '../config/constants';
 
 /**
  * Functionality used to send mail using sendgrid
@@ -12,7 +11,7 @@ export const sendMail = async({toAddress, cc, from, subject, text, html})=>{
   try {
     const msg = {
       to: toAddress,
-      from: from || `Support <${SES_FROM_MAIL}>`,
+      from: from,
       subject,
       cc,
       text,

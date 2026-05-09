@@ -9,6 +9,7 @@
 // {{product_url}}
 // {{token}}
 // {{invite_expiry_days}}
+// {{workspace_slug}}
 
 export const subject = '{{product_name}}: You\'ve been invited to join {{workspace_name}}';
 
@@ -33,7 +34,7 @@ export const body = `<!DOCTYPE html>
                   To accept this invite, create your account using the button below. Once your account is created, you'll automatically join the workspace.
                 </p>
 
-                <a href="{{product_url}}/signup?token={{token}}&workspace={{workspace_name}}" style="display:inline-block; background:{{primary_color}}; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:8px; font-size:15px; font-weight:600;">
+                <a href="{{product_url}}/signup?token={{token}}&name={{workspace_name}}&slug={{workspace_slug}}" style="display:inline-block; background:{{primary_color}}; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:8px; font-size:15px; font-weight:600;">
                   Accept invite
                 </a>
 
@@ -44,8 +45,8 @@ export const body = `<!DOCTYPE html>
                 <p style="margin:16px 0 0; font-size:13px; line-height:20px; color:{{text_color}};">
                   If the button does not work, copy and paste this link into your browser:
                   <br />
-                  <a href="{{product_url}}/signup?token={{token}}&workspace={{workspace_name}}" style="color:{{primary_color}};">
-                    {{product_url}}/signup?token={{token}}&workspace={{workspace_name}}
+                  <a href="{{product_url}}/signup?token={{token}}&name={{workspace_name}}&slug={{workspace_slug}}" style="color:{{primary_color}};">
+                    {{product_url}}/signup?token={{token}}&name={{workspace_name}}&slug={{workspace_slug}}
                   </a>
                 </p>
 

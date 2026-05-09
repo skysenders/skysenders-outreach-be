@@ -120,6 +120,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
           to: targetUser.email,
           data: {
             workspace_name: workspace.name,
+            workspace_slug: workspace.slug,
             inviter_name: user.name || user.email,
             invite_expiry_days: 7,
             token,
