@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
     updated_at: DataTypes.DATE,
     deleted_at: DataTypes.DATE,
     is_deleted: DataTypes.BOOLEAN,
-    is_first_invite: DataTypes.BOOLEAN
+    is_first_invite: DataTypes.BOOLEAN,
+    is_client: DataTypes.BOOLEAN
   }, {
     tableName: 'users',
     timestamps: false

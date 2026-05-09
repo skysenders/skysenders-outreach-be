@@ -64,11 +64,15 @@ export const inviteWorkspaceMembers = async(req, res) => {
       email: memberEmails
     });
     // fetch existing mappings to avoid duplicates
-    const existingUserWorkspaceMembers = await UserWorkspaceMappingModelHandler.getWorkspaceMembers({
-      workspace_id: workspace.id,
-      user_id: existingUsers.map(u => u.id),
-      is_deleted: false
-    });
+    let existingUserWorkspaceMembers = [];
+
+    if (existingUsers.length > 0) {
+      existingUserWorkspaceMembers = await UserWorkspaceMappingModelHandler.getWorkspaceMembers({
+        workspace_id: workspace.id,
+        user_id: existingUsers.map(u => u.id),
+        is_deleted: false
+      });
+    }
 
     const invited = [];
     const failed = [];

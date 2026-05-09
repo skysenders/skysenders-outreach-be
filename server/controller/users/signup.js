@@ -51,7 +51,8 @@ export const addNewUser = async(req, res) => {
     const [existUser] = await Promise.all([
       UserModelHandler.getUserByWhere({
         partner_id: partnerId,
-        email: userEmails
+        email: userEmails,
+        is_client: false
       })
     ]);
 

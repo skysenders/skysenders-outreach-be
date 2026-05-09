@@ -35,6 +35,7 @@ export const userLogin = async(req, res) => {
     let userDBData = await UserModelHandler.getUserByWhere({
       partner_id: partnerId,
       email,
+      is_client: false
     });
 
     // if the user is not found in the database, respond with user not found
@@ -206,6 +207,7 @@ export const resendUserActivationLink = async(req, res) => {
     let user = await UserModelHandler.getUserByWhere({
       partner_id: partnerId,
       email,
+      is_client: false
     });
 
     if (!user) {

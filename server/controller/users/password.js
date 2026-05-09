@@ -32,6 +32,7 @@ export const forgotPassword = async(req, res) => {
     const user = await UserModelHandler.getUserByWhere({
       partner_id: partnerId,
       email,
+      is_client: false
     });
 
     if (!user) {

@@ -13,6 +13,7 @@ import * as PartnerSessionModelHandler from '../db/handler/partner_sessions';
 import * as UserModelHandler from '../db/handler/users';
 import * as WorkspaceModelHandler from '../db/handler/workspaces';
 import * as UserWorkspaceMappingModelHandler from '../db/handler/user_workspace_mappings';
+import * as WorkspaceClientMappingModelHandler from '../db/handler/workspace_client_mappings';
 import * as UserSessionModelHandler from '../db/handler/user_sessions';
 
 // Billing Modules
@@ -60,6 +61,7 @@ const injectorInstance = async() => {
     Container.set('UserModelHandler', UserModelHandler);
     Container.set('WorkspaceModelHandler', WorkspaceModelHandler);
     Container.set('UserWorkspaceMappingModelHandler', UserWorkspaceMappingModelHandler);
+    Container.set('WorkspaceClientMappingModelHandler', WorkspaceClientMappingModelHandler);
     Container.set('UserSessionModelHandler', UserSessionModelHandler);
 
     // ---- Billing / Subscription ----
