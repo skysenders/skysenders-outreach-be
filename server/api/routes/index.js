@@ -76,7 +76,7 @@ export const initialize = async(fastifyApp, redisClient) => {
     routePrefix: '/documentation',
     swagger: {
       info: {
-        title: 'API Docs',
+        title: 'Outreach API Docs',
         contact: {
           name: 'SkySenders Team',
           email: 'support@skysenders.ai',
@@ -94,7 +94,7 @@ export const initialize = async(fastifyApp, redisClient) => {
       produces: ['application/json'],
       exposeRoute: true,
       tags: [
-        // { name: 'Sky Box', description: 'Endpoints for inbox, sent, email settigns, etc.' },
+        { name: 'Workspaces', description: 'Endpoints for managing workspaces' },
       ],
       docExpansion: 'none',
       deepLinking: true,

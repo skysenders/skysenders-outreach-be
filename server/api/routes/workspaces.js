@@ -25,7 +25,7 @@ export default async function workspaceRoutes(fastify) {
     '/',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Create workspace',
         description: 'Create a new workspace',
         operationId: 'createWorkspace',
@@ -75,7 +75,7 @@ export default async function workspaceRoutes(fastify) {
     '/:workspaceId/get-logo-signed-url',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Get signed URL for uploading workspace logo',
         description: 'Returns a pre-signed S3 URL for uploading workspace logo image',
         operationId: 'getSignedUrlForWorkspaceLogo',
@@ -130,7 +130,7 @@ export default async function workspaceRoutes(fastify) {
     '/:workspaceId',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Get workspace details by ID',
         description: 'Returns workspace details for the given workspace ID',
         operationId: 'getWorkspaceById',
@@ -182,7 +182,7 @@ export default async function workspaceRoutes(fastify) {
     '/',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Get all workspaces for logged in user',
         description: 'Returns a list of all workspaces associated to the logged in user',
         operationId: 'getAllWorkspaces',
@@ -229,7 +229,7 @@ export default async function workspaceRoutes(fastify) {
     '/:workspaceId',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Update workspace details',
         description: 'Update workspace details like name, logo, timezone, team size etc.',
         operationId: 'updateWorkspace',
@@ -288,7 +288,7 @@ export default async function workspaceRoutes(fastify) {
     '/:workspaceId/goals',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Update workspace goals',
         description: 'Update workspace goals',
         operationId: 'updateWorkspaceGoals',
@@ -344,6 +344,10 @@ export default async function workspaceRoutes(fastify) {
   fastify.post('/:workspaceId/invite-members',
     {
       schema: {
+        tags: ['Workspaces'],
+        summary: 'Invite team members to workspace',
+        description: 'Invite team members to join the workspace by sending them an email invitation',
+        operationId: 'inviteWorkspaceMembers',
         params: {
           type: 'object',
           properties: {
@@ -438,7 +442,7 @@ export default async function workspaceRoutes(fastify) {
   fastify.post('/join',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Join workspace with token',
         description: 'API endpoint to join workspace using invitation token',
         operationId: 'joinWorkspaceWithToken',
@@ -481,7 +485,7 @@ export default async function workspaceRoutes(fastify) {
   fastify.patch('/:workspaceId/members/:userId',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Update team member role or deactivate member',
         description: 'API endpoint to update a team member\'s role or deactivate their account',
         operationId: 'updateWorkspaceMember',
@@ -528,7 +532,7 @@ export default async function workspaceRoutes(fastify) {
   fastify.get('/:workspaceId/members',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'List workspace members',
         description: 'API endpoint to list all members of a workspace',
         operationId: 'getWorkspaceMembers',
@@ -580,7 +584,7 @@ export default async function workspaceRoutes(fastify) {
   fastify.delete('/:workspaceId/members/:userId',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Delete a team member from workspace',
         description: 'API endpoint to delete a team member from workspace',
         operationId: 'deleteWorkspaceMember',
@@ -624,7 +628,7 @@ export default async function workspaceRoutes(fastify) {
   fastify.post('/:workspaceId/leave',
     {
       schema: {
-        tags: ['Workspace'],
+        tags: ['Workspaces'],
         summary: 'Leave workspace',
         description: 'API endpoint for a member to leave the workspace',
         operationId: 'leaveWorkspace',
@@ -695,10 +699,18 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // find api rate limit leader board
-  fastify.get('/redis/api-stats-leader-board', fetchAPIRateLimitStatLeaderBoard);
+  fastify.get('/redis/api-stats-leader-board', {
+    schema: {
+      hide: true,
+    }
+  }, fetchAPIRateLimitStatLeaderBoard);
 
   // find api rate limit by api key
-  fastify.get('/redis/api-limit-by-apikey', fetchAPIConsumedCountByAPIKey);
+  fastify.get('/redis/api-limit-by-apikey', {
+    schema: {
+      hide: true,
+    }
+  }, fetchAPIConsumedCountByAPIKey);
 
   // update workspace api rate limit
   fastify.post('/redis/:workspaceId/set-custom-rate-limit',
