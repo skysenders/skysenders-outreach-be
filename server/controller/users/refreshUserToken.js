@@ -71,6 +71,15 @@ export const refreshUserToken = async(req, res) => {
       id: userSessionDBData.id
     });
 
+    // set access token in http only cookie
+    res.setCookie('access_token', token.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/api/users/refresh-token',
+      maxAge: 1000 * JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
     // set refresh token in http only cookie
     res.setCookie('refresh_token', token.refresh_token, {
       httpOnly: true,

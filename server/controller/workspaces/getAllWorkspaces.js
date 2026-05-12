@@ -10,7 +10,7 @@ export const getAllWorkspaces = async(req, res) => {
 
     // fetch all the workspaces associated to the logged in user
     const query = `SELECT 
-          w.id as workspace_id,
+          w.id as id,
           w.name,
           w.slug,
           w.logo_url,

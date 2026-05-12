@@ -18,6 +18,12 @@ import { getUserProfileSignedUrl } from '../../controller/users/getUserProfileSi
 import { updateTriggerProductTour } from '../../controller/users/updateTriggerProductTour';
 import { refreshUserToken } from '../../controller/users/refreshUserToken';
 import { logoutUser } from '../../controller/users/logoutUser';
+// google auth login
+import { signinWithGoogle } from '../../controller/users/google/signinWithGoogle';
+import { handleGoogleOAuthCallback } from '../../controller/users/google/handleGoogleOAuthCallback';
+// microsoft auth login
+import { signinWithMicrosoft } from '../../controller/users/microsoft/signinWithMicrosoft';
+import { handleMicrosoftOAuthCallback } from '../../controller/users/microsoft/handleMicrosoftOAuthCallback';
 
 
 export default async function authRoutes(fastify) {
@@ -168,6 +174,182 @@ export default async function authRoutes(fastify) {
       },
     },
     userLogin
+  );
+  // route to signin google user with redirect to authorized url
+  fastify.get(
+    '/auth/google/signin',
+    {
+      schema: {
+        tags: ['Users'], // Group under "Product" tag
+        summary: 'Signin with Google',
+        description: 'API endpoint to signin with Google',
+        operationId: 'signinWithGoogle',
+        hide: true,
+        querystring: {
+          type: 'object',
+          properties: {
+            token: { type: 'string', description: 'User invitation token for joining workspace after social login/signup' }
+          },
+        },
+        response: {
+          // redirect response will not be handled by fastify, but we can document the expected response for better API documentation
+          302: {
+            description: 'Redirect to Google for authentication',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, signinWithGoogle
+  );
+
+  // route to handle google oauth callback
+  fastify.get(
+    '/auth/google/callback',
+    {
+      schema: {
+        tags: ['Users'], // Group under "Product" tag
+        summary: 'Google OAuth callback',
+        description: 'API endpoint to handle Google OAuth callback',
+        operationId: 'handleGoogleOAuthCallback',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['code', 'state'],
+          properties: {
+            code: { type: 'string' },
+            state: { type: 'string' },
+          },
+        },
+        response: {
+          302: {
+            description: 'Redirect to frontend with user data and token',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, handleGoogleOAuthCallback
+  );
+
+  // route to signin microsoft user with redirect to authorized url
+  fastify.get(
+    '/auth/microsoft/signin',
+    {
+      schema: {
+        tags: ['Users'], // Group under "Product" tag
+        summary: 'Signin with Microsoft',
+        description: 'API endpoint to signin with Microsoft',
+        operationId: 'signinWithMicrosoft',
+        hide: true,
+        querystring: {
+          type: 'object',
+          properties: {
+            token: { type: 'string', description: 'User invitation token for joining workspace after social login/signup' }
+          },
+        },
+        response: {
+          302: {
+            description: 'Redirect to Microsoft for authentication',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, signinWithMicrosoft
+  );
+
+  // route to handle microsoft oauth callback
+  fastify.get(
+    '/auth/microsoft/callback',
+    {
+      schema: {
+        tags: ['Users'], // Group under "Product" tag
+        summary: 'Microsoft OAuth callback',
+        description: 'API endpoint to handle Microsoft OAuth callback',
+        operationId: 'handleMicrosoftOAuthCallback',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['code', 'state'],
+          properties: {
+            code: { type: 'string' },
+            state: { type: 'string' },
+          }
+        },
+        response: {
+          302: {
+            description: 'Redirect to frontend with user data and token',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, handleMicrosoftOAuthCallback
   );
 
   // refresh user refresh token route

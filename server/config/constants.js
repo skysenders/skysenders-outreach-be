@@ -69,6 +69,12 @@ export const API = {
   PREFIX: '/api',
 };
 
+export const AUTH_PROVIDER = {
+  EMAIL: 'email',
+  GOOGLE: 'google',
+  MICROSOFT: 'microsoft',
+};
+
 export const JWT_ALLOWED_URLS = {
   '/health': true,
   '/api/users/login': true,
@@ -81,6 +87,11 @@ export const JWT_ALLOWED_URLS = {
   '/api/users/reset-password': true,
   '/api/users/verify-user': true,
   '/api/users/resend-verify-link': true,
+  // oauth login urls
+  '/api/users/auth/google/signin': true,
+  '/api/users/auth/google/callback': true,
+  '/api/users/auth/microsoft/signin': true,
+  '/api/users/auth/microsoft/callback': true,
   // partners
   '/api/partners/login': true,
   '/api/partners/signup': true,

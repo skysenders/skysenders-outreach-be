@@ -198,7 +198,7 @@ export default async function workspaceRoutes(fastify) {
             items: {
               type: 'object',
               properties: {
-                workspace_id: { type: 'string' },
+                id: { type: 'string' },
                 name: { type: 'string' },
                 slug: { type: 'string' },
                 logo_url: { type: 'string' },

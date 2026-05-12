@@ -14,6 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     user_agent: DataTypes.TEXT,
     ip_address: DataTypes.TEXT,
 
+    auth_provider: DataTypes.TEXT,
+
     is_active: DataTypes.BOOLEAN,
 
     expires_at: DataTypes.DATE,

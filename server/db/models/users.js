@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     email: DataTypes.STRING,
     name: DataTypes.STRING,
     password: DataTypes.TEXT,
+    auth_provider: DataTypes.ENUM('email', 'google', 'microsoft'),
     status: DataTypes.ENUM('active', 'inactive', 'deleted', 'invited'),
     profile_url: DataTypes.STRING,
     timezone: DataTypes.STRING,

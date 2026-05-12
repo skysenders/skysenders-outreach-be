@@ -1,7 +1,7 @@
 import { Container } from 'typedi';
 import { isEmpty } from 'lodash';
 import { StatusCodes } from 'http-status-codes';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, USER_STATUS, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME, JWT } from '../../config/constants';
+import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, USER_STATUS, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME, JWT, AUTH_PROVIDER } from '../../config/constants';
 
 /**
  * Functionality used to log in a user
@@ -81,7 +81,17 @@ export const userLogin = async(req, res) => {
       user_agent: req.headers['user-agent'] || '',
       ip_address: req.ip || '',
       is_active: true,
-      expires_at: token.refresh_token_expiries_at
+      expires_at: token.refresh_token_expiries_at,
+      auth_provider: AUTH_PROVIDER.EMAIL
+    });
+
+    // set access token in http only cookie
+    res.setCookie('access_token', token.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/api/users/refresh-token',
+      maxAge: 1000 * JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
     });
 
     // set refresh token in http only cookie
@@ -163,7 +173,8 @@ export const userMagicLinkLogin = async(req, res) => {
       user_agent: req.headers['user-agent'] || '',
       ip_address: req.ip || '',
       is_active: true,
-      expires_at: token.refresh_token_expiries_at
+      expires_at: token.refresh_token_expiries_at,
+      auth_provider: AUTH_PROVIDER.EMAIL
     });
 
     // remove password from user data
@@ -329,7 +340,8 @@ export const verifyUserByUuid = async(req, res) => {
       user_agent: req.headers['user-agent'] || '',
       ip_address: req.ip || '',
       is_active: true,
-      expires_at: token.refresh_token_expiries_at
+      expires_at: token.refresh_token_expiries_at,
+      auth_provider: AUTH_PROVIDER.EMAIL
     });
 
     // update user with is_email_verified as true
