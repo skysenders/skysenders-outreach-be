@@ -28,6 +28,28 @@ export const getWorkspaceMembers = async(req, res) => {
       });
     }
 
+    let filterWhereQuery = ' AND uwm.is_deleted = false';
+    const replacements = { workspaceId };
+
+    const { search_text: searchText, role, status } = req.query;
+
+    if (status) {
+      filterWhereQuery += ' AND uwm.status = :status';
+      replacements.status = status;
+      if (status === 'deleted') {
+        filterWhereQuery = ' AND uwm.is_deleted = true AND uwm.status = :status';
+      }
+    }
+
+    if (searchText) {
+      filterWhereQuery += ' AND (u.name ILIKE :searchText OR u.email ILIKE :searchText)';
+      replacements.searchText = `%${searchText}%`;
+    }
+    if (role) {
+      filterWhereQuery += ' AND uwm.role = :role';
+      replacements.role = role;
+    }
+
     // 2. Execute Raw SQL Query
     // We join the UserWorkspaceMappings with the Users table
     const query = `
@@ -42,11 +64,11 @@ export const getWorkspaceMembers = async(req, res) => {
       FROM user_workspace_mappings uwm
       INNER JOIN users u ON uwm.user_id = u.id
       WHERE uwm.workspace_id = :workspaceId 
-        AND uwm.is_deleted = false;
+       ${filterWhereQuery};
     `;
 
     const members = await db.sequelize.query(query, {
-      replacements: { workspaceId },
+      replacements,
       type: db.sequelize.QueryTypes.SELECT
     });
 

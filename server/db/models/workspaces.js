@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     slug: DataTypes.STRING,
     logo_url: DataTypes.STRING,
+    logo_bg_color: DataTypes.STRING,
     timezone: DataTypes.STRING,
     team_size: DataTypes.INTEGER,
     goals: DataTypes.JSONB,

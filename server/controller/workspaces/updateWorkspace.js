@@ -18,6 +18,7 @@ export const updateWorkspace = async(req, res) => {
     const {
       name,
       logo_url: logoUrl,
+      logo_bg_color: logoBgColor,
       timezone,
       team_size: teamSize
     } = req.body;
@@ -48,6 +49,7 @@ export const updateWorkspace = async(req, res) => {
 
     if (name) updatePayload.name = name;
     if (logoUrl) updatePayload.logo_url = logoUrl;
+    if (logoBgColor) updatePayload.logo_bg_color = logoBgColor;
     if (timezone) updatePayload.timezone = timezone;
     if (teamSize) updatePayload.team_size = teamSize;
 

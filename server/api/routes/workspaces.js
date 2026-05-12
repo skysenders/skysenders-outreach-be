@@ -54,6 +54,7 @@ export default async function workspaceRoutes(fastify) {
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
               timezone: { type: 'string' },
               team_size: { type: 'string' },
               goals: { type: 'array', items: { type: 'string' } },
@@ -146,6 +147,7 @@ export default async function workspaceRoutes(fastify) {
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
               timezone: { type: 'string' },
               team_size: { type: 'string' },
               goals: { type: 'array', items: { type: 'string' } },
@@ -200,6 +202,7 @@ export default async function workspaceRoutes(fastify) {
                 name: { type: 'string' },
                 slug: { type: 'string' },
                 logo_url: { type: 'string' },
+                logo_bg_color: { type: 'string' },
                 role: { type: 'string' },
                 status: { type: 'string' },
                 is_active: { type: 'boolean' },
@@ -234,6 +237,7 @@ export default async function workspaceRoutes(fastify) {
           properties: {
             name: { type: 'string', maxLength: 150 },
             logo_url: { type: 'string' },
+            logo_bg_color: { type: 'string' },
             timezone: { type: 'string' },
             team_size: { type: 'string' }
           }
@@ -247,6 +251,7 @@ export default async function workspaceRoutes(fastify) {
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
               timezone: { type: 'string' },
               team_size: { type: 'string' },
               goals: { type: 'array', items: { type: 'string' } },
@@ -564,7 +569,7 @@ export default async function workspaceRoutes(fastify) {
           properties: {
             role: {
               type: 'string',
-              enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT']
+              enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
             },
             is_active: { type: 'boolean' }
           }
@@ -642,6 +647,14 @@ export default async function workspaceRoutes(fastify) {
         summary: 'List workspace members',
         description: 'API endpoint to list all members of a workspace',
         operationId: 'getWorkspaceMembers',
+        querystring: {
+          type: 'object',
+          properties: {
+            search_text: { type: 'string', description: 'Text to search members by name or email' },
+            role: { type: 'string', enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'], description: 'Filter members by role' },
+            status: { type: 'string', enum: ['invitation_pending', 'invitation_accepted', 'invitation_expired', 'deleted', 'left'], description: 'Filter members by status' },
+          },
+        },
         response: {
           200: {
             description: 'Workspace members retrieved successfully',

@@ -14,6 +14,7 @@ export const getAllWorkspaces = async(req, res) => {
           w.name,
           w.slug,
           w.logo_url,
+          w.logo_bg_color,
           uwm.role,
           uwm.status,
           uwm.is_active,
