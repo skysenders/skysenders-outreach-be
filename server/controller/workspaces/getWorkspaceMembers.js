@@ -64,7 +64,8 @@ export const getWorkspaceMembers = async(req, res) => {
       FROM user_workspace_mappings uwm
       INNER JOIN users u ON uwm.user_id = u.id
       WHERE uwm.workspace_id = :workspaceId 
-       ${filterWhereQuery};
+       ${filterWhereQuery}
+       ORDER BY uwm.id ASC;
     `;
 
     const members = await db.sequelize.query(query, {

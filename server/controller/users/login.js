@@ -89,18 +89,18 @@ export const userLogin = async(req, res) => {
     res.setCookie('access_token', token.access_token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
-      path: '/api/users/refresh-token',
-      maxAge: 1000 * JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
     });
 
     // set refresh token in http only cookie
     res.setCookie('refresh_token', token.refresh_token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
-      path: '/api/users/refresh-token',
-      maxAge: 1000 * JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
     });
 
     // remove password from user data
