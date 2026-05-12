@@ -1,6 +1,5 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { WORKSPACE_USER_ROLE } from '../../config/constants';
 import { db } from '../../db/index';
 
 export const getWorkspaceMembers = async(req, res) => {
@@ -8,14 +7,19 @@ export const getWorkspaceMembers = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId } = req.params;
     const user = req.user;
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({
+        message: 'Workspace ID is missing in request header'
+      });
+    }
 
     // 1. Permission Check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasRequiredRoleAccess({
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
-      workspaceId,
-      requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+      workspaceId
     });
 
     if (!hasAdminAccess) {

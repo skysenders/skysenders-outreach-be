@@ -1,6 +1,6 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { PARTNER_STATUS } from '../../config/constants';
+import { JWT, PARTNER_STATUS } from '../../config/constants';
 
 /**
  * Functionality used to refresh a partner's authentication token
@@ -16,7 +16,13 @@ export const refreshPartnerToken = async(req, res) => {
   const logger = Container.get('logger');
 
   try {
-    const { refresh_token: refreshToken } = req.body;
+    const refreshToken = req.cookies.refresh_token;
+
+    if (!refreshToken) {
+      return res.code(StatusCodes.UNAUTHORIZED).send({
+        message: 'Refresh token missing',
+      });
+    }
 
     // check if partner exists in the database
     logger.info('Attempting to refresh token for partner with refresh token');
@@ -63,6 +69,18 @@ export const refreshPartnerToken = async(req, res) => {
     }, {
       id: partnerSessionDBData.id
     });
+
+    // set refresh token in http only cookie
+    res.setCookie('refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/api/partners/refresh-token',
+      maxAge: 1000 * JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS, // 60 days
+    });
+
+    delete token.refresh_token;
+    delete token.refresh_token_expiries_at;
 
     logger.info('Token refreshed successfully for partner');
 

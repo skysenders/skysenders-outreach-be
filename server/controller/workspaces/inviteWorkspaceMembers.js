@@ -20,9 +20,13 @@ export const inviteWorkspaceMembers = async(req, res) => {
   const redisClient = Container.get('redisClient');
 
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.workspace?.id;
     const { members } = req.body; // Guaranteed max 10
     const user = req.user;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     // 1. Validate Workspace & Permissions
     const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
@@ -36,10 +40,9 @@ export const inviteWorkspaceMembers = async(req, res) => {
     }
 
     const isOwner = workspace.owner_user_id === user.id;
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasRequiredRoleAccess({
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
-      workspaceId: workspace.id,
-      requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+      workspaceId: workspace.id
     });
 
     if (!isOwner && !hasAdminAccess) {

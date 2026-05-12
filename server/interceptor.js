@@ -88,14 +88,19 @@ export const verifyToken = async(req, res) => {
       req.user = workspace.user;
 
     } else {
-      const tokenData = await req.jwtVerify();
-      if (!tokenData) {
-        return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid token'});
+      try {
+        const tokenData = await req.jwtVerify();
+        if (!tokenData) {
+          return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid token'});
+        }
+        // Set user data into request object
+        updateUserTokenDataBasedonRoute(req, tokenData);
+      } catch (err) {
+        return res.status(StatusCodes.UNAUTHORIZED).send({
+          message: 'Access token expired',
+        });
       }
-      // Set user data into request object
-      updateUserTokenDataBasedonRoute(req, tokenData);
     }
-
   } catch (err) {
     logger.error(`Error while verifying token for user - ${req.url} - ${err.message}`);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({message: `Unauthorized: Invalid token - ${err.message}`});

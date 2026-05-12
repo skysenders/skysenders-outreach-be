@@ -8,8 +8,12 @@ export const leaveWorkspace = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId } = req.params;
     const user = req.user;
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     // 1. Fetch the user's current mapping in this workspace
     const existingMapping = await UserWorkspaceMappingModelHandler.getWorkspaceMembers({

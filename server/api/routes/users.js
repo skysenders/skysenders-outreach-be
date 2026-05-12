@@ -180,13 +180,6 @@ export default async function authRoutes(fastify) {
         description: 'API endpoint for users to refresh their authentication token',
         operationId: 'refreshUserToken',
         hide: true,
-        body: {
-          type: 'object',
-          required: ['refresh_token'],
-          properties: {
-            refresh_token: { type: 'string' }
-          }
-        },
         response: {
           200: {
             description: 'Token refreshed successfully',

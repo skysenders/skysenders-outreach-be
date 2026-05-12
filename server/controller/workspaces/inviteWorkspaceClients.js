@@ -16,9 +16,13 @@ export const inviteWorkspaceClients = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.workspace?.id;
     const { clients } = req.body; // Guaranteed max 10
     const user = req.user;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     // 1. Validate Workspace & Permissions
     const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
@@ -32,10 +36,10 @@ export const inviteWorkspaceClients = async(req, res) => {
     }
 
     const isOwner = workspace.owner_user_id === user.id;
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasRequiredRoleAccess({
+
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
-      workspaceId: workspace.id,
-      requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+      workspaceId: workspace.id
     });
 
     if (!isOwner && !hasAdminAccess) {
@@ -86,7 +90,7 @@ export const inviteWorkspaceClients = async(req, res) => {
         let targetClient = existingClients.find(u => u.email === email);
 
         // Check for existing mapping
-        const hasMapping = targetClient && existingUserWorkspaceClients.some(m => m.user_id === targetClient.id);
+        const hasMapping = targetClient && existingUserWorkspaceClients.some(m => m.user_id === targetClient.user_id);
 
         if (hasMapping) {
           failed.push({ email, reason: 'Client already associated with workspace' });

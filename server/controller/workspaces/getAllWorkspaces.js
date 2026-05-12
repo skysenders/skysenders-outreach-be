@@ -21,6 +21,7 @@ export const getAllWorkspaces = async(req, res) => {
       FROM user_workspace_mappings uwm
       INNER JOIN workspaces w ON uwm.workspace_id = w.id
       WHERE uwm.user_id = :userId 
+        AND uwm.is_active = true
         AND uwm.is_deleted = false;`;
 
     const workspaces = await db.sequelize.query(query, {

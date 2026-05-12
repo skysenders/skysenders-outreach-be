@@ -1,4 +1,5 @@
 import { Container } from 'typedi';
+import { WORKSPACE_USER_ROLE } from '../../config/constants';
 
 const getWorkspaceMemberKey = (userId, workspaceId) => {
   return `workspace_member:${userId}:${workspaceId}`;
@@ -64,7 +65,7 @@ export const hasWorkspaceAccess = async({
 }) => {
   const redisClient = Container.get('redisClient');
   const key = getWorkspaceMemberKey(userId, workspaceId);
-
+  console.log(`Checking workspace access for user ${userId} on workspace ${workspaceId} with key ${key}`);
   const exists = await redisClient.exists(key);
 
   // In some clients exists returns a boolean, in others it returns 1 or 0
@@ -87,6 +88,18 @@ export const hasRequiredRoleAccess = async({
   }
 
   return requiredRoles.includes(role);
+};
+
+// Check if the user has the admin role access
+export const hasAdminRoleAccess = async({
+  userId,
+  workspaceId,
+}) => {
+  return await hasRequiredRoleAccess({
+    userId,
+    workspaceId,
+    requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+  });
 };
 
 // Get workspace access details

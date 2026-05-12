@@ -9,8 +9,14 @@ export const deleteWorkspaceClient = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId, userId } = req.params;
+    const { userId } = req.params;
     const user = req.user;
+
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     // 1. Prevent Self-Deletion
     if (user.id === userId) {
@@ -20,10 +26,9 @@ export const deleteWorkspaceClient = async(req, res) => {
     }
 
     // 2. Permission Check: Only Admin or Super Admin can delete clients
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasRequiredRoleAccess({
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
-      workspaceId,
-      requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+      workspaceId
     });
 
     if (!hasAdminAccess) {

@@ -8,8 +8,16 @@ export const getWorkspaceById = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.workspace?.id;
     const user = req.user;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({
+        message: 'Workspace ID is missing in request header'
+      });
+    }
+
+    console.log('Fetching workspace with ID:', workspaceId, 'for user:', user.id);
 
     // check if the user has access to workspace or not via cache
     const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({

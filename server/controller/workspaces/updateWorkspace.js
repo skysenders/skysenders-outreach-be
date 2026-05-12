@@ -7,7 +7,13 @@ export const updateWorkspace = async(req, res) => {
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
 
   try {
-    const { workspaceId } = req.params;
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({
+        message: 'Workspace ID is missing in request header'
+      });
+    }
 
     const {
       name,

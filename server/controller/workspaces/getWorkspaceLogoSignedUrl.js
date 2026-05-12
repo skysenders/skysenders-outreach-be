@@ -7,8 +7,14 @@ export const getWorkspaceLogoSignedUrl = async(req, res) => {
   const logger = Container.get('logger');
 
   const { filename, content_type: contentType } = req.body;
-  const workspaceId = req.params.workspaceId;
+  const workspaceId = req.workspace?.id;
   const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
+
+  if (!workspaceId) {
+    return res.status(StatusCodes.BAD_REQUEST).send({
+      message: 'Workspace ID is missing in request header'
+    });
+  }
 
   try {
     logger.info(`Generating signed URL for workspace logo for workspace ID: ${workspaceId}`);

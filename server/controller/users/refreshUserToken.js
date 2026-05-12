@@ -1,6 +1,6 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { USER_STATUS } from '../../config/constants';
+import { JWT, USER_STATUS } from '../../config/constants';
 
 /**
  * Functionality used to refresh a user's authentication token
@@ -17,7 +17,13 @@ export const refreshUserToken = async(req, res) => {
   const logger = Container.get('logger');
 
   try {
-    const { refresh_token: refreshToken } = req.body;
+    const refreshToken = req.cookies.refresh_token;
+
+    if (!refreshToken) {
+      return res.code(StatusCodes.UNAUTHORIZED).send({
+        message: 'Refresh token missing',
+      });
+    }
 
     // check if user exists in the database
     logger.info('Attempting to refresh token for user with refresh token');
@@ -64,6 +70,18 @@ export const refreshUserToken = async(req, res) => {
     }, {
       id: userSessionDBData.id
     });
+
+    // set refresh token in http only cookie
+    res.setCookie('refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/api/users/refresh-token',
+      maxAge: 1000 * JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
+    delete token.refresh_token;
+    delete token.refresh_token_expiries_at;
 
     logger.info('Token refreshed successfully for user');
 

@@ -100,7 +100,12 @@ export const setWorkspaceApiCustomLimitToRedis = async(req, res) => {
   logger.info('Start fetching custom api rate limt for workspace and set to redis');
 
   try {
-    const workspaceId = req.params.workspaceId;
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
+
     const workspace = await WorkspaceModelHandler.getWorkspaceById(workspaceId);
 
     if (!workspace) {

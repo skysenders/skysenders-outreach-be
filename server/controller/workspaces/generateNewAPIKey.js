@@ -10,9 +10,13 @@ import { StatusCodes } from 'http-status-codes';
  */
 export const generateNewAPIKey = async(req, res) => {
   try {
-    const workspaceId = req.params.workspaceId;
     const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
     const ownerUserId = req.user.id;
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
     const APIKeyGenerator = Container.get('APIKeyGenerator');
@@ -60,7 +64,7 @@ export const generateNewAPIKey = async(req, res) => {
       }
 
       // return the result with success message
-      res.status(StatusCodes.OK).send({ message: 'success', apiKey: newAPIKey });
+      res.status(StatusCodes.OK).send({ message: 'success', api_key: newAPIKey });
 
     } else {
       return res.status(StatusCodes.NOT_ACCEPTABLE).send({message: 'Invalid request! Workspace not found!'});

@@ -75,7 +75,7 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to get signed URL for uploading workspace logo
   fastify.post(
-    '/:workspaceId/get-logo-signed-url',
+    '/get-logo-signed-url',
     {
       schema: {
         tags: ['Workspaces'],
@@ -130,20 +130,13 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to get workspace details by id
   fastify.get(
-    '/:workspaceId',
+    '/',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Get workspace details by ID',
         description: 'Returns workspace details for the given workspace ID',
         operationId: 'getWorkspaceById',
-        params: {
-          type: 'object',
-          required: ['workspaceId'],
-          properties: {
-            workspaceId: { type: 'string' }
-          }
-        },
         response: {
           200: {
             description: 'Workspace details retrieved successfully',
@@ -182,7 +175,7 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to get all workspaces associated to logged in user
   fastify.get(
-    '/',
+    '/fetch-all',
     {
       schema: {
         tags: ['Workspaces'],
@@ -229,20 +222,13 @@ export default async function workspaceRoutes(fastify) {
 
   // update workspace details
   fastify.put(
-    '/:workspaceId',
+    '/',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Update workspace details',
         description: 'Update workspace details like name, logo, timezone, team size etc.',
         operationId: 'updateWorkspace',
-        params: {
-          type: 'object',
-          required: ['workspaceId'],
-          properties: {
-            workspaceId: { type: 'string' }
-          }
-        },
         body: {
           type: 'object',
           properties: {
@@ -288,7 +274,7 @@ export default async function workspaceRoutes(fastify) {
 
   // update workspace goals
   fastify.put(
-    '/:workspaceId/goals',
+    '/goals',
     {
       schema: {
         tags: ['Workspaces'],
@@ -296,13 +282,6 @@ export default async function workspaceRoutes(fastify) {
         description: 'Update workspace goals',
         operationId: 'updateWorkspaceGoals',
         hide: true,
-        params: {
-          type: 'object',
-          required: ['workspaceId'],
-          properties: {
-            workspaceId: { type: 'string' }
-          }
-        },
         body: {
           type: 'object',
           properties: {
@@ -344,20 +323,13 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // invite team members to workspace
-  fastify.post('/:workspaceId/invite-members',
+  fastify.post('/invite-members',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Invite team members to workspace',
         description: 'Invite team members to join the workspace by sending them an email invitation',
         operationId: 'inviteWorkspaceMembers',
-        params: {
-          type: 'object',
-          properties: {
-            workspaceId: { type: 'string' }
-          },
-          required: ['workspaceId']
-        },
         body: {
           type: 'object',
           properties: {
@@ -442,20 +414,13 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Route to invite clients to workspace
-  fastify.post('/:workspaceId/invite-clients',
+  fastify.post('/invite-clients',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Invite clients to workspace',
         description: 'Invite clients to join the workspace by sending them an email invitation',
         operationId: 'inviteWorkspaceClients',
-        params: {
-          type: 'object',
-          properties: {
-            workspaceId: { type: 'string' }
-          },
-          required: ['workspaceId']
-        },
         body: {
           type: 'object',
           properties: {
@@ -537,7 +502,7 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Route to invite clients to workspace
-  fastify.post('/:workspaceId/join',
+  fastify.post('/join',
     {
       schema: {
         tags: ['Workspaces'],
@@ -580,7 +545,7 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Update team member role or deactivate member
-  fastify.patch('/:workspaceId/members/:userId',
+  fastify.patch('/members/:userId',
     {
       schema: {
         tags: ['Workspaces'],
@@ -590,10 +555,9 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            workspaceId: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['workspaceId', 'userId']
+          required: ['userId']
         },
         body: {
           type: 'object',
@@ -627,7 +591,7 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Route for updating client detials or deactivate from workspace
-  fastify.patch('/:workspaceId/clients/:userId',
+  fastify.patch('/clients/:userId',
     {
       schema: {
         tags: ['Workspaces'],
@@ -637,10 +601,9 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            workspaceId: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['workspaceId', 'userId']
+          required: ['userId']
         },
         body: {
           type: 'object',
@@ -672,20 +635,13 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Route to list members of a workspace
-  fastify.get('/:workspaceId/members',
+  fastify.get('/members',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'List workspace members',
         description: 'API endpoint to list all members of a workspace',
         operationId: 'getWorkspaceMembers',
-        params: {
-          type: 'object',
-          properties: {
-            workspaceId: { type: 'string' }
-          },
-          required: ['workspaceId']
-        },
         response: {
           200: {
             description: 'Workspace members retrieved successfully',
@@ -724,7 +680,7 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // delete a team member from workspace
-  fastify.delete('/:workspaceId/members/:userId',
+  fastify.delete('/members/:userId',
     {
       schema: {
         tags: ['Workspaces'],
@@ -734,10 +690,9 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            workspaceId: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['workspaceId', 'userId']
+          required: ['userId']
         },
         response: {
           200: {
@@ -768,7 +723,7 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // Route to dleete a client from workspace
-  fastify.delete('/:workspaceId/clients/:userId',
+  fastify.delete('/clients/:userId',
     {
       schema: {
         tags: ['Workspaces'],
@@ -778,10 +733,9 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            workspaceId: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['workspaceId', 'userId']
+          required: ['userId']
         },
         response: {
           200: {
@@ -812,20 +766,13 @@ export default async function workspaceRoutes(fastify) {
   );
 
   // leave workspace
-  fastify.post('/:workspaceId/leave',
+  fastify.post('/leave',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Leave workspace',
         description: 'API endpoint for a member to leave the workspace',
         operationId: 'leaveWorkspace',
-        params: {
-          type: 'object',
-          properties: {
-            workspaceId: { type: 'string' }
-          },
-          required: ['workspaceId']
-        },
         response: {
           200: {
             description: 'Successfully left the workspace',
@@ -856,7 +803,7 @@ export default async function workspaceRoutes(fastify) {
 
   // generate api key route
   fastify.post(
-    '/:workspaceId/generate-api-key',
+    '/generate-api-key',
     {
       schema: {
         tags: ['Auth'], // Group under "Auth" tag
@@ -870,6 +817,7 @@ export default async function workspaceRoutes(fastify) {
             type: 'object',
             properties: {
               message: { type: 'string' },
+              api_key: { type: 'string' }
             },
           },
           406: {
@@ -900,7 +848,7 @@ export default async function workspaceRoutes(fastify) {
   }, fetchAPIConsumedCountByAPIKey);
 
   // update workspace api rate limit
-  fastify.post('/redis/:workspaceId/set-custom-rate-limit',
+  fastify.post('/redis/set-custom-rate-limit',
     {
       schema: {
         querystring: {

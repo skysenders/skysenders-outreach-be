@@ -9,9 +9,15 @@ export const updateWorkspaceClient = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   try {
-    const { workspaceId, userId } = req.params;
+    const { userId } = req.params;
     const { password, is_active: isActive } = req.body;
     const user = req.user;
+
+    const workspaceId = req.workspace?.id;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
 
     // 1. Basic Validation
     if (!password && typeof isActive !== 'boolean') {
@@ -24,10 +30,9 @@ export const updateWorkspaceClient = async(req, res) => {
     }
 
     // 3. Permission Check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasRequiredRoleAccess({
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
-      workspaceId,
-      requiredRoles: [WORKSPACE_USER_ROLE.ADMIN, WORKSPACE_USER_ROLE.SUPER_ADMIN]
+      workspaceId
     });
 
     if (!hasAdminAccess) {

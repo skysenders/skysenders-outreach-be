@@ -7,6 +7,7 @@ import { connect } from './db/index';
 import { fastify, initialize, registerRoutes } from './api/routes/index';
 import fastifyCors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
+import cookie from '@fastify/cookie';
 import { JWT_ALLOWED_URLS, JWT, APP, PORT } from './config/constants';
 import logger from './loaders/logger';
 
@@ -31,6 +32,9 @@ export const startFastifyServer = async() => {
       'X-Requested-With',
     ],
   });
+
+  // register cookie
+  fastify.register(cookie, {});
 
   // Initialize the fastify server
   await initialize(fastify, redisClient);
