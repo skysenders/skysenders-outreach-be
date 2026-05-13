@@ -48,7 +48,7 @@ export const handleMicrosoftOAuthCallback = async(req, res) => {
     });
 
     // redirect to frontend with user data and token
-    const redirectWithParams = `${redirectUrl}?user=${encodeURIComponent(JSON.stringify(user))}&token=${encodeURIComponent(JSON.stringify(jwtToken.access_token))}`;
+    const redirectWithParams = `${redirectUrl}?user=${encodeURIComponent(JSON.stringify(user))}&token=${encodeURIComponent(jwtToken.access_token)}`;
 
     logger.info(`Redirecting to frontend with user data and token for partner ID - ${partnerId}`);
     return res.redirect(redirectWithParams);
