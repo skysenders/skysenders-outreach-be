@@ -116,3 +116,28 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
     throw err;
   }
 };
+
+export const fetchWorkspaceOwnerDetails = async(workspaceId) => {
+  try {
+    const workspaceOwnerData = await db.sequelize.query(`
+      SELECT
+        u.id,
+        u.email,
+        u.name,
+        u.uuid,
+        u.partner_id as tenant_id,
+        w.id as workspace_id,
+        w.name as workspace_name
+      FROM workspaces w
+      LEFT JOIN users u
+        ON u.id = w.owner_user_id
+      WHERE w.id = ${workspaceId};`,
+    { type: QueryTypes.SELECT });
+
+    return workspaceOwnerData[0];
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error while fetching workspace owner details ${err.message}`);
+    throw err;
+  }
+};

@@ -48,6 +48,21 @@ export const bulkCreateSubscriptionItems = async(data) => {
   }
 };
 
+export const deleteAndBulkAddSubscriptionItemDetails = async(itemsData, where) => {
+  const transaction = await db.sequelize.transaction();
+  try {
+    await db.workspace_subscription_items.destroy({ where, transaction });
+    const createdItems = await db.workspace_subscription_items.bulkCreate(itemsData, { transaction });
+    await transaction.commit();
+    return createdItems;
+  } catch (err) {
+    await transaction.rollback();
+    const logger = Container.get('logger');
+    logger.error(`Error in delete and bulk add subscription items: ${err.message}`);
+    throw err;
+  }
+};
+
 export const updateSubscriptionItem = async(data, where) => {
   try {
     const [_, updated] = await db.workspace_subscription_items.update(data, {

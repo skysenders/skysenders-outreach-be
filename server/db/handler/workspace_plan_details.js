@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import { QueryTypes } from 'sequelize';
 import { db } from '../index';
 import { Container } from 'typedi';
 
@@ -59,6 +60,27 @@ export const deletePlanDetails = async(where) => {
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error deleting plan details: ${err.message}`);
+    throw err;
+  }
+};
+
+export const fetchWorkspaceContactMailboxCount = async(partnerId, workspaceId) => {
+  const logger = Container.get('logger');
+  try {
+    logger.info(`Fetching workspace mailboxes and contacts live count for user ID: ${partnerId}, workspace ID: ${workspaceId}`);
+    // const query = `SELECT
+    //       (SELECT COUNT(*) FROM mailboxes WHERE partner_id = :partnerId AND workspace_id = :workspaceId AND is_deleted = false') AS mailboxes_count,
+    //       (SELECT COUNT(*) FROM contacts WHERE partner_id = :partnerId AND workspace_id = :workspaceId AND is_deleted = false' ) AS contacts_count`;
+
+    // return (await db.sequelize.query(query, {
+    //   replacements: { partnerId, workspaceId },
+    //   type: QueryTypes.SELECT,
+    // }))[0] || {};
+
+    return { mailboxes_count: 0, contacts_count: 0 };
+
+  } catch (err) {
+    logger.error(`Error while fetching workspace mailboxes and contacts live count ${err.message}`);
     throw err;
   }
 };

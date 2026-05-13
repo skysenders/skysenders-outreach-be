@@ -229,8 +229,6 @@ export const INDIA_PLAN_PRICE_ID_MAP = {
   PARTNER_PLAN: IS_PRODUCTION ? 'price_1TGcmiSH8JhoP1shmx4XAUaS' : 'price_1TGcm3SH8JhoP1shahWBhIJv',
 };
 
-export const STRIPE_GST_TAX_ID = IS_PRODUCTION ? 'txr_1Rkgu4SH8JhoP1shBteolayc' : 'txr_1Ri8P1SH8JhoP1shSDsIUYDz';
-
 export const USD_INR_VALUE = 94;
 
 export const FRONTEND_URL = process.env.FRONTEND_URL;
@@ -333,5 +331,5 @@ export const EMAIL_TEMPLATE_NAME = {
   FORGOT_PASSWORD: 'forgotPassword',
   SUBSCRIPTION_FAILURE: 'subscriptionFailure',
   INVITE_EXISTING_TEAM_MEMBER: 'inviteExistingTeamMember',
-  INVITE_NEW_TEAM_MEMBER: 'inviteNewTeamMember'
+  INVITE_NEW_TEAM_MEMBER: 'inviteNewTeamMember',
 };

@@ -5,6 +5,9 @@ import Fastify from 'fastify';
 import partners from './partners';
 import users from './users';
 import workspaces from './workspaces';
+import subscription from './subscription';
+// webhooks
+import stripeWebhook from './stripe-webhook';
 
 // other imports
 import Logger from '../../loaders/logger';
@@ -118,10 +121,11 @@ export const registerRoutes = async(fastifyApp) => {
   });
 
   // register auth
-  // fastifyApp.register(auth, { prefix: '/api/auth' });
   fastifyApp.register(partners, { prefix: '/api/partners' });
   fastifyApp.register(users, { prefix: '/api/users' });
   fastifyApp.register(workspaces, { prefix: '/api/workspaces' });
+  fastifyApp.register(subscription, { prefix: '/api/subscription' });
+  fastifyApp.register(stripeWebhook, { prefix: '/api/stripe-webhook' });
 
   // register public v1 api routes
   fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
