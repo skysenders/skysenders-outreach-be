@@ -81,6 +81,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
     const failed = [];
     const userWorkspaceMappingsToCreate = [];
     const emailsToSend = [];
+    const currentDate = new Date().toISOString();
 
     // 3. Process Members in Parallel (Safe for batch of 10 with unique emails)
     await Promise.all(uniqueMembers.map(async(member) => {
@@ -99,6 +100,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
                 role: role || WORKSPACE_USER_ROLE.MEMBER,
                 status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
                 invited_by: user.id,
+                invited_at: currentDate,
                 is_active: false
               }, {
                 workspace_id: workspace.id,
@@ -130,6 +132,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
             role: role || WORKSPACE_USER_ROLE.MEMBER,
             status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
             invited_by: user.id,
+            invited_at: currentDate,
             is_active: false
           });
         }
@@ -173,6 +176,110 @@ export const inviteWorkspaceMembers = async(req, res) => {
 
   } catch (err) {
     logger.error(`Critical error in inviteWorkspaceMembers: ${err.message}`);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
+  }
+};
+
+export const resendInvitation = async(req, res) => {
+  const logger = Container.get('logger');
+  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
+  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const MailerInstance = Container.get('MailerInstance');
+  const redisClient = Container.get('redisClient');
+  const StringHelper = Container.get('StringHelper');
+
+  try {
+    const workspaceId = req.workspace?.id;
+    const userId = req.params.user_id;
+    const user = req.user;
+
+    if (!workspaceId) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
+    }
+
+    // 1. Validate Workspace & Permissions
+    const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
+      id: workspaceId,
+      partner_id: user.tenant_id,
+      is_deleted: false
+    });
+
+    if (!workspace) {
+      return res.status(StatusCodes.NOT_FOUND).send({ message: 'Workspace not found' });
+    }
+
+    const isOwner = workspace.owner_user_id === user.id;
+    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      userId: user.id,
+      workspaceId: workspace.id
+    });
+
+    if (!isOwner && !hasAdminAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to invite members' });
+    }
+
+    // 2. Pre-fetch Data
+    const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${user.tenant_id}`);
+    const parsedPartnerEmailDetails = JSON.parse(partnerEmailDetails || '{}');
+
+    const [ userWorkspaceMappings ] = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspace.id, {
+      userId,
+      status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING
+    });
+
+    if (!userWorkspaceMappings) {
+      return res.status(StatusCodes.NOT_FOUND).send({
+        message: 'User with status "invitation_pending" does not exists',
+      });
+    }
+
+    // check if the resend is atleast 5 mins time before reinvite
+    const invitedAt = new Date(userWorkspaceMappings.invited_at);
+    const now = new Date();
+
+    const diffInMs = now - invitedAt;
+    const diffInMinutes = diffInMs / (1000 * 60);
+
+    // check if resend is triggered within 5 mins
+    if (diffInMinutes < 5) {
+      return res.status(StatusCodes.BAD_REQUEST).send({
+        message: 'Resend invitation can only be triggered after 5 minutes',
+      });
+    }
+
+    const emailTemplateData = {
+      partnerId: user.tenant_id,
+      type: userWorkspaceMappings.is_first_invite ? EMAIL_TEMPLATE_NAME.INVITE_NEW_TEAM_MEMBER : EMAIL_TEMPLATE_NAME.INVITE_EXISTING_TEAM_MEMBER,
+      to: userWorkspaceMappings.email,
+      data: {
+        workspace_name: workspace.name,
+        workspace_slug: workspace.slug,
+        inviter_name: user.name || user.email,
+        invite_expiry_days: 7,
+        token: StringHelper.encodeToken({ partner_id: user.tenant_id, user_id: userWorkspaceMappings.user_id, workspace_id: workspace.id }),
+        ...parsedPartnerEmailDetails
+      }
+    };
+
+    await Promise.all([
+      MailerInstance.sendMail(emailTemplateData),
+      UserWorkspaceMappingModelHandler.updateWorkspaceMember({
+        invited_by: user.id,
+        invited_at: new Date().toISOString(),
+        is_active: false
+      }, {
+        workspace_id: workspace.id,
+        user_id: userWorkspaceMappings.user_id,
+      })
+    ]);
+
+    return res.status(StatusCodes.OK).send({
+      message: 'Invitation sent successfully'
+    });
+
+  } catch (err) {
+    logger.error(`Critical error in resendInvitation: ${err.message}`);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
   }
 };

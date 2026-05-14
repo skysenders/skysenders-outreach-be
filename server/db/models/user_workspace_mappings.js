@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     ),
 
     invited_by: DataTypes.INTEGER,
+    invited_at: DataTypes.DATE,
     is_active: DataTypes.BOOLEAN,
 
     created_at: DataTypes.DATE,

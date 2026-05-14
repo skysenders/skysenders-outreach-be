@@ -7,7 +7,7 @@ import { getWorkspaceById } from '../../controller/workspaces/getWorkspaceById';
 import { getAllWorkspaces } from '../../controller/workspaces/getAllWorkspaces';
 
 // team members
-import { inviteWorkspaceMembers } from '../../controller/workspaces/inviteWorkspaceMembers';
+import { inviteWorkspaceMembers, resendInvitation } from '../../controller/workspaces/inviteWorkspaceMembers';
 import { inviteWorkspaceClients } from '../../controller/workspaces/inviteWorkspaceClients';
 import { joinWorkspaceWithToken } from '../../controller/workspaces/joinWorkspaceWithToken';
 import { updateWorkspaceMember } from '../../controller/workspaces/updateWorkspaceMember';
@@ -209,6 +209,8 @@ export default async function workspaceRoutes(fastify) {
                 role: { type: 'string' },
                 status: { type: 'string' },
                 is_active: { type: 'boolean' },
+                invited_by: { type: 'integer' },
+                invited_at: { type: 'string' },
                 joined_at: { type: 'string', format: 'date-time' }
               }
             }
@@ -422,6 +424,49 @@ export default async function workspaceRoutes(fastify) {
       }
     },
     inviteWorkspaceMembers
+  );
+
+  // resend invitation to workspace team members
+  fastify.post('/members/:userId/resend-invitation',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'resend invitation to workspace team members',
+        description: 'Resend email invitation to the wrokspace exisiting team member',
+        operationId: 'resendInvitationForTeamMember',
+        params: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string' }
+          },
+          required: ['userId']
+        },
+        response: {
+          200: {
+            description: 'Invitation sent successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          },
+          401: {
+            description: 'Unauthorized access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    resendInvitation
   );
 
   // Route to invite clients to workspace
@@ -673,6 +718,8 @@ export default async function workspaceRoutes(fastify) {
                 email: { type: 'string' },
                 role: { type: 'string' },
                 status: { type: 'string' },
+                invited_by: { type: 'integer' },
+                invited_at: { type: 'string' },
                 is_active: { type: 'boolean' },
                 joined_at: { type: 'string', format: 'date-time' }
               }

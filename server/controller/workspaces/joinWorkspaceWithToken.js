@@ -44,6 +44,17 @@ export const joinWorkspace = async(token, userId) => {
       return [null, { message: 'No pending invitation found or it has already been accepted.', status: StatusCodes.NOT_FOUND }];
     }
 
+    // check if the resend is atleast 5 mins time before reinvite
+    const invitedAt = new Date(userWorkspaceMapping.invited_at);
+    const now = new Date();
+    const diffInMs = now - invitedAt;
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    // check if invitation is expired or not (expiry time is 7 days)
+    if (diffInDays >= 7) {
+      return [null, { message: 'Invitation expired. Please contact the admin to resend invitation.', status: StatusCodes.NOT_ACCEPTABLE }];
+    }
+
     // 4. Update Database
     await UserWorkspaceMappingModelHandler.updateWorkspaceMember({
       status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
