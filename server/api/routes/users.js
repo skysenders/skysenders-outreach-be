@@ -58,6 +58,9 @@ export default async function authRoutes(fastify) {
             description: 'User created',
             type: 'object',
             properties: {
+              message: { type: 'string' },
+              otp_validation_required: { type: 'boolean' },
+              otp_token: { type: 'string' },
               user: {
                 type: 'object',
                 properties: {
@@ -78,9 +81,7 @@ export default async function authRoutes(fastify) {
                 type: 'object',
                 properties: {
                   access_token: { type: 'string' },
-                  refresh_token: { type: 'string' },
                   access_token_expiries_at: { type: 'string', format: 'date-time' },
-                  refresh_token_expiries_at: { type: 'string', format: 'date-time' },
                 },
               },
             },
@@ -142,9 +143,7 @@ export default async function authRoutes(fastify) {
                 type: 'object',
                 properties: {
                   access_token: { type: 'string' },
-                  refresh_token: { type: 'string' },
                   access_token_expiries_at: { type: 'string', format: 'date-time' },
-                  refresh_token_expiries_at: { type: 'string', format: 'date-time' },
                 },
               },
             },
@@ -368,9 +367,7 @@ export default async function authRoutes(fastify) {
             type: 'object',
             properties: {
               access_token: { type: 'string' },
-              refresh_token: { type: 'string' },
               access_token_expiries_at: { type: 'string', format: 'date-time' },
-              refresh_token_expiries_at: { type: 'string', format: 'date-time' },
             }
           },
           401: {
@@ -446,9 +443,7 @@ export default async function authRoutes(fastify) {
                 type: 'object',
                 properties: {
                   access_token: { type: 'string' },
-                  refresh_token: { type: 'string' },
                   access_token_expiries_at: { type: 'string', format: 'date-time' },
-                  refresh_token_expiries_at: { type: 'string', format: 'date-time' },
                 },
               },
             },
@@ -503,9 +498,7 @@ export default async function authRoutes(fastify) {
                 type: 'object',
                 properties: {
                   access_token: { type: 'string' },
-                  refresh_token: { type: 'string' },
                   access_token_expiries_at: { type: 'string', format: 'date-time' },
-                  refresh_token_expiries_at: { type: 'string', format: 'date-time' },
                 },
               },
             },

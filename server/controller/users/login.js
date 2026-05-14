@@ -177,8 +177,28 @@ export const userMagicLinkLogin = async(req, res) => {
       auth_provider: AUTH_PROVIDER.EMAIL
     });
 
+    // set access token in http only cookie
+    res.setCookie('access_token', token.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
+    // set refresh token in http only cookie
+    res.setCookie('refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
     // remove password from user data
     delete userDBData.password;
+    delete token.refresh_token;
+    delete token.refresh_token_expiries_at;
 
     // reset the magic link
     await UserModelHandler.updateUser({
@@ -343,6 +363,29 @@ export const verifyUserByUuid = async(req, res) => {
       expires_at: token.refresh_token_expiries_at,
       auth_provider: AUTH_PROVIDER.EMAIL
     });
+
+    // set access token in http only cookie
+    res.setCookie('access_token', token.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
+    // set refresh token in http only cookie
+    res.setCookie('refresh_token', token.refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
+    // remove password from user data
+    delete user.password;
+    delete token.refresh_token;
+    delete token.refresh_token_expiries_at;
 
     // update user with is_email_verified as true
     UserModelHandler.updateUser({ status: USER_STATUS.ACTIVE, signup_otp: null }, { id: user.id });

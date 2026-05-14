@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
 import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE,
   IS_PRODUCTION, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME,
-  USER_STATUS, AUTH_PROVIDER} from '../../config/constants';
+  USER_STATUS, AUTH_PROVIDER, JWT} from '../../config/constants';
 import { joinWorkspace } from '../workspaces/joinWorkspaceWithToken';
 
 /**
@@ -79,6 +79,46 @@ export const addNewUser = async(req, res) => {
           newUser.invited_workspace_role = joinWorkspaceResult[0].role;
         }
       }
+
+      // send success response to UI  with user data & token
+      const token = await TokenHandler.generate(newUser);
+
+      // create a new session for the user
+      UserSessionModelHandler.createUserSession({
+        user_id: newUser.id,
+        partner_id: partnerId,
+        refresh_token: token.refresh_token,
+        user_agent: req.headers['user-agent'] || '',
+        ip_address: req.ip || '',
+        is_active: true,
+        expires_at: token.refresh_token_expiries_at,
+        auth_provider: AUTH_PROVIDER.EMAIL
+      });
+
+      // set access token in http only cookie
+      res.setCookie('access_token', token.access_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
+      });
+
+      // set refresh token in http only cookie
+      res.setCookie('refresh_token', token.refresh_token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/',
+        maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+      });
+
+      // remove password from user data
+      delete newUser.password;
+      delete token.refresh_token;
+      delete token.refresh_token_expiries_at;
+
+      return res.status(StatusCodes.CREATED).send({ message: 'User created successfuly!', otp_validation_required: false, user: newUser, token });
     } else {
       // generatee otp for the user
       const otp = OtpGeneratorHelper.generateOTP();
@@ -110,26 +150,8 @@ export const addNewUser = async(req, res) => {
           ...parsedPartnerEmailDetails
         }
       });
+      return res.status(StatusCodes.CREATED).send({ message: `OPT sent successfully to ${userData.email}`, otp_validation_required: true, otp_token: token });
     }
-
-    // send success response to UI  with user data & token
-    const token = await TokenHandler.generate(newUser);
-    // create a new session for the user
-    UserSessionModelHandler.createUserSession({
-      user_id: newUser.id,
-      partner_id: partnerId,
-      refresh_token: token.refresh_token,
-      user_agent: req.headers['user-agent'] || '',
-      ip_address: req.ip || '',
-      is_active: true,
-      expires_at: token.refresh_token_expiries_at,
-      auth_provider: AUTH_PROVIDER.EMAIL
-    });
-
-    // delete the password
-    delete newUser.password;
-
-    return res.status(StatusCodes.CREATED).send({ user: newUser, token });
   } catch (error) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({message: `Server error: ${error.message}`});
   }
