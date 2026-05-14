@@ -88,9 +88,29 @@ export const inviteWorkspaceMembers = async(req, res) => {
         const { email, name, role } = member;
         let firstTimeInvite = false;
         let targetUser = existingUsers.find(u => u.email === email);
-
+        let isMemberAssociated = false;
         // Create user if missing
-        if (!targetUser) {
+        if (targetUser) {
+          // Check for existing mapping
+          const hasMapping = existingUserWorkspaceMembers.some(m => m.user_id === targetUser.id);
+          if (hasMapping) {
+            if (member.re_invite) {
+              await UserWorkspaceMappingModelHandler.updateWorkspaceMember({
+                role: role || WORKSPACE_USER_ROLE.MEMBER,
+                status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
+                invited_by: user.id,
+                is_active: false
+              }, {
+                workspace_id: workspace.id,
+                user_id: targetUser.id,
+              });
+              isMemberAssociated = true;
+            } else {
+              failed.push({ email, reason: 'User already associated with workspace' });
+              return;
+            }
+          }
+        } else {
           targetUser = await UserModelHandler.createUser({
             partner_id: user.tenant_id,
             email,
@@ -102,22 +122,17 @@ export const inviteWorkspaceMembers = async(req, res) => {
           firstTimeInvite = true;
         }
 
-        // Check for existing mapping
-        const hasMapping = existingUserWorkspaceMembers.some(m => m.user_id === targetUser.id);
-        if (hasMapping) {
-          failed.push({ email, reason: 'User already associated with workspace' });
-          return;
-        }
-
         // Prepare Bulk Data
-        userWorkspaceMappingsToCreate.push({
-          workspace_id: workspace.id,
-          user_id: targetUser.id,
-          role: role || WORKSPACE_USER_ROLE.MEMBER,
-          status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
-          invited_by: user.id,
-          is_active: false
-        });
+        if (!isMemberAssociated) {
+          userWorkspaceMappingsToCreate.push({
+            workspace_id: workspace.id,
+            user_id: targetUser.id,
+            role: role || WORKSPACE_USER_ROLE.MEMBER,
+            status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
+            invited_by: user.id,
+            is_active: false
+          });
+        }
 
         const token = StringHelper.encodeToken({ partner_id: user.tenant_id, user_id: targetUser.id, workspace_id: workspace.id });
 

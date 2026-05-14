@@ -355,7 +355,8 @@ export default async function workspaceRoutes(fastify) {
                   role: {
                     type: 'string',
                     enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
-                  }
+                  },
+                  re_invite: { type: 'boolean', description: 'Enable this to re-invite users with a "left" status' }
                 },
                 required: ['email', 'name', 'role']
               }
