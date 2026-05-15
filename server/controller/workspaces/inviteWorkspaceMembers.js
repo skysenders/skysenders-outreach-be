@@ -225,7 +225,7 @@ export const resendInvitation = async(req, res) => {
 
     const [ userWorkspaceMappings ] = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspace.id, {
       userId,
-      status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING
+      status: [ WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING ]
     });
 
     if (!userWorkspaceMappings) {

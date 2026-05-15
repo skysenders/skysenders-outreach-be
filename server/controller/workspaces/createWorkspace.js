@@ -8,6 +8,8 @@ export const createWorkspace = async(req, res) => {
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
   const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
+  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
 
   try {
     const {
@@ -47,24 +49,32 @@ export const createWorkspace = async(req, res) => {
     });
 
     // assign owner as super_admin
-    await UserWorkspaceMappingModelHandler.addUserToWorkspace({
-      workspace_id: workspace.id,
-      user_id: user.id,
-      role: WORKSPACE_USER_ROLE.SUPER_ADMIN,
-      status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
-      invited_by: user.id,
-      is_active: true
-    });
-
-    // create an entry in redis cache for super admin
-    await WorkspaceRedisCacheHelper.addWorkspaceAccess({
-      userId: user.id,
-      workspaceId: workspace.id,
-      role: WORKSPACE_USER_ROLE.SUPER_ADMIN
-    });
+    await Promise.all([
+      UserWorkspaceMappingModelHandler.addUserToWorkspace({
+        workspace_id: workspace.id,
+        user_id: user.id,
+        role: WORKSPACE_USER_ROLE.SUPER_ADMIN,
+        status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
+        invited_by: user.id,
+        is_active: true
+      }),
+      // create an entry in redis cache for super admin
+      WorkspaceRedisCacheHelper.addWorkspaceAccess({
+        userId: user.id,
+        workspaceId: workspace.id,
+        role: WORKSPACE_USER_ROLE.SUPER_ADMIN
+      }),
+      WorkspacePlanDetailsModelHandler.createPlanDetails({
+        partner_id: user.tenant_id,
+        workspace_id: workspace.id,
+      }),
+      WorkspaceSubscriptionModelHandler.createSubscription({
+        partner_id: user.tenant_id,
+        workspace_id: workspace.id,
+      })
+    ]);
 
     return res.status(StatusCodes.CREATED).send(workspace);
-
   } catch (err) {
     logger.error(`Error creating workspace: ${err.message}`);
     throw err;

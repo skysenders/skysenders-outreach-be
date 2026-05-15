@@ -57,7 +57,7 @@ export const removeWorkspaceMember = async(where) => {
   }
 };
 
-export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searchText, userId, role, status}) => {
+export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searchText, userId, role, status }) => {
   let filterWhereQuery = ' AND uwm.is_deleted = false';
   const replacements = { workspaceId };
 
@@ -66,42 +66,45 @@ export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searc
     replacements.userId = userId;
   }
 
-  if (status) {
-    filterWhereQuery += ' AND uwm.status = :status';
-    replacements.status = status;
-    if (status === 'deleted') {
-      filterWhereQuery = ' AND uwm.is_deleted = true AND uwm.status = :status';
+  if (status?.length) {
+
+    if (status.includes('deleted')) {
+      filterWhereQuery = ' AND uwm.is_deleted = true';
+    } else {
+      filterWhereQuery += ' AND uwm.status IN (:status)';
     }
+
+    replacements.status = status;
   }
 
   if (searchText) {
     filterWhereQuery += ' AND (u.name ILIKE :searchText OR u.email ILIKE :searchText)';
     replacements.searchText = `%${searchText}%`;
   }
-  if (role) {
-    filterWhereQuery += ' AND uwm.role = :role';
+
+  if (role?.length) {
+    filterWhereQuery += ' AND uwm.role IN (:role)';
     replacements.role = role;
   }
 
-  // We join the UserWorkspaceMappings with the Users table
   const query = `
-      SELECT 
-        u.id as user_id,
-        u.name,
-        u.email,
-        u.is_first_invite,
-        uwm.role,
-        uwm.status,
-        uwm.is_active,
-        uwm.invited_at,
-        uwm.invited_by,
-        uwm.created_at as joined_at
-      FROM user_workspace_mappings uwm
-      INNER JOIN users u ON uwm.user_id = u.id
-      WHERE uwm.workspace_id = :workspaceId 
-       ${filterWhereQuery}
-       ORDER BY uwm.id ASC;
-    `;
+    SELECT 
+      u.id as user_id,
+      u.name,
+      u.email,
+      u.is_first_invite,
+      uwm.role,
+      uwm.status,
+      uwm.is_active,
+      uwm.invited_at,
+      uwm.invited_by,
+      uwm.created_at as joined_at
+    FROM user_workspace_mappings uwm
+    INNER JOIN users u ON uwm.user_id = u.id
+    WHERE uwm.workspace_id = :workspaceId
+    ${filterWhereQuery}
+    ORDER BY uwm.id ASC;
+  `;
 
   return await db.sequelize.query(query, {
     replacements,

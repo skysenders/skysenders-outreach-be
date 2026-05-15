@@ -702,8 +702,8 @@ export default async function workspaceRoutes(fastify) {
           type: 'object',
           properties: {
             search_text: { type: 'string', description: 'Text to search members by name or email' },
-            role: { type: 'string', enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'], description: 'Filter members by role' },
-            status: { type: 'string', enum: ['invitation_pending', 'invitation_accepted', 'invitation_expired', 'deleted', 'left'], description: 'Filter members by status' },
+            role: { type: 'array', items: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'] }, description: 'Filter members by role' },
+            status: { type: 'array', items: { type: 'string', enum: ['invitation_pending', 'invitation_accepted', 'invitation_expired', 'deleted', 'left'] }, description: 'Filter members by status' },
           },
         },
         response: {
