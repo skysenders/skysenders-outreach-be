@@ -16,6 +16,18 @@ import * as UserWorkspaceMappingModelHandler from '../db/handler/user_workspace_
 import * as WorkspaceClientMappingModelHandler from '../db/handler/workspace_client_mappings';
 import * as UserSessionModelHandler from '../db/handler/user_sessions';
 
+// Domains & Mailboxes
+import * as DomainsModelHandler from '../db/handler/domains';
+import * as MailboxesModelHandler from '../db/handler/mailboxes';
+import * as MailboxCredentialsModelHandler from '../db/handler/mailbox_credentials';
+import * as WarmupMessagesModelHandler from '../db/handler/warmup_messages';
+import * as WarmupProfileDetailsModelHandler from '../db/handler/warmup_profile_details';
+import * as MailboxWarmupDetailsModelHandler from '../db/handler/mailbox_warmup_details';
+import * as WarmupTriggerDetailsModelHandler from '../db/handler/warmup_trigger_details';
+import * as WarmupReplyTriggersModelHandler from '../db/handler/warmup_reply_triggers';
+import * as MailboxBlockHistoryModelHandler from '../db/handler/mailbox_block_history';
+import * as WarmupSentLogsModelHandler from '../db/handler/warmup_sent_logs';
+
 // Billing Modules
 import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
 import * as WorkspaceSubscriptionModelHandler from '../db/handler/workspace_subscriptions';
@@ -39,6 +51,7 @@ import * as APIKeyGenerator from '../utils/api_key_generator';
 import * as StringHelper from '../utils/string-helper';
 import * as DetectESPHelper from '../utils/detectEsp';
 import * as WorkspaceRedisCacheHelper from '../utils/redis-handler/redis-workspace-user-cache';
+import * as DomainDNSConfigHelper from '../utils/domain-dns-helper';
 
 /**
  * Functionalilty used to set the container services
@@ -69,6 +82,17 @@ const injectorInstance = async() => {
     Container.set('WorkspaceSubscriptionItemsModelHandler', WorkspaceSubscriptionItemsModelHandler);
     Container.set('WorkspaceSubscriptionLogsModelHandler', WorkspaceSubscriptionLogsModelHandler);
 
+    // Domains & Mailboxes
+    Container.set('DomainsModelHandler', DomainsModelHandler);
+    Container.set('MailboxesModelHandler', MailboxesModelHandler);
+    Container.set('MailboxCredentialsModelHandler', MailboxCredentialsModelHandler);
+    Container.set('WarmupMessagesModelHandler', WarmupMessagesModelHandler);
+    Container.set('WarmupProfileDetailsModelHandler', WarmupProfileDetailsModelHandler);
+    Container.set('MailboxWarmupDetailsModelHandler', MailboxWarmupDetailsModelHandler);
+    Container.set('WarmupTriggerDetailsModelHandler', WarmupTriggerDetailsModelHandler);
+    Container.set('WarmupReplyTriggersModelHandler', WarmupReplyTriggersModelHandler);
+    Container.set('MailboxBlockHistoryModelHandler', MailboxBlockHistoryModelHandler);
+    Container.set('WarmupSentLogsModelHandler', WarmupSentLogsModelHandler);
 
     // Services
     Container.set('AwsService', AwsService);
@@ -86,7 +110,7 @@ const injectorInstance = async() => {
     Container.set('StringHelper', StringHelper);
     Container.set('DetectESPHelper', DetectESPHelper);
     Container.set('WorkspaceRedisCacheHelper', WorkspaceRedisCacheHelper);
-
+    Container.set('DomainDNSConfigHelper', DomainDNSConfigHelper);
     return;
   } catch (err) {
     LoggerInstance.error('🔥 Error on dependency injector instance loader: %o', err);

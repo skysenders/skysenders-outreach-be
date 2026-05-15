@@ -333,3 +333,29 @@ export const EMAIL_TEMPLATE_NAME = {
   INVITE_EXISTING_TEAM_MEMBER: 'inviteExistingTeamMember',
   INVITE_NEW_TEAM_MEMBER: 'inviteNewTeamMember',
 };
+
+// ESP Type
+export const ESP_TYPE = {
+  SKY_SENDERS: 'SKY_SENDERS',
+  GMAIL: 'GMAIL',
+  OUTLOOK: 'OUTLOOK',
+  YAHOO: 'YAHOO',
+  ZOHO: 'ZOHO',
+  OTHERS: 'OTHERS',
+};
+
+// Mailbox Type
+export const MAILBOX_TYPE = {
+  SKY_SENDERS: 'SKY_SENDERS',
+  GMAIL: 'GMAIL',
+  OUTLOOK: 'OUTLOOK',
+  YAHOO: 'YAHOO',
+  ZOHO: 'ZOHO',
+  SMTP: 'SMTP',
+};
+
+export const MAILBOX_AUTH_TYPE = {
+  OAUTH: 'OAUTH',
+  SMTP_PASSWORD: 'SMTP_PASSWORD',
+  APP_PASSWORD: 'APP_PASSWORD',
+};

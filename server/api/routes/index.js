@@ -8,6 +8,9 @@ import workspaces from './workspaces';
 import subscription from './subscription';
 // webhooks
 import stripeWebhook from './stripe-webhook';
+// domains & mailbxoes
+import domains from './domains';
+import mailboxes from './mailboxes';
 
 // other imports
 import Logger from '../../loaders/logger';
@@ -125,6 +128,8 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(workspaces, { prefix: '/api/workspaces' });
   fastifyApp.register(subscription, { prefix: '/api/subscription' });
   fastifyApp.register(stripeWebhook, { prefix: '/api/stripe-webhook' });
+  fastifyApp.register(domains, { prefix: '/api/domains' });
+  fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
 
   // register public v1 api routes
   fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
