@@ -5,11 +5,12 @@ import { updateWorkspaceGoals } from '../../controller/workspaces/updateWorkspac
 import { getWorkspaceLogoSignedUrl } from '../../controller/workspaces/getWorkspaceLogoSignedUrl';
 import { getWorkspaceById } from '../../controller/workspaces/getWorkspaceById';
 import { getAllWorkspaces } from '../../controller/workspaces/getAllWorkspaces';
+import { deleteWorkspace } from '../../controller/workspaces/deleteWorkspace';
 
 // team members
 import { inviteWorkspaceMembers, resendInvitation } from '../../controller/workspaces/inviteWorkspaceMembers';
 import { inviteWorkspaceClients } from '../../controller/workspaces/inviteWorkspaceClients';
-import { joinWorkspaceWithToken } from '../../controller/workspaces/joinWorkspaceWithToken';
+import { joinWorkspaceWithToken, joinWorkspaceWithSlug } from '../../controller/workspaces/joinWorkspaceWithToken';
 import { updateWorkspaceMember } from '../../controller/workspaces/updateWorkspaceMember';
 import { updateWorkspaceClient } from '../../controller/workspaces/updateWorkspaceClient';
 import { getWorkspaceMembers } from '../../controller/workspaces/getWorkspaceMembers';
@@ -18,6 +19,7 @@ import { deleteWorkspaceMember } from '../../controller/workspaces/deleteWorkspa
 import { deleteWorkspaceClient } from '../../controller/workspaces/deleteWorkspaceClient';
 
 // api key routes
+import { getWorkspaceApiKey } from '../../controller/workspaces/getWorkspaceApiKey';
 import { generateNewAPIKey } from '../../controller/workspaces/generateNewAPIKey';
 import { fetchAPIConsumedCountByAPIKey, fetchAPIRateLimitStatLeaderBoard, setWorkspaceApiCustomLimitToRedis } from '../../controller/workspaces/rateLimitAPIFetch';
 
@@ -334,6 +336,40 @@ export default async function workspaceRoutes(fastify) {
     updateWorkspaceGoals
   );
 
+  // Route to delete workspace
+  fastify.delete(
+    '/',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'Delete workspace',
+        description: 'Delete a workspace and all its associated data',
+        operationId: 'deleteWorkspace',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          403: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    deleteWorkspace
+  );
+
   // invite team members to workspace
   fastify.post('/invite-members',
     {
@@ -598,6 +634,49 @@ export default async function workspaceRoutes(fastify) {
         },
       },
     }, joinWorkspaceWithToken
+  );
+
+  // Route to join workspace with slug and user should be authenticated
+  fastify.post('/join-with-slug',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'Join workspace with slug',
+        description: 'API endpoint to join workspace using workspace slug. User must be authenticated to use this endpoint',
+        operationId: 'joinWorkspaceWithSlug',
+        hide: true,
+        body: {
+          type: 'object',
+          properties: {
+            slug: { type: 'string' }
+          },
+          required: ['slug']
+        },
+        response: {
+          200: {
+            description: 'Joined workspace successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Invalid request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, joinWorkspaceWithSlug
   );
 
   // Update team member role or deactivate member
@@ -867,12 +946,45 @@ export default async function workspaceRoutes(fastify) {
     leaveWorkspace
   );
 
+  // get workspace api key
+  fastify.get(
+    '/api-key',
+    {
+      schema: {
+        tags: ['Workspaces'], // Group under "Auth" tag
+        summary: 'Get workspace API key',
+        description: 'API endpoint to fetch workspace API key',
+        operationId: 'getWorkspaceApiKey',
+        hide: true,
+        response: {
+          200: {
+            description: 'API key retrieved successfully',
+            type: 'object',
+            properties: {
+              api_key: { type: 'string' },
+              api_key_created_at: { type: 'string', format: 'date-time' },
+              custom_api_rate_limit: { type: 'number' }
+            },
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    getWorkspaceApiKey
+  );
+
   // generate api key route
   fastify.post(
     '/generate-api-key',
     {
       schema: {
-        tags: ['Auth'], // Group under "Auth" tag
+        tags: ['Workspaces'], // Group under "Workspaces" tag
         summary: 'Generate API key',
         description: 'API endpoint to create new API key',
         operationId: 'generateApiKey',

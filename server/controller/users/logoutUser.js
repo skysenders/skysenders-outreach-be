@@ -13,7 +13,13 @@ export const logoutUser = async(req, res) => {
   const logger = Container.get('logger');
 
   try {
-    const { refresh_token: refreshToken } = req.body;
+    const refreshToken = req.cookies.refresh_token;
+
+    if (!refreshToken) {
+      return res.code(StatusCodes.UNAUTHORIZED).send({
+        message: 'Refresh token missing',
+      });
+    }
 
     // delete partner session from the database
     logger.info('Attempting to log out user with refresh token');

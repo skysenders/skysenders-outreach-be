@@ -47,6 +47,21 @@ export const updateWorkspaceMember = async(data, where) => {
   }
 };
 
+export const bulkUpdateWorkspaceMember = async(data, where) => {
+  try {
+    const [_, updated] = await db.user_workspace_mappings.update(data, {
+      where,
+      returning: true,
+      raw: true
+    });
+    return updated;
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error bulk updating workspace member: ${err.message}`);
+    throw err;
+  }
+};
+
 export const removeWorkspaceMember = async(where) => {
   try {
     return await db.user_workspace_mappings.destroy({ where });

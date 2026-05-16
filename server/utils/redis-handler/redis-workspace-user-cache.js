@@ -65,7 +65,6 @@ export const hasWorkspaceAccess = async({
 }) => {
   const redisClient = Container.get('redisClient');
   const key = getWorkspaceMemberKey(userId, workspaceId);
-  console.log(`Checking workspace access for user ${userId} on workspace ${workspaceId} with key ${key}`);
   const exists = await redisClient.exists(key);
 
   // In some clients exists returns a boolean, in others it returns 1 or 0

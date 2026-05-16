@@ -66,7 +66,6 @@ export const initialize = async(fastifyApp, redisClient) => {
   // Set up a global error handler for validation errors and other errors
   fastify.setErrorHandler((error, request, reply) => {
     if (error.validation) {
-      console.log('Validation error:', error.validation);
       return reply.status(400).send({
         message: error.validation.map(err => `${err.instancePath} ${err.message}`).join(', '),
       });

@@ -393,13 +393,6 @@ export default async function authRoutes(fastify) {
         description: 'API endpoint for users to logout and revoke their session',
         operationId: 'logoutUser',
         hide: true,
-        body: {
-          type: 'object',
-          required: ['refresh_token'],
-          properties: {
-            refresh_token: { type: 'string' }
-          }
-        }
       }
     },
     logoutUser

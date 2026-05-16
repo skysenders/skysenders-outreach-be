@@ -17,8 +17,6 @@ export const getWorkspaceById = async(req, res) => {
       });
     }
 
-    console.log('Fetching workspace with ID:', workspaceId, 'for user:', user.id);
-
     // check if the user has access to workspace or not via cache
     const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
       userId: user.id,

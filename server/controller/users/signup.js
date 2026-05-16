@@ -26,8 +26,6 @@ export const addNewUser = async(req, res) => {
     const StringHelper = Container.get('StringHelper');
     const logger = Container.get('logger');
 
-    console.log('request origin is ', req.origin);
-
     // find the partner_id based on the req.origin
     let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
 
@@ -241,7 +239,7 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
       invited_workspace_join_error: existUser.invited_workspace_join_error
     } };
   } catch (error) {
-    console.error('Error in social login/signup:', error);
+    logger.error(`Error in social login/signup: ${error.message}`);
     throw error;
   }
 };

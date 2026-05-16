@@ -19,7 +19,7 @@ export const sendMail = async({toAddress, cc, from, subject, text, html})=>{
     };
 
     const sendEmailLambdaRes = await AwsService.invokeLambdaFunction('send-email-via-ses', msg);
-    console.log('Send email lambda response for sending email: ', sendEmailLambdaRes);
+    logger.info(`Email sent to ${toAddress} with response: ${JSON.stringify(sendEmailLambdaRes)}`);
     return true;
   } catch (err) {
     logger.error(`Error while sending email (${toAddress}) - ${err.message}`);
