@@ -366,9 +366,26 @@ export default async function authRoutes(fastify) {
             description: 'Token refreshed successfully',
             type: 'object',
             properties: {
-              access_token: { type: 'string' },
-              access_token_expiries_at: { type: 'string', format: 'date-time' },
-            }
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  uuid: { type: 'string' },
+                  email: { type: 'string' },
+                  name: { type: 'string' },
+                  status: { type: 'string' },
+                  profile_url: { type: 'string' },
+                  timezone: { type: 'string' },
+                },
+              },
+              token: {
+                type: 'object',
+                properties: {
+                  access_token: { type: 'string' },
+                  access_token_expiries_at: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
           },
           401: {
             description: 'Invalid refresh token',

@@ -102,6 +102,16 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
   const isSkySendersDomain = hostname.endsWith('.skysenders.ai');
 
   if (isSkySendersDomain) {
+    // set logged_in cookie for frontend to check if user is logged in
+    res.setCookie('logged_in', 'true', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.ai',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+
     return res.setCookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
@@ -118,7 +128,6 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
       secure: true,
       sameSite: 'none',
       path: '/',
-      domain: '.localhost',
       maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
     });
   }
@@ -130,5 +139,38 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
     sameSite: 'lax',
     path: '/',
     maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+  });
+};
+
+export const clearRefreshTokenCookie = (res, reqOrigin) => {
+  const hostname = reqOrigin ? new URL(reqOrigin).hostname : '';
+  const isLocalhost = hostname === 'localhost' || hostname.includes('.localhost');
+  const isSkySendersDomain = hostname.endsWith('.skysenders.ai');
+
+  if (isSkySendersDomain) {
+    res.clearCookie('logged_in', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.ai',
+    });
+  }
+
+  if (isLocalhost) {
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+    });
+  }
+
+  // clear refresh token from http only cookie
+  res.clearCookie('refresh_token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
   });
 };

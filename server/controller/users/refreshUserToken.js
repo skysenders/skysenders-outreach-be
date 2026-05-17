@@ -80,7 +80,7 @@ export const refreshUserToken = async(req, res) => {
     logger.info('Token refreshed successfully for user');
 
     // return token and user info
-    return res.status(StatusCodes.OK).send(token);
+    return res.status(StatusCodes.OK).send({ token, user: userDBData });
 
   } catch (error) {
     logger.error(`Error occurred during user login: ${error.message}`);

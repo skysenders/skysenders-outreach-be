@@ -8,8 +8,8 @@ import { StatusCodes } from 'http-status-codes';
  * @returns {Object} success message
  */
 export const logoutUser = async(req, res) => {
-
   const UserSessionModelHandler = Container.get('UserSessionModelHandler');
+  const TokenHandler = Container.get('TokenHandler');
   const logger = Container.get('logger');
 
   try {
@@ -35,6 +35,9 @@ export const logoutUser = async(req, res) => {
     }
 
     logger.info('User logged out successfully');
+
+    // clear res cookie
+    TokenHandler.clearRefreshTokenCookie(res, req.headers.origin);
 
     // return success message
     return res.status(StatusCodes.OK).send({ message: 'Logged out successfully' });
