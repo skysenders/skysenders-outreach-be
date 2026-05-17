@@ -234,3 +234,32 @@ export const invokeLambdaFunction = async(functionName, payload, region = proces
     throw err;
   }
 };
+
+export const verifySMTPMailbox = async(payload) => {
+  try {
+    const lambdaClient = getLambdaClient(process.env.AWS_DEFAULT_REGION);
+
+    const command = new InvokeCommand({
+      FunctionName: 'skysenders-verify-smtp-accounts',
+      InvocationType: 'RequestResponse',
+      Payload: Buffer.from(JSON.stringify(payload)),
+    });
+
+    const response = await lambdaClient.send(command);
+
+    // Lambda returns the payload as a Uint8Array, so we need to convert it to a string
+    const rawPayload = response.Payload
+      ? Buffer.from(response.Payload).toString()
+      : null;
+
+    // Check if the Lambda function returned an error
+    if (response.FunctionError) {
+      throw new Error(`Lambda error: ${rawPayload}`);
+    }
+    // Parse the payload as JSON and return it
+    return rawPayload ? JSON.parse(rawPayload) : null;
+  } catch (err) {
+    console.error('Exception occurred while invoking Lambda function:', err);
+    throw err;
+  }
+};

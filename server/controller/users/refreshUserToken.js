@@ -1,6 +1,6 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { JWT, USER_STATUS } from '../../config/constants';
+import { USER_STATUS } from '../../config/constants';
 
 /**
  * Functionality used to refresh a user's authentication token
@@ -71,23 +71,8 @@ export const refreshUserToken = async(req, res) => {
       id: userSessionDBData.id
     });
 
-    // set access token in http only cookie
-    res.setCookie('access_token', token.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/',
-      maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
-    });
-
     // set refresh token in http only cookie
-    res.setCookie('refresh_token', token.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/',
-      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
-    });
+    TokenHandler.setRefreshTokenCookie(res, token.refresh_token, req.headers.origin);
 
     delete token.refresh_token;
     delete token.refresh_token_expiries_at;

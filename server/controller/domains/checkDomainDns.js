@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import Container from 'typedi';
-
+import { TRACKING_DOMAIN_CNAME_TARGET } from '../../config/constants';
 /*
 --------------------------------------------------
 CHECK DOMAIN DNS CONFIG
@@ -38,7 +38,7 @@ export const checkDomainDns = async(req, res) => {
     }
 
     const dnsResult = await DomainDNSConfigHelper.checkDomainDNSConfig(domain.domain_name,
-      domain.dkim_selector, domain.tracking_domain_url, process.env.TRACKING_DOMAIN_CNAME_TARGET);
+      domain.dkim_selector, domain.tracking_domain_url, TRACKING_DOMAIN_CNAME_TARGET);
 
     /*
     -------------------------

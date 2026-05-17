@@ -57,3 +57,45 @@ export const deleteDomain = async(where) => {
     throw err;
   }
 };
+
+// create a new domain but on conflict do nothing and return the existing domain
+export const createNewDomain = async(domain) => {
+  try {
+    const [newDomain, created] = await db.domains.findOrCreate({
+      where: domain,
+      defaults: domain,
+      raw: true,
+    });
+    // if domain is created for the first time
+    // then check for its DNS config and update the record
+    //  otherwise return the existing record
+    if (created) {
+      const DomainDNSConfigHelper = Container.get('DomainDNSConfigHelper');
+      const dnsResult = await DomainDNSConfigHelper.checkDomainDNSConfig(newDomain.domain_name);
+      db.domains.update({
+        spf_pass: dnsResult.spf.pass,
+        dmarc_pass: dnsResult.dmarc.pass,
+        mx_pass: dnsResult.mx.pass,
+        dkim_pass: dnsResult.dkim.pass,
+
+        dns_errors: {
+          spf: dnsResult.spf.error,
+          dmarc: dnsResult.dmarc.error,
+          mx: dnsResult.mx.error,
+          dkim: dnsResult.dkim.error
+        },
+
+        dns_last_checked_at: new Date(),
+
+        updated_at: new Date()
+      }, {
+        where: { id: newDomain.id }
+      });
+    }
+    return newDomain;
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error creating new domain: ${err.message}`);
+    throw err;
+  }
+};

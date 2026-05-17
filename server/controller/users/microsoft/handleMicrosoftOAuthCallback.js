@@ -2,7 +2,7 @@ import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
 import { handleMicrosoftCallback } from '../../../services/esp_provides/microsoft/microsoft.login.api';
 import { socialLoginOrSignup } from '../signup';
-import { FRONTEND_URL, JWT } from '../../../config/constants';
+import { FRONTEND_URL } from '../../../config/constants';
 
 /**
  * Functionality used to log in a user
@@ -12,6 +12,7 @@ import { FRONTEND_URL, JWT } from '../../../config/constants';
  */
 export const handleMicrosoftOAuthCallback = async(req, res) => {
   const logger = Container.get('logger');
+  const TokenHandler = Container.get('TokenHandler');
   try {
     const { code, state } = req.query;
     let partnerId, redirectUrl, token;
@@ -29,23 +30,8 @@ export const handleMicrosoftOAuthCallback = async(req, res) => {
 
     const { user, jwtToken } = await socialLoginOrSignup(userData, token, req.headers['user-agent'] || '', req.ip || '');
 
-    // set access token in http only cookie
-    res.setCookie('access_token', jwtToken.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/api/users/refresh-token',
-      maxAge: 1000 * JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
-    });
-
     // set refresh token in http only cookie
-    res.setCookie('refresh_token', jwtToken.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/api/users/refresh-token',
-      maxAge: 1000 * JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
-    });
+    TokenHandler.setRefreshTokenCookie(res, jwtToken.refresh_token, req.headers.origin);
 
     // redirect to frontend with user data and token
     const redirectWithParams = `${redirectUrl}?user=${encodeURIComponent(JSON.stringify(user))}&token=${encodeURIComponent(jwtToken.access_token)}`;

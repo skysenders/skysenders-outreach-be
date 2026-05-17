@@ -94,3 +94,41 @@ export const generatePartnerToken = async(partner) => {
     throw err;
   }
 };
+
+export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
+  const hostname = reqOrigin ? new URL(reqOrigin).hostname : '';
+  const isLocalhost = hostname === 'localhost' || hostname.includes('.localhost');
+
+  const isSkySendersDomain = hostname.endsWith('.skysenders.ai');
+
+  if (isSkySendersDomain) {
+    return res.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.app.skysenders.ai',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+  }
+
+  if (isLocalhost) {
+    return res.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      domain: '.localhost',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+  }
+
+  // set refresh token in http only cookie
+  return res.setCookie('refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+  });
+};

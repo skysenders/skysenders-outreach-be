@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
 import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE,
   IS_PRODUCTION, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME,
-  USER_STATUS, AUTH_PROVIDER, JWT} from '../../config/constants';
+  USER_STATUS, AUTH_PROVIDER } from '../../config/constants';
 import { joinWorkspace } from '../workspaces/joinWorkspaceWithToken';
 
 /**
@@ -93,23 +93,8 @@ export const addNewUser = async(req, res) => {
         auth_provider: AUTH_PROVIDER.EMAIL
       });
 
-      // set access token in http only cookie
-      res.setCookie('access_token', token.access_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: '/',
-        maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
-      });
-
       // set refresh token in http only cookie
-      res.setCookie('refresh_token', token.refresh_token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: '/',
-        maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
-      });
+      TokenHandler.setRefreshTokenCookie(res, token.refresh_token, req.headers.origin);
 
       // remove password from user data
       delete newUser.password;

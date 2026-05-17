@@ -1,6 +1,6 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { JWT, PARTNER_STATUS } from '../../config/constants';
+import { PARTNER_STATUS } from '../../config/constants';
 
 /**
  * Functionality used to log in a partner
@@ -67,23 +67,8 @@ export const partnerLogin = async(req, res) => {
       expires_at: token.refresh_token_expiries_at
     });
 
-    // set access token in http only cookie
-    res.setCookie('access_token', token.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/',
-      maxAge: JWT.ACCESS_TOKEN_EXPIRY_IN_SECONDS,
-    });
-
     // set refresh token in http only cookie
-    res.setCookie('refresh_token', token.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/',
-      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS, // 60 days
-    });
+    TokenHandler.setRefreshTokenCookie(res, token.refresh_token, req.headers.origin);
 
     // remove password from response
     delete partnerDBData.password;

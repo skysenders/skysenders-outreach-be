@@ -16,6 +16,7 @@ export const ENVIRONMENT = process.env.NODE_ENV || 'LOCAL';
 
 export const CORS = {
   ALLOWED_DOMAINS: process.env.ALLOWED_DOMAINS,
+  ALLOWED_REGEX_DOMAINS: process.env.ALLOWED_REGEX_DOMAINS,
 };
 
 export const BE_URL = process.env.BE_URL;
@@ -359,3 +360,18 @@ export const MAILBOX_AUTH_TYPE = {
   SMTP_PASSWORD: 'SMTP_PASSWORD',
   APP_PASSWORD: 'APP_PASSWORD',
 };
+
+export const MAILBOX_STATUS = {
+  ACTIVE: 'ACTIVE',
+  DISCONNECTED: 'DISCONNECTED',
+  DELETED: 'DELETED',
+  SUSPENDED: 'SUSPENDED',
+  DISABLED: 'DISABLED',
+};
+
+export const MAILBOX_DEFAULT_SEND_LIMTS = {
+  sending_limit_per_day: 30,
+  minimum_time_gap_mins: 5,
+};
+
+export const TRACKING_DOMAIN_CNAME_TARGET = '';

@@ -26,4 +26,3 @@ export const sendMail = async({toAddress, cc, from, subject, text, html})=>{
     return false;
   }
 };
-
