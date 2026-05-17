@@ -107,7 +107,7 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
       secure: true,
       sameSite: 'lax',
       path: '/',
-      domain: '.app.skysenders.ai',
+      domain: '.skysenders.ai',
       maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
     });
   }
