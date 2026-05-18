@@ -109,6 +109,7 @@ export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searc
       u.email,
       u.is_first_invite,
       uwm.role,
+      uwm.permission,
       uwm.status,
       uwm.is_active,
       uwm.invited_at,

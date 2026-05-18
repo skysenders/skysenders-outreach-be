@@ -261,6 +261,7 @@ export default async function workspaceRoutes(fastify) {
                 logo_bg_color: { type: 'string' },
                 theme_color: { type: 'string' },
                 role: { type: 'string' },
+                permission: { type: 'object', additionalProperties: true },
                 status: { type: 'string' },
                 is_active: { type: 'boolean' },
                 invited_by: { type: 'integer' },
@@ -577,7 +578,8 @@ export default async function workspaceRoutes(fastify) {
                 properties: {
                   email: { type: 'string' },
                   name: { type: 'string' },
-                  password: { type: 'string', minLength: 6 }
+                  password: { type: 'string', minLength: 6 },
+                  permission: { type: 'object', additionalProperties: true }
                 },
                 required: ['email', 'name', 'password']
               }
@@ -645,7 +647,7 @@ export default async function workspaceRoutes(fastify) {
     inviteWorkspaceClients
   );
 
-  // Route to invite clients to workspace
+  // Route to invite members to workspace
   fastify.post('/join',
     {
       schema: {
@@ -797,6 +799,7 @@ export default async function workspaceRoutes(fastify) {
           properties: {
             name: { type: 'string' },
             password: { type: 'string', minLength: 6 },
+            permission: { type: 'object', additionalProperties: true },
             is_active: { type: 'boolean' }
           }
         },
@@ -848,6 +851,7 @@ export default async function workspaceRoutes(fastify) {
                 name: { type: 'string' },
                 email: { type: 'string' },
                 role: { type: 'string' },
+                permission: { type: 'object', additionalProperties: true },
                 status: { type: 'string' },
                 invited_by: { type: 'integer' },
                 invited_at: { type: 'string' },

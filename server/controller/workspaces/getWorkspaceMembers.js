@@ -17,10 +17,15 @@ export const getWorkspaceMembers = async(req, res) => {
     }
 
     // 1. Permission Check
+    console.log('userId', user.id);
+    console.log('workspaceId', workspaceId);
+
     const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
       userId: user.id,
       workspaceId
     });
+
+    console.log('hasAdminAccess', hasAdminAccess);
 
     if (!hasAdminAccess) {
       return res.status(StatusCodes.FORBIDDEN).send({

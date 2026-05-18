@@ -17,6 +17,7 @@ export const getAllWorkspaces = async(req, res) => {
           w.logo_bg_color,
           w.theme_color,
           uwm.role,
+          uwm.permission,
           uwm.status,
           uwm.is_active,
           uwm.created_at as joined_at
