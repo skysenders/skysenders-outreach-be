@@ -385,3 +385,46 @@ export const MAILBOX_DEFAULT_SEND_LIMTS = {
 };
 
 export const TRACKING_DOMAIN_CNAME_TARGET = '';
+
+export const WORKSPACE_ROLE_PERMISSIONS = {
+  SUPER_ADMIN: {
+    isSuperAdmin: true,
+    canWrite: true,
+    canManageInbox: true,
+    canManageWorkspace: true,
+  },
+
+  ADMIN: {
+    isSuperAdmin: false,
+    canWrite: true,
+    canManageInbox: true,
+    canManageWorkspace: true,
+  },
+
+  MEMBER: {
+    isSuperAdmin: false,
+    canWrite: true,
+    canManageInbox: true,
+    canManageWorkspace: false,
+  },
+
+  INBOX_MANAGER: {
+    isSuperAdmin: false,
+    canWrite: false,
+    canManageInbox: true,
+    canManageWorkspace: false,
+  },
+
+  VIEWER: {
+    isSuperAdmin: false,
+    canWrite: false,
+    canManageInbox: false,
+    canManageWorkspace: false,
+  },
+  CLIENT: {
+    isSuperAdmin: false,
+    canWrite: false,
+    canManageInbox: true,
+    canManageWorkspace: false,
+  },
+};

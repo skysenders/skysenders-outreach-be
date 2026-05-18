@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     user_id: DataTypes.INTEGER,
 
     role: DataTypes.ENUM('SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'),
+    permission: DataTypes.JSONB,
     status: DataTypes.ENUM(
       'invitation_pending',
       'invitation_accepted',

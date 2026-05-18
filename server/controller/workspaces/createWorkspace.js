@@ -1,5 +1,5 @@
 import { Container } from 'typedi';
-import { WORKSPACE_USER_ROLE, WORKSPACE_USER_MAPPING_STATUS } from '../../config/constants';
+import { WORKSPACE_USER_ROLE, WORKSPACE_USER_MAPPING_STATUS, WORKSPACE_ROLE_PERMISSIONS } from '../../config/constants';
 import { StatusCodes } from 'http-status-codes';
 
 export const createWorkspace = async(req, res) => {
@@ -55,6 +55,7 @@ export const createWorkspace = async(req, res) => {
         user_id: user.id,
         role: WORKSPACE_USER_ROLE.SUPER_ADMIN,
         status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
+        permission: WORKSPACE_ROLE_PERMISSIONS.SUPER_ADMIN,
         invited_by: user.id,
         is_active: true
       }),

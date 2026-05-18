@@ -10,7 +10,7 @@ export const updateWorkspaceMember = async(req, res) => {
   try {
     const { userId } = req.params;
     const workspaceId = req.workspace?.id;
-    const { role, is_active: isActive } = req.body;
+    const { role, is_active: isActive, permission } = req.body;
     const user = req.user;
 
     if (!workspaceId) {
@@ -58,6 +58,7 @@ export const updateWorkspaceMember = async(req, res) => {
     // 6. Perform Update
     const updateData = {};
     if (role) updateData.role = role;
+    if (permission) updateData.permission = permission;
     if (typeof isActive === 'boolean') updateData.is_active = isActive;
 
     await UserWorkspaceMappingModelHandler.updateWorkspaceMember(updateData, {

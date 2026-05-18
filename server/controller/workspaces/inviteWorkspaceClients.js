@@ -5,6 +5,7 @@ import {
   WORKSPACE_USER_ROLE,
   WORKSPACE_USER_MAPPING_STATUS,
   USER_STATUS,
+  WORKSPACE_ROLE_PERMISSIONS,
 } from '../../config/constants';
 
 export const inviteWorkspaceClients = async(req, res) => {
@@ -85,7 +86,7 @@ export const inviteWorkspaceClients = async(req, res) => {
     // 3. Process Clients in Parallel (Safe for batch of 10 with unique emails)
     await Promise.all(uniqueClients.map(async(client) => {
       try {
-        const { email, name, password } = client;
+        const { email, name, password, permission } = client;
 
         let targetClient = existingClients.find(u => u.email === email);
 
@@ -121,6 +122,7 @@ export const inviteWorkspaceClients = async(req, res) => {
           workspace_id: workspace.id,
           user_id: targetClient.id,
           role: WORKSPACE_USER_ROLE.CLIENT,
+          permission: permission || WORKSPACE_ROLE_PERMISSIONS.CLIENT,
           status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
           invited_by: user.id,
           is_active: false

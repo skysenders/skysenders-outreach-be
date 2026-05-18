@@ -6,7 +6,8 @@ import {
   WORKSPACE_USER_MAPPING_STATUS,
   USER_STATUS,
   EMAIL_TEMPLATE_NAME,
-  PARTNER_EMAIL_SETTINGS_CACHE
+  PARTNER_EMAIL_SETTINGS_CACHE,
+  WORKSPACE_ROLE_PERMISSIONS
 } from '../../config/constants';
 
 export const inviteWorkspaceMembers = async(req, res) => {
@@ -98,6 +99,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
             if (member.re_invite) {
               await UserWorkspaceMappingModelHandler.updateWorkspaceMember({
                 role: role || WORKSPACE_USER_ROLE.MEMBER,
+                permission: WORKSPACE_ROLE_PERMISSIONS[role] || WORKSPACE_ROLE_PERMISSIONS.MEMBER,
                 status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
                 invited_by: user.id,
                 invited_at: currentDate,
@@ -130,6 +132,7 @@ export const inviteWorkspaceMembers = async(req, res) => {
             workspace_id: workspace.id,
             user_id: targetUser.id,
             role: role || WORKSPACE_USER_ROLE.MEMBER,
+            permission: WORKSPACE_ROLE_PERMISSIONS[role] || WORKSPACE_ROLE_PERMISSIONS.MEMBER,
             status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_PENDING,
             invited_by: user.id,
             invited_at: currentDate,

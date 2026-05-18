@@ -146,11 +146,13 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
 
   try {
     // check whether email with that email address exists
-    let existUser = await UserModelHandler.getUserByWhere({
+    const existUserList = await UserModelHandler.getUsersByWhere({
       email: email.toLowerCase().trim(),
       partner_id: partnerId,
-      is_client: false
     });
+
+    let existUser = existUserList.filter(u => !u.is_client)[0] || null;
+    let existClientUser = existUserList.filter(u => u.is_client)[0] || null;
 
     if (existUser && existUser.id && existUser.auth_provider !== authProvider) {
       // update user auth provider if it's different from the one in the database
@@ -165,20 +167,32 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
       });
       logger.info(`Updated auth provider for user ${existUser.id} to ${authProvider}`);
     } else if (!existUser || !existUser.id) {
-      // else create a new user, create session and return the token
-      existUser = await UserModelHandler.createUser({
-        partner_id: partnerId,
-        email,
-        name,
-        status: USER_STATUS.ACTIVE,
-        profile_url: profileUrl,
-        auth_provider: authProvider,
-        provider_user_id: providerUserId,
-      });
-
-      if (!(existUser && existUser.id)) {
-        throw new Error('Something went wrong in database');
+      // check if it is a client user
+      if (existClientUser && existClientUser.id) {
+        // if auth provider is not set, then update it
+        if (existClientUser.auth_provider !== authProvider) {
+          // update user auth provider if it's different from the one in the database
+          existClientUser = await UserModelHandler.updateUser({
+            name: name || existClientUser.name,
+            profile_url: profileUrl || existClientUser.profile_url,
+            auth_provider: authProvider,
+            provider_user_id: providerUserId
+          }, {
+            id: existClientUser.id
+          });
+        }
+        existUser = existClientUser;
       } else {
+        // else create a new user, create session and return the token
+        existUser = await UserModelHandler.createUser({
+          partner_id: partnerId,
+          email,
+          name,
+          status: USER_STATUS.ACTIVE,
+          profile_url: profileUrl,
+          auth_provider: authProvider,
+          provider_user_id: providerUserId,
+        });
         logger.info(`New user created with id ${existUser.id} through social login/signup`);
       }
     }
@@ -216,6 +230,7 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
     return { jwtToken: tokenData, user: {
       name: existUser.name,
       email: existUser.email,
+      is_client: existUser.is_client,
       invited_accepted: existUser.invited_accepted,
       invited_workspace_id: existUser.invited_workspace_id,
       invited_workspace_role: existUser.invited_workspace_role,

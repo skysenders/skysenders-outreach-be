@@ -10,7 +10,7 @@ export const updateWorkspaceClient = async(req, res) => {
 
   try {
     const { userId } = req.params;
-    const { password, is_active: isActive } = req.body;
+    const { password, is_active: isActive, permission } = req.body;
     const user = req.user;
 
     const workspaceId = req.workspace?.id;
@@ -61,14 +61,20 @@ export const updateWorkspaceClient = async(req, res) => {
       });
     }
 
+    const updateFields = {};
+
     if (password) {
-      await WorkspaceClientMappingModelHandler.updateWorkspaceClientMapping({
-        password
-      }, {
-        workspace_id: workspaceId,
-        user_id: userId,
-      });
+      updateFields.password = password;
     }
+
+    if (permission) {
+      updateFields.permission = permission;
+    }
+
+    await WorkspaceClientMappingModelHandler.updateWorkspaceClientMapping(updateFields, {
+      workspace_id: workspaceId,
+      user_id: userId,
+    });
 
 
     // Sync Redis Cache

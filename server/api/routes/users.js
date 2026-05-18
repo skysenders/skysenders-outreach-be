@@ -120,6 +120,7 @@ export default async function authRoutes(fastify) {
               maxLength: 100,
             },
             password: { type: 'string', maxLength: 30 },
+            workspace_id: { type: 'integer' }
           },
         },
         response: {
@@ -137,6 +138,7 @@ export default async function authRoutes(fastify) {
                   status: { type: 'string' },
                   profile_url: { type: 'string' },
                   timezone: { type: 'string' },
+                  is_client: { type: 'boolean' }
                 },
               },
               token: {

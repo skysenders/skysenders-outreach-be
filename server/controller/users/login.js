@@ -18,7 +18,7 @@ export const userLogin = async(req, res) => {
     const PartnerCacheHelper = Container.get('PartnerCacheHelper');
     const logger = Container.get('logger');
 
-    const { password } = req.body;
+    const { password, workspace_id: workspaceId } = req.body;
 
     // find the partner_id based on the req.origin
     let partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
@@ -32,14 +32,13 @@ export const userLogin = async(req, res) => {
     const email = req.body.email.toLowerCase().trim();
 
     // check if user exists in the database
-    let userDBData = await UserModelHandler.getUserByWhere({
+    let userDBDataList = await UserModelHandler.getUsersByWhere({
       partner_id: partnerId,
       email,
-      is_client: false
     });
 
     // if the user is not found in the database, respond with user not found
-    if (!userDBData) {
+    if (userDBDataList.length === 0) {
       return res
         .status(StatusCodes.NOT_FOUND)
         .send({ message: 'User not found' });
@@ -47,24 +46,70 @@ export const userLogin = async(req, res) => {
 
     // check user password is right or not
     let isPasswordRight;
+    let userDBData;
 
     if (req.body.cs_email && req.body.cs_email_verified) {
       isPasswordRight = true; // CS user login does not require password verification
+      userDBData = userDBDataList[0];
     } else {
-      isPasswordRight = PasswordHandler.compare(
-        password,
-        userDBData.password
-      );
+    // filter normal user and client user
+      const normalUser = userDBDataList.filter(u => !u.is_client)[0] || null;
+      const clientUser = userDBDataList.filter(u => u.is_client)[0] || null;
+
+      if (normalUser) {
+        isPasswordRight = PasswordHandler.compare(
+          password,
+          normalUser.password
+        );
+        // if password is not right, respond with unauthorized
+        if (isPasswordRight) {
+          userDBData = normalUser;
+        } else if (!clientUser) {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .send({ message: 'Credentials does not match' });
+        }
+      }
+
+      if (!userDBData) {
+        if (clientUser && workspaceId) {
+        // find the worksapce client mapping
+          const WorkspaceClientMappingModelHandler = Container.get('WorkspaceClientMappingModelHandler');
+
+          const clientWorksapceDetails = await WorkspaceClientMappingModelHandler.getWorkspaceClientMappingByWhere({
+            user_id: clientUser.id,
+            workspace_id: workspaceId
+          });
+
+          if (!clientWorksapceDetails) {
+            return res
+              .status(StatusCodes.NOT_FOUND)
+              .send({ message: 'Client not found' });
+          }
+
+          isPasswordRight = PasswordHandler.compare(
+            password,
+            clientWorksapceDetails.password
+          );
+
+          // if password is not right, respond with unauthorized
+          if (!isPasswordRight) {
+            return res
+              .status(StatusCodes.UNAUTHORIZED)
+              .send({ message: 'Credentials does not match' });
+          } else {
+            userDBData = clientUser;
+          }
+        } else {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .send({ message: 'Credentials does not match' });
+        }
+      }
     }
 
-    // if password is not right, respond with unauthorized
-    if (!isPasswordRight) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .send({ message: 'Credentials does not match' });
-    }
     // check if user is verified or not, return email not verified
-    if (userDBData.status !== USER_STATUS.ACTIVE) {
+    if (userDBData && userDBData.status !== USER_STATUS.ACTIVE) {
       return res
         .status(StatusCodes.NOT_ACCEPTABLE)
         .send({ message: 'Email not verified' });
@@ -73,20 +118,22 @@ export const userLogin = async(req, res) => {
     // generate token with user
     const token = await TokenHandler.generate(userDBData);
 
-    // create a new session for the user
-    UserSessionModelHandler.createUserSession({
-      user_id: userDBData.id,
-      partner_id: partnerId,
-      refresh_token: token.refresh_token,
-      user_agent: req.headers['user-agent'] || '',
-      ip_address: req.ip || '',
-      is_active: true,
-      expires_at: token.refresh_token_expiries_at,
-      auth_provider: AUTH_PROVIDER.EMAIL
-    });
+    if (req.body.cs_email && req.body.cs_email_verified) {
+      // create a new session for the user
+      UserSessionModelHandler.createUserSession({
+        user_id: userDBData.id,
+        partner_id: partnerId,
+        refresh_token: token.refresh_token,
+        user_agent: req.headers['user-agent'] || '',
+        ip_address: req.ip || '',
+        is_active: true,
+        expires_at: token.refresh_token_expiries_at,
+        auth_provider: AUTH_PROVIDER.EMAIL
+      });
 
-    // set refresh token in http only cookie
-    TokenHandler.setRefreshTokenCookie(res, token.refresh_token, req.headers.origin);
+      // set refresh token in http only cookie
+      TokenHandler.setRefreshTokenCookie(res, token.refresh_token, req.headers.origin);
+    }
 
     // remove password from user data
     delete userDBData.password;
