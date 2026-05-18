@@ -3,7 +3,7 @@ import { createWorkspace } from '../../controller/workspaces/createWorkspace';
 import { updateWorkspace } from '../../controller/workspaces/updateWorkspace';
 import { updateWorkspaceGoals } from '../../controller/workspaces/updateWorkspaceGoals';
 import { getWorkspaceLogoSignedUrl } from '../../controller/workspaces/getWorkspaceLogoSignedUrl';
-import { getWorkspaceById } from '../../controller/workspaces/getWorkspaceById';
+import { getWorkspaceById, getWorkspaceBySlug } from '../../controller/workspaces/getWorkspaceById';
 import { getAllWorkspaces } from '../../controller/workspaces/getAllWorkspaces';
 import { deleteWorkspace } from '../../controller/workspaces/deleteWorkspace';
 
@@ -177,6 +177,58 @@ export default async function workspaceRoutes(fastify) {
       }
     },
     getWorkspaceById
+  );
+
+  // Route to get workspace details by id
+  fastify.get(
+    '/details',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'Get workspace details by slug',
+        description: 'Returns workspace details for the given workspace slug',
+        operationId: 'getWorkspaceBySlug',
+        hide: true,
+        queryparam: {
+          type: 'object',
+          required: ['slug'],
+          properties: {
+            slug: { type: 'string', description: 'Workspace slug' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Workspace details retrieved successfully',
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              slug: { type: 'string' },
+              logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
+              theme_color: { type: 'string' },
+              timezone: { type: 'string' },
+              created_at: { type: 'string', format: 'date-time' },
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getWorkspaceBySlug
   );
 
   // Route to get all workspaces associated to logged in user

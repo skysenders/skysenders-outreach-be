@@ -1,6 +1,5 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE } from '../../../config/constants';
 import { getMicrosoftAuthUrl } from '../../../services/esp_provides/microsoft/microsoft.login.api';
 
 /**
@@ -11,16 +10,16 @@ import { getMicrosoftAuthUrl } from '../../../services/esp_provides/microsoft/mi
  */
 export const signinWithMicrosoft = async(req, res) => {
   try {
-    const redisClient = Container.get('redisClient');
+    const PartnerCacheHelper = Container.get('PartnerCacheHelper');
     const logger = Container.get('logger');
 
     const { token, redirectUrl } = req.query;
 
     // find the partner_id based on the req.origin
-    let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
+    let partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
 
     if (!partnerId) {
-      logger.warn(`Partner ID not found in cache for origin: ${TRIM_ORIGIN_DOMAIN(req.origin)}`);
+      logger.warn(`Partner ID not found in cache for origin: ${req.origin}`);
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }

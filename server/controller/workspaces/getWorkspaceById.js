@@ -48,3 +48,40 @@ export const getWorkspaceById = async(req, res) => {
     throw err;
   }
 };
+
+export const getWorkspaceBySlug = async(req, res) => {
+  const logger = Container.get('logger');
+
+  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const PartnerCacheHelper = Container.get('PartnerCacheHelper');
+
+  try {
+    // get the partner id from the origin
+    const partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
+
+    // get workspace slug from req params
+    const workspaceSlug = req.query.slug;
+
+    // slug normalization
+    const normalizedSlug = workspaceSlug.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+
+    // check duplicate slug under same partner
+    const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
+      partner_id: partnerId,
+      slug: normalizedSlug
+    });
+
+    if (!workspace) {
+      return res.status(StatusCodes.NOT_FOUND).send({
+        message: 'Workspace not found'
+      });
+    }
+
+    return res.status(StatusCodes.OK).send(workspace);
+
+  } catch (err) {
+    logger.error(`Error fetching workspace: ${err.message}`);
+    throw err;
+  }
+};

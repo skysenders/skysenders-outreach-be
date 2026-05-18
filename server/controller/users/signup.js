@@ -1,8 +1,7 @@
 
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE,
-  IS_PRODUCTION, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME,
+import { IS_PRODUCTION, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME,
   USER_STATUS, AUTH_PROVIDER } from '../../config/constants';
 import { joinWorkspace } from '../workspaces/joinWorkspaceWithToken';
 
@@ -23,14 +22,13 @@ export const addNewUser = async(req, res) => {
     const TokenHandler = Container.get('TokenHandler');
     const OtpGeneratorHelper = Container.get('OtpGeneratorHelper');
     const redisClient = Container.get('redisClient');
+    const PartnerCacheHelper = Container.get('PartnerCacheHelper');
     const StringHelper = Container.get('StringHelper');
     const logger = Container.get('logger');
 
-    // find the partner_id based on the req.origin
-    let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
-
+    const partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
     if (!partnerId) {
-      logger.warn(`Partner ID not found in cache for origin: ${TRIM_ORIGIN_DOMAIN(req.origin)}`);
+      logger.warn(`Partner ID not found in cache for origin: ${req.origin}`);
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }

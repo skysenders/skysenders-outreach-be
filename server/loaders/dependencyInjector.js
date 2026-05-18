@@ -52,6 +52,7 @@ import * as StringHelper from '../utils/string-helper';
 import * as DetectESPHelper from '../utils/detectEsp';
 import * as WorkspaceRedisCacheHelper from '../utils/redis-handler/redis-workspace-user-cache';
 import * as DomainDNSConfigHelper from '../utils/domain-dns-helper';
+import * as PartnerCacheHelper from '../utils/redis-handler/partner-cache-finder';
 
 /**
  * Functionalilty used to set the container services
@@ -111,6 +112,7 @@ const injectorInstance = async() => {
     Container.set('DetectESPHelper', DetectESPHelper);
     Container.set('WorkspaceRedisCacheHelper', WorkspaceRedisCacheHelper);
     Container.set('DomainDNSConfigHelper', DomainDNSConfigHelper);
+    Container.set('PartnerCacheHelper', PartnerCacheHelper);
     return;
   } catch (err) {
     LoggerInstance.error('🔥 Error on dependency injector instance loader: %o', err);

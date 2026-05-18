@@ -102,6 +102,7 @@ export const JWT_ALLOWED_URLS = {
   '/api/partners/branding/public': true,
   '/api/partners/custom-scripts/public': true,
   // Rate limit ADMIN use
+  '/api/workspaces/details': true,
   '/api/workspaces/redis/api-stats-leader-board': true,
   '/api/workspaces/redis/api-limit-by-apikey': true,
   '/api/workspaces/redis/set-user-custom-rate-limit': true,
@@ -265,7 +266,16 @@ export const PARTNER_EMAIL_SETTINGS_CACHE = 'partner_email_settings:';
 export const PARTNER_PAYMENT_CACHE = 'partner_payment:';
 export const DEFAULT_PARTNER_ID = 1;
 
-export const TRIM_ORIGIN_DOMAIN = (origin = '') => origin.replace(/(^\w+:|^)\/\//, '').replace(/\/$/, '');
+export const TRIM_ORIGIN_DOMAIN = (origin = '') => {
+  const host = origin.replace(/(^\w+:|^)\/\//, '').replace(/\/$/, '');
+  // split by .
+  const parts = host.split('.');
+  // apple.app.skysenders.ai -> app.skysenders.ai
+  if (parts.length > 3) {
+    return parts.slice(-3).join('.');
+  }
+  return host;
+};
 
 export const WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX = 'workspace_custom_rate_limit:';
 

@@ -1,7 +1,7 @@
 import { Container } from 'typedi';
 import { isEmpty } from 'lodash';
 import { StatusCodes } from 'http-status-codes';
-import { TRIM_ORIGIN_DOMAIN, DEFAULT_PARTNER_ID, PARTNER_ORIGIN_CACHE, USER_STATUS, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME, AUTH_PROVIDER } from '../../config/constants';
+import { USER_STATUS, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME, AUTH_PROVIDER } from '../../config/constants';
 
 /**
  * Functionality used to log in a user
@@ -15,16 +15,16 @@ export const userLogin = async(req, res) => {
     const PasswordHandler = Container.get('PasswordHandler');
     const UserModelHandler = Container.get('UserModelHandler');
     const UserSessionModelHandler = Container.get('UserSessionModelHandler');
-    const redisClient = Container.get('redisClient');
+    const PartnerCacheHelper = Container.get('PartnerCacheHelper');
     const logger = Container.get('logger');
 
     const { password } = req.body;
 
     // find the partner_id based on the req.origin
-    let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
+    let partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
 
     if (!partnerId) {
-      logger.warn(`Partner ID not found in cache for origin: ${TRIM_ORIGIN_DOMAIN(req.origin)}`);
+      logger.warn(`Partner ID not found in cache for origin: ${req.origin}`);
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }
@@ -200,15 +200,16 @@ export const resendUserActivationLink = async(req, res) => {
   try {
     const UserModelHandler = Container.get('UserModelHandler');
     const MailerInstance = Container.get('MailerInstance');
+    const PartnerCacheHelper = Container.get('PartnerCacheHelper');
     const redisClient = Container.get('redisClient');
     const StringHelper = Container.get('StringHelper');
     const logger = Container.get('logger');
 
     // find the partner_id based on the req.origin
-    let partnerId = await redisClient.get(`${PARTNER_ORIGIN_CACHE}${TRIM_ORIGIN_DOMAIN(req.origin)}`) || DEFAULT_PARTNER_ID;
+    let partnerId = await PartnerCacheHelper.getPartnerIdFromOrigin(req.origin);
 
     if (!partnerId) {
-      logger.warn(`Partner ID not found in cache for origin: ${TRIM_ORIGIN_DOMAIN(req.origin)}`);
+      logger.warn(`Partner ID not found in cache for origin: ${req.origin}`);
       // if partner id is not found in cache return error
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid origin. Please contact support if you think this is an error.' });
     }
