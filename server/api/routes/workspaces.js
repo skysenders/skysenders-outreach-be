@@ -3,7 +3,7 @@ import { createWorkspace } from '../../controller/workspaces/createWorkspace';
 import { updateWorkspace } from '../../controller/workspaces/updateWorkspace';
 import { updateWorkspaceGoals } from '../../controller/workspaces/updateWorkspaceGoals';
 import { getWorkspaceLogoSignedUrl } from '../../controller/workspaces/getWorkspaceLogoSignedUrl';
-import { getWorkspaceById, getWorkspaceBySlug } from '../../controller/workspaces/getWorkspaceById';
+import { getWorkspaceById, getWorkspaceBySlug, getWorkspaceByCustomDomainUrl } from '../../controller/workspaces/getWorkspaceById';
 import { getAllWorkspaces } from '../../controller/workspaces/getAllWorkspaces';
 import { deleteWorkspace } from '../../controller/workspaces/deleteWorkspace';
 
@@ -229,6 +229,58 @@ export default async function workspaceRoutes(fastify) {
       }
     },
     getWorkspaceBySlug
+  );
+
+  // Route to get workspace details by custom domain url
+  fastify.get(
+    '/details-by-domain',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'Get workspace details by custom domain url',
+        description: 'Returns workspace details for the given custom domain url',
+        operationId: 'getWorkspaceByCustomDomainUrl',
+        hide: true,
+        queryparam: {
+          type: 'object',
+          required: ['custom_domain_url'],
+          properties: {
+            custom_domain_url: { type: 'string', description: 'Workspace custom domain url' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Workspace details retrieved successfully',
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              slug: { type: 'string' },
+              logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
+              theme_color: { type: 'string' },
+              timezone: { type: 'string' },
+              created_at: { type: 'string', format: 'date-time' },
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getWorkspaceByCustomDomainUrl
   );
 
   // Route to get all workspaces associated to logged in user

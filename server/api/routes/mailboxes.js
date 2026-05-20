@@ -1,14 +1,12 @@
 import { listMailboxes } from '../../controller/mailboxes/listMailboxes';
 import { verifyAndCreateSMTPMailbox } from '../../controller/mailboxes/connect/connectSMTPMailbox';
 
+// google mailbox oauth
+import { getGoogleAuthorizeUrl, handleGoogleOAuthCallback } from '../../controller/mailboxes/connect/connectGoogleMailbox';
+
 export default async function mailboxRoutes(fastify) {
 
-  /*
-  --------------------------------------------------
-  LIST MAILBOXES
-  --------------------------------------------------
-  */
-
+  // list mailboxes with search and filters
   fastify.get(
     '/',
     {
@@ -142,5 +140,89 @@ export default async function mailboxRoutes(fastify) {
       }
     },
     verifyAndCreateSMTPMailbox
+  );
+  // route to connect gmail account with redirect to authorized url
+  fastify.get(
+    '/connect/gmail',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'connect Gmail mailbox',
+        description: 'API endpoint to connect Gmail mailbox using OAuth',
+        operationId: 'connectGmailMailbox',
+        hide: true,
+        response: {
+          // redirect response will not be handled by fastify, but we can document the expected response for better API documentation
+          302: {
+            description: 'Redirect to Google for authentication',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, getGoogleAuthorizeUrl
+  );
+
+  // route to handle google oauth callback
+  fastify.get(
+    '/connect/gmail/callback',
+    {
+      schema: {
+        tags: ['Mailboxes'], // Group under "Product" tag
+        summary: 'connect gmail account callback',
+        description: 'API endpoint to handle Google OAuth callback and connect Gmail mailbox',
+        operationId: 'handleGoogleOAuthCallback',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['code', 'state'],
+          properties: {
+            code: { type: 'string' },
+            state: { type: 'string' },
+          },
+        },
+        response: {
+          302: {
+            description: 'Redirect to frontend with success or error message after handling Google OAuth callback',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              mailbox_id: { type: 'number' },
+              email: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, handleGoogleOAuthCallback
   );
 }

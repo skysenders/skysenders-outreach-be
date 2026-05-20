@@ -85,3 +85,31 @@ export const getWorkspaceBySlug = async(req, res) => {
     throw err;
   }
 };
+
+export const getWorkspaceByCustomDomainUrl = async(req, res) => {
+  const logger = Container.get('logger');
+
+  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+
+  try {
+    // get workspace custom domain url from req params
+    const customDomainUrl = req.query.custom_domain_url;
+
+    // check if workspace exists with the custom domain url
+    const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
+      custom_domain_url: customDomainUrl
+    });
+
+    if (!workspace) {
+      return res.status(StatusCodes.NOT_FOUND).send({
+        message: 'Workspace not found'
+      });
+    }
+
+    return res.status(StatusCodes.OK).send(workspace);
+
+  } catch (err) {
+    logger.error(`Error fetching workspace: ${err.message}`);
+    throw err;
+  }
+};

@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.STRING,
     workspace_settings: DataTypes.JSONB,
 
+    custom_domain_url: DataTypes.TEXT,
     api_key: DataTypes.TEXT,
     api_key_created_at: DataTypes.DATE,
     custom_api_rate_limit: DataTypes.INTEGER,

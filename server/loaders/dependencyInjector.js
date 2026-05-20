@@ -38,6 +38,7 @@ import * as WorkspaceSubscriptionLogsModelHandler from '../db/handler/workspace_
 // services
 import * as AwsService from '../services/aws/aws_service';
 import * as StripeAPIServices from '../services/stripe/stripeApi';
+import * as ConnectESPMailboxServices from '../services/esp_provides/connect_esp';
 import * as GoogleApiServices from '../services/esp_provides/google/google.api';
 import * as MicrosoftApiServices from '../services/esp_provides/microsoft/microsoft.api';
 import * as MailerInstance from '../services/email-service/send-email';
@@ -98,6 +99,7 @@ const injectorInstance = async() => {
     // Services
     Container.set('AwsService', AwsService);
     Container.set('StripeAPIServices', StripeAPIServices);
+    Container.set('ConnectESPMailboxServices', ConnectESPMailboxServices);
     Container.set('GoogleApiServices', GoogleApiServices);
     Container.set('MicrosoftApiServices', MicrosoftApiServices);
 

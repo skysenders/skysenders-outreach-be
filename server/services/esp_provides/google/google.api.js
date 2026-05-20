@@ -3,12 +3,11 @@ import { Container } from 'typedi';
 const { google } = require('googleapis');
 
 export const getGoogleOAuthClientByPartnerId = async(partnerId) => {
-
   // get the partner oAuth credentials from redis
   const redisClient = Container.get('redisClient');
-
+  // fetch the google login config for the partner from redis
   if (partnerId) {
-    const partnerGoogleConfig = await redisClient.get(`PARTNER_GOOGLE_CONFIG_${partnerId}`);
+    const partnerGoogleConfig = await redisClient.get(`${GOOGLE_CONFIG.REDIS_CACHE_KEY}:${partnerId}`);
     if (partnerGoogleConfig) {
       // json parse the config
       const config = JSON.parse(partnerGoogleConfig);
@@ -21,28 +20,18 @@ export const getGoogleOAuthClientByPartnerId = async(partnerId) => {
       }
     }
   }
-
-  return new google.auth.OAuth2(
-    GOOGLE_CONFIG.CLIENT_ID,
-    GOOGLE_CONFIG.CLIENT_SECRET,
-    GOOGLE_CONFIG.REDIRECT_URI
-  );
+  throw new Error('Google OAuth configuration not found for partner');
 };
 
 /**
  * get the Google authentication URL
- * @param {string} userId - the userId
- * @param {string} redirectUrl - the redirect URL
- * @param {string} partnerId - the partnerId
+ * @param {object} stateData - userId, workspaceId, redirectUrl, partnerId
+ * @param {string} partnerId - partnerId
  * @returns {string} - The Google authentication URL
  */
-export const getAuthUrl = async(userId, redirectUrl, partnerId) => {
+export const getAuthUrl = async(stateData, partnerId) => {
   const oauth2Client = await getGoogleOAuthClientByPartnerId(partnerId);
-  const state = JSON.stringify({
-    user_id: userId,
-    redirect_url: redirectUrl,
-    partner_id: partnerId
-  });
+  const state = JSON.stringify(stateData);
   return oauth2Client.generateAuthUrl({
     access_type: 'offline', // Critical for getting the refresh_token
     scope: GOOGLE_CONFIG.MAIL_SCOPE,
@@ -136,12 +125,11 @@ export const getNormalisedData = (googleUser, tokens) => {
       email: googleUser.email.toLowerCase(),
       first_name: googleUser.family_name && googleUser.given_name ? googleUser.given_name : googleUser.name,
       last_name: googleUser.family_name && googleUser.given_name ? googleUser.family_name : '',
-      token: {
+      credentials: {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-        expires_at: tokens.expiry_date,
-        scope: tokens.scope,
-        provider: 'google'
+        token_expiry: tokens.expiry_date,
+        last_token_refresh_at: new Date().toISOString()
       },
       token_expiry_at: new Date(tokens.expiry_date).toISOString(),
     };

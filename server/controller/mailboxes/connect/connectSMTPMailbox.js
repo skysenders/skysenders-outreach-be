@@ -1,13 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import Container from 'typedi';
-import { MAILBOX_TYPE, MAILBOX_AUTH_TYPE, MAILBOX_STATUS, MAILBOX_DEFAULT_SEND_LIMTS } from '../../../config/constants';
+import { MAILBOX_TYPE, MAILBOX_DEFAULT_SEND_LIMTS, MAILBOX_AUTH_TYPE } from '../../../config/constants';
 
 export const verifyAndCreateSMTPMailbox = async(req, res) => {
   const logger = Container.get('logger');
   const AwsService = Container.get('AwsService');
-  const MailboxesModelHandler = Container.get('MailboxesModelHandler');
-  const DomainsModelHandler = Container.get('DomainsModelHandler');
-  const MailboxCredentialsModelHandler = Container.get('MailboxCredentialsModelHandler');
+  const ConnectESPMailboxServices = Container.get('ConnectESPMailboxServices');
 
   const workspaceId = req.workspace.id;
   const partnerId = req.user.tenant_id;
@@ -20,27 +18,7 @@ export const verifyAndCreateSMTPMailbox = async(req, res) => {
   }
 
   try {
-    const { id, email, provider = MAILBOX_TYPE.SMTP } = req.body;
-
-    // first chec k if the mailbox with same email already exists in the workspace
-    const existingMailbox = await MailboxesModelHandler.getMailboxByWhere({
-      partner_id: partnerId,
-      email,
-      is_deleted: false,
-    });
-
-    // eslint-disable-next-line eqeqeq
-    if (existingMailbox && existingMailbox.workspace_id != workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'A mailbox with this email already exists in another workspace. Please switch workspace to access it or contact customer support team.'
-      });
-    }
-
-    if (existingMailbox && existingMailbox.id !== id) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'A mailbox with this email already exists in the workspace. Please use a different email or use the right "id" to update it.'
-      });
-    }
+    const { id, email } = req.body;
 
     // call lambda function for verifying the SMTP credentials
     const lambdaPayload = {
@@ -69,102 +47,46 @@ export const verifyAndCreateSMTPMailbox = async(req, res) => {
       });
     }
 
-    const currentDate = new Date().toISOString();
+    const [ success, error ] = await ConnectESPMailboxServices.connectMailbox(
+      { mailboxId: id, userId: req.user.id, partnerId, workspaceId },
+      email,
+      MAILBOX_TYPE.SMTP,
+      MAILBOX_AUTH_TYPE.SMTP_PASSWORD,
+      {
+        name: req.body.name || email,
+        email,
+        sending_limit_per_day: req.body.sending_limit_per_day || MAILBOX_DEFAULT_SEND_LIMTS.sending_limit_per_day,
+        minimum_time_gap_mins: req.body.minimum_time_gap_mins || MAILBOX_DEFAULT_SEND_LIMTS.minimum_time_gap_mins,
+        different_reply_to: req.body.different_reply_to,
+        bcc_to_crm: req.body.bcc_to_crm,
+        credentials: {
+          smtp_host: req.body.smtp_host,
+          smtp_port: req.body.smtp_port,
+          smtp_secure: req.body.smtp_secure,
+          smtp_username: req.body.smtp_username,
+          smtp_password: req.body.smtp_password,
 
-    // if successfully verified, create/update mailbox record in the database
-    if (existingMailbox) {
-      await MailboxesModelHandler.updateMailbox({
-        name: req.body.name || existingMailbox.name,
-        email: email || existingMailbox.email,
-        status: MAILBOX_STATUS.ACTIVE,
-        provider,
-        auth_type: MAILBOX_AUTH_TYPE.SMTP,
-        domain_id: existingMailbox.domain_id,
-        sending_limit_per_day: req.body.sending_limit_per_day || existingMailbox.sending_limit_per_day,
-        minimum_time_gap_mins: req.body.minimum_time_gap_mins || existingMailbox.minimum_time_gap_mins,
-        last_connected_at: currentDate,
-        disconnect_reason: null,
-        different_reply_to: req.body.different_reply_to || existingMailbox.different_reply_to,
-        bcc_to_crm: req.body.bcc_to_crm || existingMailbox.bcc_to_crm,
-        is_active: true,
-        is_deleted: false,
-        updated_at: currentDate,
-      }, {
-        id: existingMailbox.id
-      });
+          imap_host: req.body.imap_host,
+          imap_port: req.body.imap_port,
+          imap_secure: req.body.imap_secure,
+          imap_username: req.body.imap_username,
+          imap_password: req.body.imap_password,
+        }
+      }
+    );
 
-      // update credentials in the credentials table as well
-      await MailboxCredentialsModelHandler.updateMailboxCredentials({
-        smtp_host: req.body.smtp_host,
-        smtp_port: req.body.smtp_port,
-        smtp_secure: req.body.smtp_secure,
-        smtp_username: req.body.smtp_username,
-        smtp_password: req.body.smtp_password,
-
-        imap_host: req.body.imap_host,
-        imap_port: req.body.imap_port,
-        imap_secure: req.body.imap_secure,
-        imap_username: req.body.imap_username,
-        imap_password: req.body.imap_password,
-
-        updated_at: currentDate,
-      }, {
-        mailbox_id: existingMailbox.id
-      });
-
-      return res.status(StatusCodes.OK).send({
-        message: 'Mailbox verified and updated successfully',
-        mailbox: existingMailbox
+    // if there was an error during connection (after successful verification), return the error message
+    if (error) {
+      return res.status(error.status_code).send({
+        message: error.message
       });
     }
 
-    const domian = await DomainsModelHandler.createNewDomain({
-      partner_id: partnerId,
-      workspace_id: workspaceId,
-      domain_name: email.split('@')[1],
-      provider,
-    });
-
-    // else create new mailbox record
-    const mailbox = await MailboxesModelHandler.createMailbox({
-      partner_id: partnerId,
-      workspace_id: workspaceId,
-      name: req.body.name || email,
-      email,
-      status: MAILBOX_STATUS.ACTIVE,
-      provider,
-      domain_id: domian.id,
-      auth_type: MAILBOX_AUTH_TYPE.SMTP,
-      sending_limit_per_day: req.body.sending_limit_per_day || MAILBOX_DEFAULT_SEND_LIMTS.sending_limit_per_day,
-      minimum_time_gap_mins: req.body.minimum_time_gap_mins || MAILBOX_DEFAULT_SEND_LIMTS.minimum_time_gap_mins,
-      last_connected_at: currentDate,
-      different_reply_to: req.body.different_reply_to,
-      bcc_to_crm: req.body.bcc_to_crm,
-    });
-
-    // create credentials record in the credentials table as well
-    await MailboxCredentialsModelHandler.createMailboxCredentials({
-      mailbox_id: mailbox.id,
-      email,
-      smtp_host: req.body.smtp_host,
-      smtp_port: req.body.smtp_port,
-      smtp_secure: req.body.smtp_secure,
-      smtp_username: req.body.smtp_username,
-      smtp_password: req.body.smtp_password,
-
-      imap_host: req.body.imap_host,
-      imap_port: req.body.imap_port,
-      imap_secure: req.body.imap_secure,
-      imap_username: req.body.imap_username,
-      imap_password: req.body.imap_password,
-      created_at: currentDate,
-      updated_at: currentDate,
-    });
-
+    // else return success message with mailbox details
     return res.status(StatusCodes.OK).send({
-      message: 'Mailbox verified and created successfully',
-      mailbox,
-      verification: result,
+      message: success.message,
+      mailbox: success.mailbox,
+      verification: result.body,
     });
 
   } catch (error) {

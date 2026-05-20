@@ -103,6 +103,7 @@ export const JWT_ALLOWED_URLS = {
   '/api/partners/custom-scripts/public': true,
   // Rate limit ADMIN use
   '/api/workspaces/details': true,
+  '/api/workspaces/details-by-domain': true,
   '/api/workspaces/redis/api-stats-leader-board': true,
   '/api/workspaces/redis/api-limit-by-apikey': true,
   '/api/workspaces/redis/set-user-custom-rate-limit': true,
@@ -111,9 +112,9 @@ export const JWT_ALLOWED_URLS = {
   '/custom-whitelabel-api-docs': true,
 
   // google oauth for mailboxes
-  '/api/mailboxes/google/oauth-callback': true,
+  '/api/mailboxes/connect/gmail/callback': true,
   // mailboxes outlook oauth
-  '/api/mailboxes/outlook/oauth-callback': true,
+  '/api/mailboxes/connect/outlook/callback': true,
 };
 
 
@@ -280,6 +281,7 @@ export const TRIM_ORIGIN_DOMAIN = (origin = '') => {
 export const WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX = 'workspace_custom_rate_limit:';
 
 export const GOOGLE_CONFIG = {
+  REDIS_CACHE_KEY: 'partner_google_mailbox_config',
   CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   // https://developers.google.com/gmail/api/auth/scopes
