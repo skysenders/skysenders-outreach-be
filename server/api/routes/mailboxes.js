@@ -1,6 +1,7 @@
 import { listMailboxes } from '../../controller/mailboxes/listMailboxes';
 import { fetchMailboxById } from '../../controller/mailboxes/fetchMailboxById';
 import { updateMailboxById, bulkUpdateMailboxes } from '../../controller/mailboxes/updateMailboxes';
+import { deleteMailboxById, bulkDeleteMailboxes } from '../../controller/mailboxes/deleteMailboxes';
 // connect and save smtp mailbox
 import { verifyAndCreateSMTPMailbox } from '../../controller/mailboxes/connect/connectSMTPMailbox';
 // google mailbox oauth
@@ -472,7 +473,7 @@ export default async function mailboxRoutes(fastify) {
 
   // Route to bulk update mailboxes
   fastify.put(
-    '/',
+    '/bulk-update',
     {
       schema: {
         tags: ['Mailboxes'],
@@ -514,7 +515,17 @@ export default async function mailboxRoutes(fastify) {
             description: 'Mailboxes updated successfully',
             type: 'object',
             properties: {
-              message: { type: 'string' }
+              message: { type: 'string' },
+              updated_mailboxes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    email: { type: 'string' },
+                  }
+                }
+              }
             }
           },
           400: {
@@ -534,5 +545,115 @@ export default async function mailboxRoutes(fastify) {
         },
       },
     }, bulkUpdateMailboxes
+  );
+  // Route to delete mailbox by id
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'Delete mailbox by ID',
+        description: 'Delete mailbox details by ID',
+        operationId: 'deleteMailboxById',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' }
+          },
+          required: ['id']
+        },
+        response: {
+          200: {
+            description: 'Mailbox deleted successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Mailbox not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          },
+          500: {
+            description: 'Failed to delete mailbox',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          }
+        }
+      },
+    }, deleteMailboxById
+  );
+
+  // Route to bulk delete mailboxes
+  fastify.delete(
+    '/bulk-delete',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'Bulk delete mailboxes',
+        description: 'Bulk delete mailbox details based on filters',
+        operationId: 'bulkDeleteMailboxes',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        body: {
+          type: 'object',
+          properties: {
+            mailbox_ids: { type: 'array', items: { type: 'number' } },
+            search_text: { type: 'string', maxLength: 255 },
+            provider: { type: 'string' },
+            is_active: { type: 'boolean' },
+            warmup_enabled: { type: 'boolean' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Mailboxes delete successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              deleted_mailboxes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    email: { type: 'string' },
+                  }
+                }
+              }
+            }
+          },
+          400: {
+            description: 'Invalid request or failed to delete mailboxes',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          },
+          500: {
+            description: 'Failed to update mailboxes',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          }
+        },
+      },
+    }, bulkDeleteMailboxes
   );
 }

@@ -2,19 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { Op } from 'sequelize';
 import Container from 'typedi';
 
-const getUpdateData = (updateFields) => {
-  const updateData = {};
-  if (typeof updateFields.is_active === 'boolean') updateData.is_active = updateFields.is_active;
-  if (typeof updateFields.warmup_enabled === 'boolean') updateData.warmup_enabled = updateFields.warmup_enabled;
-  if (updateFields.sending_limit_per_day) updateData.sending_limit_per_day = updateFields.sending_limit_per_day;
-  if (updateFields.minimum_time_gap_mins) updateData.minimum_time_gap_mins = updateFields.minimum_time_gap_mins;
-  return updateData;
-};
-
 /*
-UPDATE MAILBOX BY ID
+DELETE MAILBOX BY ID
 */
-export const updateMailboxById = async(req, res) => {
+export const deleteMailboxById = async(req, res) => {
   const logger = Container.get('logger');
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
@@ -28,19 +19,15 @@ export const updateMailboxById = async(req, res) => {
   }
 
   try {
-
-    const where = { partner_id: partnerId, workspace_id: workspaceId, id };
-    const updateData = getUpdateData(req.body);
-
-    const mailbox = await MailboxesModelHandler.updateMailbox(updateData, where);
+    const mailbox = await MailboxesModelHandler.softDeleteMailbox({ partner_id: partnerId, workspace_id: workspaceId, id });
 
     // if mailbox not found, return 404
-    if (!mailbox) {
+    if (!(mailbox && mailbox[0])) {
       logger.warn(`Mailbox with ID ${id} not found for workspace ID ${workspaceId}`);
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Mailbox not found.' });
     }
 
-    return res.status(StatusCodes.OK).send(mailbox);
+    return res.status(StatusCodes.OK).send({ message: 'Mailbox deleted successfully!' });
   } catch (error) {
 
     logger.error(`Error fetching mailboxes: ${error.message}`);
@@ -52,10 +39,8 @@ export const updateMailboxById = async(req, res) => {
   }
 };
 
-/*
-BULK UPDATE MAILBOX BY ID
-*/
-export const bulkUpdateMailboxes = async(req, res) => {
+// Delete all mailboxes
+export const bulkDeleteMailboxes = async(req, res) => {
   const logger = Container.get('logger');
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
@@ -67,11 +52,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
     return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
   }
 
-
   try {
-
-    const updateFields = req.body.update_fields || {};
-    const updateData = getUpdateData(updateFields);
 
     const {
       mailbox_ids: mailboxIds,
@@ -79,7 +60,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
       provider,
       is_active: isActive,
       warmup_enabled: warmupEnabled,
-    } = req.body.filter || {};
+    } = req.body || {};
 
     let isFilterProvided = false;
     const where = { partner_id: partnerId, workspace_id: workspaceId, is_deleted: false };
@@ -114,16 +95,16 @@ export const bulkUpdateMailboxes = async(req, res) => {
     }
 
     if (!isFilterProvided) {
-      logger.warn('No filter provided for bulk update');
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk update.' });
+      logger.warn('No filter provided for bulk delete');
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk delete.' });
     }
 
-    // bulk update mailboxes matching the where condition with the updateData
-    const updatedMailboxes = await MailboxesModelHandler.updateMailboxes(updateData, where);
+    // bulk delete mailboxes
+    const deletedMailboxes = await MailboxesModelHandler.softDeleteMailbox(where);
 
     return res.status(StatusCodes.OK).send({
-      message: `${updatedMailboxes ? updatedMailboxes.length : 0} mailboxes updated successfully.`,
-      updated_mailboxes: updatedMailboxes
+      message: `${deletedMailboxes ? deletedMailboxes.length : 0} mailboxes deleted successfully.`,
+      deleted_mailboxes: deletedMailboxes
     });
   } catch (error) {
 

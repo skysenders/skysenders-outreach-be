@@ -78,7 +78,7 @@ export const updateMailboxes = async(data, where) => {
     // eslint-disable-next-line no-unused-vars
     const [_, updated] = await db.mailboxes.update(data, {
       where,
-      returning: ['id'],
+      returning: ['id', 'email'],
       raw: true
     });
 
@@ -92,15 +92,17 @@ export const updateMailboxes = async(data, where) => {
 
 export const softDeleteMailbox = async(where) => {
   try {
-    return await db.mailboxes.update(
+    // eslint-disable-next-line no-unused-vars
+    const [_, updated] = await db.mailboxes.update(
       {
         is_deleted: true,
         deleted_at: new Date(),
         is_active: false,
         updated_at: new Date()
       },
-      { where }
+      { where, returning: ['id', 'email'], }
     );
+    return updated;
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error soft deleting mailbox: ${err.message}`);
