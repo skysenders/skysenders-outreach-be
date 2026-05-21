@@ -282,25 +282,17 @@ export const WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX = 'workspace_custom_rate_limit:'
 
 export const GOOGLE_CONFIG = {
   REDIS_CACHE_KEY: 'partner_google_mailbox_config',
-  CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-  CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   // https://developers.google.com/gmail/api/auth/scopes
   MAIL_SCOPE: [
     'https://mail.google.com/',
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email'
   ],
-  REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
 };
 
 // MIcrosoft OAuth Config
 export const MICROSOFT_CONFIG = {
-  CLIENT_ID: process.env.MS_CLIENT_ID,
-  CLIENT_SECRET: process.env.MS_CLIENT_SECRET,
-  REDIRECT_URI: process.env.MS_REDIRECT_URI,
-
-  AUTHORITY: 'https://login.microsoftonline.com/common',
-
+  REDIS_CACHE_KEY: 'partner_microsoft_mailbox_config',
   MAIL_SCOPE: [
     'openid',
     'profile',

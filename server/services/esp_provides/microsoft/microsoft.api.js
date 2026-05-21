@@ -3,50 +3,36 @@ import { MICROSOFT_CONFIG } from '../../../config/constants';
 import { Container } from 'typedi';
 const qs = require('querystring');
 
-export const getMicrosoftOAuthClientByPartnerId = async(patnerId) => {
-  let clientId = MICROSOFT_CONFIG.CLIENT_ID;
-  let clientSecret = MICROSOFT_CONFIG.CLIENT_SECRET;
-  let beRedirectUrl = MICROSOFT_CONFIG.REDIRECT_URI;
+export const getMicrosoftOAuthClientByPartnerId = async(partnerId) => {
+  const redisClient = Container.get('redisClient');
   // if partnerId then check if the partner has nay google / outlook client secrete
-  if (patnerId) {
-    const redisClient = Container.get('redisClient');
-    const partnerConfig = await redisClient.get(`PARTNER_MICROSOFT_CONFIG_${patnerId}`);
-    if (partnerConfig) {
-      const config = JSON.parse(partnerConfig);
+  if (partnerId) {
+    const partnerMicrosoftConfig = await redisClient.get(`${MICROSOFT_CONFIG.REDIS_CACHE_KEY}:${partnerId}`);
+    if (partnerMicrosoftConfig) {
+      const config = JSON.parse(partnerMicrosoftConfig);
       if (config.CLIENT_ID && config.CLIENT_SECRET) {
-        clientId = config.CLIENT_ID;
-        clientSecret = config.CLIENT_SECRET;
-        beRedirectUrl = config.REDIRECT_URI;
+        return {
+          clientId: config.CLIENT_ID,
+          clientSecret: config.CLIENT_SECRET,
+          beRedirectUrl: config.REDIRECT_URI,
+        };
       }
     }
   }
-
-  return {
-    clientId,
-    clientSecret,
-    beRedirectUrl,
-  };
+  throw new Error('Microsoft OAuth configuration not found for partner');
 };
 
-export const getMicrosoftAuthUrl = async(userId, redirectUrl, partnerId) => {
+export const getMicrosoftAuthUrl = async(stateData, partnerId) => {
   const { clientId, beRedirectUrl } = await getMicrosoftOAuthClientByPartnerId(partnerId);
-
-  const state = JSON.stringify({
-    user_id: userId,
-    redirect_url: redirectUrl,
-    partner_id: partnerId
-  });
-
   const params = qs.stringify({
     client_id: clientId,
     response_type: 'code',
     redirect_uri: beRedirectUrl,
     response_mode: 'query',
     scope: MICROSOFT_CONFIG.MAIL_SCOPE.join(' '),
-    state: state,
+    state: JSON.stringify(stateData),
     prompt: 'consent'
   });
-
   return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
 };
 
@@ -135,16 +121,13 @@ export const getMicrosoftNormalisedData = (userData, tokens) => {
 
   return {
     email: userData.mail || userData.userPrincipalName || '',
-    first_name: userData.displayName || '',
-    last_name: '',
-    token: {
+    name: userData.displayName || '',
+    credentials: {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_at: expiry,
-      scope: tokens.scope,
-      provider: 'microsoft'
+      token_expiry: expiry,
+      last_token_refresh_at: new Date().toISOString()
     },
-    token_expiry_at: expiry
   };
 };
 

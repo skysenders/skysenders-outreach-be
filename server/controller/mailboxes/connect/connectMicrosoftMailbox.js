@@ -3,12 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
 import { FRONTEND_URL, MAILBOX_AUTH_TYPE, MAILBOX_TYPE } from '../../../config/constants';
 
-export const getGoogleAuthorizeUrl = async(req, res) => {
+export const getOutlookAuthorizeUrl = async(req, res) => {
   const logger = Container.get('logger');
-  const GoogleApiServices = Container.get('GoogleApiServices');
+  const MicrosoftApiServices = Container.get('MicrosoftApiServices');
   const { redirect_uri: redirectUrl } = req.query;
   try {
-    const authorizeUrl = await GoogleApiServices.getAuthUrl({
+    const authorizeUrl = await MicrosoftApiServices.getMicrosoftAuthUrl({
       userId: req.user.id,
       redirectUrl,
       partnerId: req.user.tenant_id,
@@ -18,20 +18,20 @@ export const getGoogleAuthorizeUrl = async(req, res) => {
     // redirect to Google authentication URL
     return res.redirect(authorizeUrl);
   } catch (error) {
-    logger.error('Error fetching Google authorize URL: %o', error);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ error: 'Failed to fetch Google authorize URL' });
+    logger.error('Error fetching Outlook authorize URL: %o', error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: error.message || 'Failed to fetch Outlook authorize URL' });
   }
 };
 
-export const handleGoogleOAuthCallback = async(req, res) => {
+export const handleOutlookOAuthCallback = async(req, res) => {
   const logger = Container.get('logger');
-  const GoogleApiServices = Container.get('GoogleApiServices');
+  const MicrosoftApiServices = Container.get('MicrosoftApiServices');
   const ConnectESPMailboxServices = Container.get('ConnectESPMailboxServices');
 
   try {
     const { code, state } = req.query;
-    let userId = 0, workspaceId, partnerId, redirectUrl;
-
+    let userId, workspaceId, partnerId;
+    let redirectUrl = FRONTEND_URL;
     // extract user_id from the state parameter
     if (state) {
       const stateData = JSON.parse(state);
@@ -40,16 +40,18 @@ export const handleGoogleOAuthCallback = async(req, res) => {
       workspaceId = stateData.workspaceId || null;
       redirectUrl = stateData.redirectUrl || FRONTEND_URL;
     }
-    logger.info(`Received Google OAuth callback for user ID - ${userId}`);
-    const tokens = await GoogleApiServices.handleGoogleCallback(code, partnerId);
+    logger.info(`Received Outlook OAuth callback for user ID - ${userId}`);
+    const tokens = await MicrosoftApiServices.handleMicrosoftCallback(code, partnerId);
 
-    logger.info(`Google tokens obtained for user ID - ${userId}`);
-    const googleUser = await GoogleApiServices.verify(tokens.id_token, partnerId);
+    logger.info(`Outlook tokens obtained for user ID - ${userId}`);
+    const userData = await MicrosoftApiServices.getMicrosoftUserDetails(tokens);
 
-    const providerData = GoogleApiServices.getNormalisedData(googleUser, tokens);
+    logger.info(`Outlook user data fetched for user ID - ${userId}, email - ${userData.mail}`);
+    const providerData = MicrosoftApiServices.getMicrosoftNormalisedData(userData, tokens);
     const email = providerData.email;
 
-    logger.info(`Connecting mailbox for user ID - ${userId}, email - ${email}`);
+    logger.info(`Connecting mailbox for user ID - ${userId}, email - ${providerData.email}`);
+
     const [ success, error ] = await ConnectESPMailboxServices.connectMailbox(
       { userId, partnerId, workspaceId },
       email,
@@ -64,7 +66,7 @@ export const handleGoogleOAuthCallback = async(req, res) => {
     }
     return res.redirect(`${redirectUrl}/app/mailbox/${success.mailbox.id}/warmup?connectionSuccess=true&email=${email}&mailbox_id=${success.mailbox.id}`);
   } catch (error) {
-    logger.error(`Error handling Google OAuth callback: ${error}`);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: error.message || 'Failed to handle Google OAuth callback' });
+    logger.error(`Error handling Outlook OAuth callback: ${error}`);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ error: 'Failed to handle Outlook OAuth callback' });
   }
 };

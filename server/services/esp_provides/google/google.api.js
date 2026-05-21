@@ -123,15 +123,13 @@ export const getNormalisedData = (googleUser, tokens) => {
   try {
     return {
       email: googleUser.email.toLowerCase(),
-      first_name: googleUser.family_name && googleUser.given_name ? googleUser.given_name : googleUser.name,
-      last_name: googleUser.family_name && googleUser.given_name ? googleUser.family_name : '',
+      name: googleUser.family_name && googleUser.given_name ? `${googleUser.given_name} ${googleUser.family_name}` : googleUser.name,
       credentials: {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-        token_expiry: tokens.expiry_date,
+        token_expiry: new Date(tokens.expiry_date).toISOString(),
         last_token_refresh_at: new Date().toISOString()
       },
-      token_expiry_at: new Date(tokens.expiry_date).toISOString(),
     };
   } catch (e) {
     logger.error(`Exception occurred while normalising google user data - ${e}`);

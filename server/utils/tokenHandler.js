@@ -34,6 +34,7 @@ export const generate = async(user) => {
         name: user.name,
         uuid: user.uuid,
         tenant_id: user.partner_id,
+        is_client: user.is_client || false
       },
       type: 'user',
       'https://hasura.io/jwt/claims': {

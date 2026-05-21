@@ -118,7 +118,8 @@ export const userLogin = async(req, res) => {
     // generate token with user
     const token = await TokenHandler.generate(userDBData);
 
-    if (req.body.cs_email && req.body.cs_email_verified) {
+    // for not cs admin user login, create a new session for the user and set refresh token in http only cookie
+    if (!(req.body.cs_email && req.body.cs_email_verified)) {
       // create a new session for the user
       UserSessionModelHandler.createUserSession({
         user_id: userDBData.id,

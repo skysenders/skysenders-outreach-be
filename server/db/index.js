@@ -41,7 +41,7 @@ export const connect = async() => {
       ssl: true,
       hooks: {
         afterConnect: (connection, config) => {
-          console.log(`[CONNECTED TO] ${config.host}:${config.port}`);
+          Logger.info(`[CONNECTED TO] ${config.host}:${config.port}`);
         }
       },
       dialectOptions: {

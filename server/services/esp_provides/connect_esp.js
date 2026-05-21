@@ -26,7 +26,7 @@ export const connectMailbox = async({ mailboxId, userId, partnerId, workspaceId 
       } ];
     }
 
-    if (existingMailbox && existingMailbox.id !== mailboxId) {
+    if (existingMailbox && mailboxId && existingMailbox.id !== mailboxId) {
       return [ null, {
         message: 'A mailbox with this email already exists in the workspace. Please use a different email or use the right "id" to update it.',
         status_code: StatusCodes.BAD_REQUEST
