@@ -125,7 +125,7 @@ export const inviteWorkspaceClients = async(req, res) => {
           permission: permission || WORKSPACE_ROLE_PERMISSIONS.CLIENT,
           status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED,
           invited_by: user.id,
-          is_active: false
+          is_active: true
         });
 
         invited.push({ email, status: WORKSPACE_USER_MAPPING_STATUS.INVITATION_ACCEPTED });

@@ -13,7 +13,7 @@ import { inviteWorkspaceClients } from '../../controller/workspaces/inviteWorksp
 import { joinWorkspaceWithToken, joinWorkspaceWithSlug } from '../../controller/workspaces/joinWorkspaceWithToken';
 import { updateWorkspaceMember } from '../../controller/workspaces/updateWorkspaceMember';
 import { updateWorkspaceClient } from '../../controller/workspaces/updateWorkspaceClient';
-import { getWorkspaceMembers } from '../../controller/workspaces/getWorkspaceMembers';
+import { getWorkspaceMembers, getWorkspaceClients } from '../../controller/workspaces/getWorkspaceMembers';
 import { leaveWorkspace } from '../../controller/workspaces/leaveWorkspace';
 import { deleteWorkspaceMember } from '../../controller/workspaces/deleteWorkspaceMember';
 import { deleteWorkspaceClient } from '../../controller/workspaces/deleteWorkspaceClient';
@@ -888,7 +888,7 @@ export default async function workspaceRoutes(fastify) {
           type: 'object',
           properties: {
             search_text: { type: 'string', description: 'Text to search members by name or email' },
-            role: { type: 'array', items: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'] }, description: 'Filter members by role' },
+            role: { type: 'array', items: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER'] }, description: 'Filter members by role' },
             status: { type: 'array', items: { type: 'string', enum: ['invitation_pending', 'invitation_accepted', 'invitation_expired', 'deleted', 'left'] }, description: 'Filter members by status' },
           },
         },
@@ -930,6 +930,60 @@ export default async function workspaceRoutes(fastify) {
       }
     },
     getWorkspaceMembers
+  );
+
+  // Route to list clients of a workspace
+  fastify.get('/clients',
+    {
+      schema: {
+        tags: ['Workspaces'],
+        summary: 'List workspace clients',
+        description: 'API endpoint to list all clients of a workspace',
+        operationId: 'getWorkspaceClients',
+        querystring: {
+          type: 'object',
+          properties: {
+            search_text: { type: 'string', description: 'Text to search clients by name or email' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Workspace clients retrieved successfully',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                user_id: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                permission: { type: 'object', additionalProperties: true },
+                status: { type: 'string' },
+                invited_by: { type: 'integer' },
+                invited_at: { type: 'string' },
+                is_active: { type: 'boolean' },
+                joined_at: { type: 'string', format: 'date-time' }
+              }
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getWorkspaceClients
   );
 
   // delete a team member from workspace
