@@ -10,6 +10,7 @@ import fastifyJwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import { JWT_ALLOWED_URLS, JWT, APP, PORT } from './config/constants';
 import logger from './loaders/logger';
+import { registerProxyRoutes } from './api/routes/proxy/index.js';
 
 loaderInstance();
 const Logger = Container.get('logger');
@@ -40,6 +41,8 @@ export const startFastifyServer = async() => {
   await initialize(fastify, redisClient);
   // Register the routes
   registerRoutes(fastify);
+  // Register proxy routes
+  registerProxyRoutes(fastify);
 
   // Register JWT plugin
   fastify.register(fastifyJwt, {

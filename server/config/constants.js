@@ -115,6 +115,8 @@ export const JWT_ALLOWED_URLS = {
   '/api/mailboxes/connect/gmail/callback': true,
   // mailboxes outlook oauth
   '/api/mailboxes/connect/outlook/callback': true,
+  // fetch mailboxes for internal use
+  '/api/mailboxes/internal/fetch-all': true,
 };
 
 
@@ -144,6 +146,8 @@ export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
   '/api/mailboxes/google/oauth-callback': true,
   // mailboxes outlook oauth
   '/api/mailboxes/outlook/oauth-callback': true,
+  // fetch mailboxes for internal use
+  '/api/mailboxes/internal/fetch-all': true,
 };
 
 export const RESTRICTED_API_URLS = [
@@ -422,3 +426,5 @@ export const WORKSPACE_ROLE_PERMISSIONS = {
     canManageWorkspace: false,
   },
 };
+
+export const WARMUP_PROXY_URL = process.env.WARMUP_PROXY_URL || 'http://localhost:3001';

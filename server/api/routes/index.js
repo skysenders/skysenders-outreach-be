@@ -100,6 +100,8 @@ export const initialize = async(fastifyApp, redisClient) => {
       exposeRoute: true,
       tags: [
         { name: 'Workspaces', description: 'Endpoints for managing workspaces' },
+        { name: 'Domains', description: 'Endpoints for managing domains' },
+        { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
       ],
       docExpansion: 'none',
       deepLinking: true,
@@ -133,8 +135,8 @@ export const registerRoutes = async(fastifyApp) => {
 
   // register public v1 api routes
   fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
-  fastifyApp.register(workspaces, { prefix: '/api/v1/domains' });
-  fastifyApp.register(workspaces, { prefix: '/api/v1/mailboxes' });
+  fastifyApp.register(domains, { prefix: '/api/v1/domains' });
+  fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
 
   // Custom Swagger route to set host dynamically
   fastify.get('/custom-whitelabel-api-docs', async(req) => {

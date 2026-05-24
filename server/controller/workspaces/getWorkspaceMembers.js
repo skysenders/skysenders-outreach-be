@@ -27,7 +27,7 @@ export const getWorkspaceMembers = async(req, res) => {
       });
     }
 
-    const members = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspaceId, req.query);
+    const members = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspaceId, req.query, true);
 
     // 3. Return Data
     return res.status(StatusCodes.OK).send(members);

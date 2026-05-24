@@ -1,4 +1,4 @@
-import { listMailboxes } from '../../controller/mailboxes/listMailboxes';
+import { listMailboxes, listMailboxesInternal } from '../../controller/mailboxes/listMailboxes';
 import { fetchMailboxById } from '../../controller/mailboxes/fetchMailboxById';
 import { updateMailboxById, bulkUpdateMailboxes } from '../../controller/mailboxes/updateMailboxes';
 import { deleteMailboxById, bulkDeleteMailboxes } from '../../controller/mailboxes/deleteMailboxes';
@@ -73,6 +73,57 @@ export default async function mailboxRoutes(fastify) {
       }
     },
     listMailboxes
+  );
+  // list mailboxes with search and filters
+  fastify.get(
+    '/internal/fetch-all',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'List mailboxes for internal use',
+        description: 'Fetch all mailboxes for a workspace for internal use',
+        operationId: 'listMailboxesInternal',
+        hide: true,
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        querystring: {
+          type: 'object',
+          required: ['partner_id', 'workspace_id'],
+          properties: {
+            partner_id: { type: 'number' },
+            workspace_id: { type: 'number' },
+            search_text: { type: 'string', maxLength: 255 },
+            mailbox_ids: { type: 'string' },
+          }
+        },
+        response: {
+          200: {
+            description: 'Mailboxes fetched successfully',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                email: { type: 'string' },
+                provider: { type: 'string' },
+              }
+            }
+          },
+          500: {
+            description: 'Failed to fetch mailboxes',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    listMailboxesInternal
   );
   // fetch mailbox by id
   fastify.get(

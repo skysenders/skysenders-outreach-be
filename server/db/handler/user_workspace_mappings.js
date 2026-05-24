@@ -72,7 +72,7 @@ export const removeWorkspaceMember = async(where) => {
   }
 };
 
-export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searchText, userId, role, status }) => {
+export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searchText, userId, role, status }, ignoreClient) => {
   let filterWhereQuery = ' AND uwm.is_deleted = false';
   const replacements = { workspaceId };
 
@@ -100,6 +100,11 @@ export const getWorkspaceMemberDetails = async(workspaceId, { search_text: searc
   if (role?.length) {
     filterWhereQuery += ' AND uwm.role IN (:role)';
     replacements.role = role;
+  }
+
+  if (ignoreClient) {
+    filterWhereQuery += ' AND uwm.role != :clientRole';
+    replacements.clientRole = 'CLIENT';
   }
 
   const query = `

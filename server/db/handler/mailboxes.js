@@ -36,7 +36,7 @@ export const getMailboxWithCredsByWhere = async({ partnerId, workspaceId, id }) 
   }
 };
 
-export const getAllMailboxesByWhere = async(where, offset = 0, limit = 1000, order = []) => {
+export const getAllMailboxesByWhere = async(where, offset = 0, limit = 1000, order = [['id', 'DESC']]) => {
   try {
     return await db.mailboxes.findAll({ where, raw: true, offset, limit, order });
   } catch (err) {
