@@ -30,10 +30,8 @@ export const handleMicrosoftOAuthCallback = async(req, res) => {
 
     const { user, jwtToken } = await socialLoginOrSignup(userData, token, req.headers['user-agent'] || '', req.ip || '');
 
-    const originHostname = new URL(redirectUrl).hostname;
-
     // set refresh token in http only cookie
-    TokenHandler.setRefreshTokenCookie(res, jwtToken.refresh_token, originHostname);
+    TokenHandler.setRefreshTokenCookie(res, jwtToken.refresh_token, redirectUrl);
 
     // redirect to frontend with user data and token
     const redirectWithParams = `${redirectUrl}?user=${encodeURIComponent(JSON.stringify(user))}&token=${encodeURIComponent(jwtToken.access_token)}`;
