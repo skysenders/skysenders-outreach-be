@@ -403,3 +403,33 @@ export const verifyUserByUuid = async(req, res) => {
   }
 };
 
+export const fetchUserInfo = async(req, res) => {
+  try {
+    const userId = req.user.id;
+    const partnerId = req.user.tenant_id;
+
+    const UserModelHandler = Container.get('UserModelHandler');
+
+    const user = await UserModelHandler.getUserByWhere({
+      id: userId,
+      partner_id: partnerId
+    });
+
+    if (!user) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .send({ message: 'User not found' });
+    }
+
+    // delete password from user object before sending response
+    delete user.password;
+
+    return res
+      .status(StatusCodes.OK)
+      .send(user);
+  } catch (error) {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .send({ message: `Server error: ${error.message}` });
+  }
+};

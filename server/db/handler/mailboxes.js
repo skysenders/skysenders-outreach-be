@@ -12,12 +12,44 @@ export const getMailboxByWhere = async(where) => {
   }
 };
 
+export const countMailboxesByWhere = async(where) => {
+  try {
+    return await db.mailboxes.count({ where });
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error counting mailboxes: ${err.message}`);
+    throw err;
+  }
+};
+
 export const getMailboxWithCredsByWhere = async({ partnerId, workspaceId, id }) => {
   try {
     const mailbox = await db.sequelize.query(
       `SELECT m.*, 
       c.smtp_host, c.smtp_port, c.smtp_username, c.smtp_password, c.smtp_secure,
       c.imap_host, c.imap_port, c.imap_username, c.imap_password, c.imap_secure
+      FROM mailboxes m
+      JOIN mailbox_credentials c ON m.id = c.mailbox_id
+      WHERE m.partner_id = :partner_id AND m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false
+      LIMIT 1`,
+      {
+        replacements: { partner_id: partnerId, workspace_id: workspaceId, id },
+        type: QueryTypes.SELECT,
+        raw: true
+      }
+    );
+    return mailbox[0];
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error fetching mailbox: ${err.message}`);
+    throw err;
+  }
+};
+
+export const getMailboxAndAllCredsByWhere = async({ partnerId, workspaceId, id }) => {
+  try {
+    const mailbox = await db.sequelize.query(
+      `SELECT m.*, c.*
       FROM mailboxes m
       JOIN mailbox_credentials c ON m.id = c.mailbox_id
       WHERE m.partner_id = :partner_id AND m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false

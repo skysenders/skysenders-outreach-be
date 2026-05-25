@@ -23,13 +23,21 @@ export const listDomains = async(req, res) => {
 
   try {
 
-    const domains = await DomainsModelHandler.getAllDomainsByWhere({
+    const whereClause = {
       partner_id: req.user.tenant_id,
       workspace_id: workspaceId,
-      domain_name: { [Op.iLike]: `%${searchText}%` },
-    }, offset, limit);
+    };
 
-    return res.status(StatusCodes.OK).send(domains);
+    if (searchText) {
+      whereClause.domain_name = { [Op.iLike]: `%${searchText}%` };
+    }
+
+    const [domains, count] = await Promise.all([
+      DomainsModelHandler.getAllDomainsByWhere(whereClause, offset, limit),
+      DomainsModelHandler.countDomainsByWhere(whereClause)
+    ]);
+
+    return res.status(StatusCodes.OK).send({ count, offset, limit, has_next: offset + limit < count, has_prev: offset > 0, data: domains });
 
   } catch (error) {
     logger.error(`Error listing domains: ${error.message}`);

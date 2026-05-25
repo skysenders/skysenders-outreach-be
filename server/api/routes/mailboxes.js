@@ -40,25 +40,35 @@ export default async function mailboxRoutes(fastify) {
         response: {
           200: {
             description: 'Mailboxes fetched successfully',
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'number' },
-                domain_id: { type: 'number' },
-                name: { type: 'string' },
-                email: { type: 'string' },
-                provider: { type: 'string' },
-                auth_type: { type: 'string' },
-                is_authenticated: { type: 'boolean' },
-                is_active: { type: 'boolean' },
-                warmup_enabled: { type: 'boolean' },
-                sending_limit_per_day: { type: 'number' },
-                minimum_time_gap_mins: { type: 'number' },
-                health_score: { type: 'number' },
-                last_connected_at: { type: 'string' },
-                last_sync_at: { type: 'string' },
-                created_at: { type: 'string' }
+            type: 'object',
+            properties: {
+              count: { type: 'integer' },
+              offset: { type: 'integer' },
+              limit: { type: 'integer' },
+              has_next: { type: 'boolean' },
+              has_prev: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    domain_id: { type: 'number' },
+                    name: { type: 'string' },
+                    email: { type: 'string' },
+                    provider: { type: 'string' },
+                    auth_type: { type: 'string' },
+                    is_authenticated: { type: 'boolean' },
+                    is_active: { type: 'boolean' },
+                    warmup_enabled: { type: 'boolean' },
+                    sending_limit_per_day: { type: 'number' },
+                    minimum_time_gap_mins: { type: 'number' },
+                    health_score: { type: 'number' },
+                    last_connected_at: { type: 'string' },
+                    last_sync_at: { type: 'string' },
+                    created_at: { type: 'string' }
+                  }
+                }
               }
             }
           },

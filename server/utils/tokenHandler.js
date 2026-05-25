@@ -156,6 +156,14 @@ export const clearRefreshTokenCookie = (res, reqOrigin) => {
       path: '/',
       domain: '.skysenders.ai',
     });
+    // clear refresh token from http only cookie
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.ai',
+    });
   }
 
   if (isLocalhost) {

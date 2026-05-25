@@ -21,6 +21,16 @@ export const getAllDomainsByWhere = async(where, offset, limit) => {
   }
 };
 
+export const countDomainsByWhere = async(where) => {
+  try {
+    return await db.domains.count({ where });
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error counting domains: ${err.message}`);
+    throw err;
+  }
+};
+
 export const createDomain = async(data) => {
   try {
     return await db.domains.create(data);

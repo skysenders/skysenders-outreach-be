@@ -102,9 +102,12 @@ export const listMailboxes = async(req, res) => {
       where.warmup_enabled = warmupEnabled;
     }
 
-    const mailboxes = await MailboxesModelHandler.getAllMailboxesByWhere(where, offset, limit, [['id', 'DESC']]);
+    const [mailboxes, count] = await Promise.all([
+      MailboxesModelHandler.getAllMailboxesByWhere(where, offset, limit, [['id', 'DESC']]),
+      MailboxesModelHandler.countMailboxesByWhere(where)
+    ]);
 
-    return res.status(StatusCodes.OK).send(mailboxes);
+    return res.status(StatusCodes.OK).send({ count, offset, limit, has_next: offset + limit < count, has_prev: offset > 0, data: mailboxes });
 
   } catch (error) {
 

@@ -33,23 +33,33 @@ export default async function domainsRoutes(fastify) {
         },
         response: {
           200: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'number' },
-                domain_name: { type: 'string' },
-                is_verified: { type: 'boolean' },
-                provider: { type: 'string' },
-                health_score: { type: 'number' },
-                spf_pass: { type: 'boolean' },
-                dkim_pass: { type: 'boolean' },
-                dmarc_pass: { type: 'boolean' },
-                mx_pass: { type: 'boolean' },
-                tracking_domain_pass: { type: 'boolean' },
-                created_at: { type: 'string' },
-                dns_last_checked_at: { type: 'string' },
-                dns_errors: { type: 'object', additionalProperties: true }
+            type: 'object',
+            properties: {
+              count: { type: 'integer' },
+              offset: { type: 'integer' },
+              limit: { type: 'integer' },
+              has_next: { type: 'boolean' },
+              has_prev: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    domain_name: { type: 'string' },
+                    is_verified: { type: 'boolean' },
+                    provider: { type: 'string' },
+                    health_score: { type: 'number' },
+                    spf_pass: { type: 'boolean' },
+                    dkim_pass: { type: 'boolean' },
+                    dmarc_pass: { type: 'boolean' },
+                    mx_pass: { type: 'boolean' },
+                    tracking_domain_pass: { type: 'boolean' },
+                    created_at: { type: 'string' },
+                    dns_last_checked_at: { type: 'string' },
+                    dns_errors: { type: 'object', additionalProperties: true }
+                  }
+                }
               }
             }
           }

@@ -5,6 +5,7 @@ import {
   userMagicLinkLogin,
   verifyUserByUuid,
   resendUserActivationLink,
+  fetchUserInfo
 } from '../../controller/users/login';
 
 import {
@@ -416,6 +417,40 @@ export default async function authRoutes(fastify) {
     },
     logoutUser
   );
+
+  // /me api to fetch user details for loggin user
+  fastify.get(
+    '/me',
+    {
+      schema: {
+        tags: ['Users'], // Group under "Product" tag
+        summary: 'Get logged in user details',
+        description: 'API endpoint to get details of the logged in user',
+        operationId: 'getLoggedInUserDetails',
+        response: {
+          200: {
+            description: 'User details fetched successfully',
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              uuid: { type: 'string' },
+              email: { type: 'string' },
+              name: { type: 'string' },
+              status: { type: 'string' },
+              profile_url: { type: 'string' },
+              timezone: { type: 'string' },
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, fetchUserInfo);
 
   // magic link login via user uuid
   fastify.get(
