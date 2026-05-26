@@ -99,6 +99,7 @@ export const initialize = async(fastifyApp, redisClient) => {
       produces: ['application/json'],
       exposeRoute: true,
       tags: [
+        { name: 'Users', description: 'Endpoints for managing users' },
         { name: 'Workspaces', description: 'Endpoints for managing workspaces' },
         { name: 'Domains', description: 'Endpoints for managing domains' },
         { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
@@ -134,6 +135,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
 
   // register public v1 api routes
+  fastifyApp.register(users, { prefix: '/api/v1/users' });
   fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
   fastifyApp.register(domains, { prefix: '/api/v1/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });

@@ -51,7 +51,7 @@ export const startFastifyServer = async() => {
 
   // middleware to skip swagger documentation other than /api/v1
   fastify.addHook('onRoute', (routeOptions) => {
-    if (!routeOptions.url.startsWith('/api/v1')) {
+    if (!routeOptions.url.startsWith('/api/v1') || routeOptions.url.includes('/warmup')) {
       routeOptions.schema = routeOptions.schema || {};
       routeOptions.schema.hide = true;
     }

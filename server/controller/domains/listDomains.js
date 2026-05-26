@@ -17,6 +17,7 @@ export const listDomains = async(req, res) => {
 
   const {
     search_text: searchText = '',
+    provider,
     offset = 0,
     limit = 20
   } = req.query;
@@ -30,6 +31,10 @@ export const listDomains = async(req, res) => {
 
     if (searchText) {
       whereClause.domain_name = { [Op.iLike]: `%${searchText}%` };
+    }
+
+    if (provider) {
+      whereClause.provider = provider;
     }
 
     const [domains, count] = await Promise.all([

@@ -122,3 +122,23 @@ export const createNewDomain = async(domain) => {
     throw err;
   }
 };
+
+export const softDeleteDomain = async(where) => {
+  try {
+    // eslint-disable-next-line no-unused-vars
+    const [_, updated] = await db.domains.update(
+      {
+        is_deleted: true,
+        deleted_at: new Date(),
+        is_active: false,
+        updated_at: new Date()
+      },
+      { where, returning: ['id', 'domain_name'], }
+    );
+    return updated;
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error soft deleting domain: ${err.message}`);
+    throw err;
+  }
+};

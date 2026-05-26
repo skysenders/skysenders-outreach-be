@@ -55,7 +55,7 @@ export const handleOutlookOAuthCallback = async(req, res) => {
     const [ success, error ] = await ConnectESPMailboxServices.connectMailbox(
       { userId, partnerId, workspaceId },
       email,
-      MAILBOX_TYPE.GMAIL,
+      MAILBOX_TYPE.OUTLOOK,
       MAILBOX_AUTH_TYPE.OAUTH,
       providerData
     );

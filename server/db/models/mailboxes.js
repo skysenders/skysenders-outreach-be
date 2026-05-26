@@ -70,7 +70,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
+    warmup_first_started_at: {
+      type: DataTypes.DATE,
+    },
     sending_limit_per_day: {
+      type: DataTypes.INTEGER,
+      defaultValue: 40
+    },
+    emails_sent_today: {
       type: DataTypes.INTEGER,
       defaultValue: 40
     },

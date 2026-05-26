@@ -1,8 +1,11 @@
 import { listDomains } from '../../controller/domains/listDomains';
 import { getDomainById } from '../../controller/domains/getDomainById';
 import { updateDomainDetails } from '../../controller/domains/updateDomainDetails';
-import { deleteDomainById } from '../../controller/domains/deleteDomainById';
+import { deleteDomainById, bulkDeleteDomains } from '../../controller/domains/deleteDomainById';
 import { checkDomainDns } from '../../controller/domains/checkDomainDns';
+
+// cosntants
+import { MAILBOX_TYPE } from '../../config/constants';
 
 export default async function domainsRoutes(fastify) {
 
@@ -27,6 +30,7 @@ export default async function domainsRoutes(fastify) {
           type: 'object',
           properties: {
             search_text: { type: 'string' },
+            provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
             offset: { type: 'integer', minimum: 0, default: 0 },
             limit: { type: 'integer', maximum: 100, default: 20 }
           }
@@ -246,5 +250,46 @@ export default async function domainsRoutes(fastify) {
       }
     },
     checkDomainDns
+  );
+  // route to bulk delete domains by IDs
+  fastify.put(
+    '/bulk-delete',
+    {
+      schema: {
+        tags: ['Domains'],
+        summary: 'Bulk delete domains',
+        description: 'Deletes multiple domains by their IDs for the current workspace',
+        operationId: 'bulkDeleteDomains',
+        body: {
+          type: 'object',
+          properties: {
+            ids: {
+              type: 'array', items: { type: 'integer' } },
+            search_text: { type: 'string', maxLength: 255 },
+            provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
+          }
+        },
+        response: {
+          200: {
+            description: 'Domain(s) delete successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              deleted_domains: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    domain_name: { type: 'string' },
+                  }
+                }
+              }
+            }
+          },
+        }
+      }
+    },
+    bulkDeleteDomains
   );
 }

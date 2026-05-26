@@ -40,6 +40,10 @@ export const updateMailboxById = async(req, res) => {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Mailbox not found.' });
     }
 
+    if (req.body.warmup_enabled && !updateData.warmup_first_started_at) {
+      await MailboxesModelHandler.updateMailbox({ warmup_first_started_at: new Date().toISOString() }, where);
+    }
+
     return res.status(StatusCodes.OK).send(mailbox);
   } catch (error) {
 
@@ -120,6 +124,14 @@ export const bulkUpdateMailboxes = async(req, res) => {
 
     // bulk update mailboxes matching the where condition with the updateData
     const updatedMailboxes = await MailboxesModelHandler.updateMailboxes(updateData, where);
+
+    if (warmupEnabled) {
+      const firstTimeWarmupEnabledMailboxes = updatedMailboxes.filter(mailbox => mailbox.warmup_enabled && !mailbox.warmup_first_started_at);
+      const firstTimeWarmupEnabledMailboxIds = firstTimeWarmupEnabledMailboxes.map(mailbox => mailbox.id);
+      if (firstTimeWarmupEnabledMailboxIds.length > 0) {
+        await MailboxesModelHandler.updateMailboxes({ warmup_first_started_at: new Date().toISOString() }, { id: firstTimeWarmupEnabledMailboxIds });
+      }
+    }
 
     return res.status(StatusCodes.OK).send({
       message: `${updatedMailboxes ? updatedMailboxes.length : 0} mailboxes updated successfully.`,
