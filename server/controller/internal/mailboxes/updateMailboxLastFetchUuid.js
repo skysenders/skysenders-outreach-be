@@ -53,7 +53,7 @@ export const updateMailboxLastFetchUuid = async(req, res) => {
     const mailboxIdPos = bindValues.length - 1;
 
     const queryString = `
-      UPDATE domain_mailboxes_sync_state 
+      UPDATE mailboxes_sync_state 
       SET ${updates.join(', ')} 
       WHERE partner_id = $${partnerIdPos} AND workspace_id = $${workspaceIdPos} AND mailbox_id = $${mailboxIdPos}
     `;

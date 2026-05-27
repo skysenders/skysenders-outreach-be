@@ -31,7 +31,7 @@ export const fetchMailboxesForSync = async(req, reply) => {
     const [rows] = await db.sequelize.query(
       `
       WITH cte AS (
-        SELECT mailbox_id, partner_id, workspace_id, esp_type
+        SELECT mailbox_id, partner_id, workspace_id, provider
         FROM mailboxes_sync_state
         WHERE last_checked_at <= now() - interval '30 minutes'
         ORDER BY last_checked_at NULLS FIRST
@@ -42,7 +42,7 @@ export const fetchMailboxesForSync = async(req, reply) => {
       SET last_checked_at = now()
       FROM cte
       WHERE d.mailbox_id = cte.mailbox_id
-      RETURNING d.partner_id, d.workspace_id, d.mailbox_id, d.esp_type;
+      RETURNING d.partner_id, d.workspace_id, d.mailbox_id, d.provider;
       `,
       { type: QueryTypes.UPDATE }
     );

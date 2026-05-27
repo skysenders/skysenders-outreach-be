@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import Container from 'typedi';
-import { fetchNextWarmupAccount } from '../../../utils/redis-handler/redis-warmup-pool-cache';
 import { AUTH_TOKEN } from '../../../config/constants';
+import { makeWarmupProxyAPICall } from '../../../api/routes/proxy/warmup-proxy';
 
 export const fetchRandomWarmupMailbox = async(req, res) => {
 
@@ -17,29 +17,7 @@ export const fetchRandomWarmupMailbox = async(req, res) => {
     }
 
     // fetch next warmup mailbox from Redis pool
-    const warmupAccountDetails = await fetchNextWarmupAccount('wp');
-
-    if (!warmupAccountDetails) {
-      return res.status(StatusCodes.NOT_FOUND).send({
-        message: 'No warmup mailbox found in the pool'
-      });
-    }
-
-    // check if the fetched warmupAccountDetails matches the same with req.query.user_id and mailbox_id
-    // if so then move to next warmup account in the pool and fetch details
-    // eslint-disable-next-line eqeqeq
-    if (warmupAccountDetails.workspaceId == req.query.workspace_id && warmupAccountDetails.mailboxId == req.query.mailbox_id) {
-      logger.info('Fetched warmup account details from pool matches with the request query params, fetching next warmup account details from pool..', req.query.mailbox_id);
-      const nextWarmupAccountDetails = await fetchNextWarmupAccount('wp');
-      if (nextWarmupAccountDetails) {
-        warmupAccountDetails.workspaceId = nextWarmupAccountDetails.workspaceId;
-        warmupAccountDetails.mailboxId = nextWarmupAccountDetails.mailboxId;
-      } else {
-        return res.status(StatusCodes.NOT_FOUND).send({
-          message: 'No more warmup mailbox found in the pool'
-        });
-      }
-    }
+    const warmupAccountDetails = await makeWarmupProxyAPICall(`/api/internal/fetch-next-mailbox-from-warmup-pool?auth-token=${AUTH_TOKEN}`, 'GET');
 
     /**
      * Step 2: Fetch mailbox details

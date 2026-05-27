@@ -16,9 +16,10 @@ import mailboxes from './mailboxes';
 import Logger from '../../loaders/logger';
 
 import { StatusCodes } from 'http-status-codes';
-import { BE_URL } from '../../config/constants';
+import { BE_URL, WARMUP_PROXY_URL } from '../../config/constants';
 
 import { apiRateLimiterMiddleware, trackAPIstatisticsMiddleware } from '../../middleware/track-api-requests';
+import axios from 'axios';
 
 // hooks
 
@@ -117,6 +118,7 @@ export const registerRoutes = async(fastifyApp) => {
     uiConfig: {
       docExpansion: 'none',
       deepLinking: true,
+      urls: [{ 'url': `${BE_URL}/docs/merged`, name: 'Outreach API Docs' }],
     },
   });
 
@@ -140,12 +142,46 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(domains, { prefix: '/api/v1/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
 
+  const getMergeSpec = async() => {
+    const localSpec = fastify.swagger();
+
+    // Fetch remote spec
+    const response = await axios.get(`${WARMUP_PROXY_URL}/docs/json`);
+    const remoteSpec = await response.data;
+
+    // Create a clean base clone of your local spec
+    const combinedSpec = JSON.parse(JSON.stringify(localSpec));
+
+    // 1. Move Remote Schemas over with a prefix (e.g., "Remote_User" instead of "User")
+    if (remoteSpec.components && remoteSpec.components.schemas) {
+      combinedSpec.components = combinedSpec.components || {};
+      combinedSpec.components.schemas = combinedSpec.components.schemas || {};
+
+      for (const [schemaName, schemaDefinition] of Object.entries(remoteSpec.components.schemas)) {
+        combinedSpec.components.schemas[`Remote_${schemaName}`] = schemaDefinition;
+      }
+    }
+
+    // 2. Move Remote Paths over with a prefix to prevent route overwrites
+    if (remoteSpec.paths) {
+      for (const [pathName, pathDefinition] of Object.entries(remoteSpec.paths)) {
+
+        // Convert any internal $ref pointers inside the remote paths to point to the new 'Remote_' schemas
+        let pathString = JSON.stringify(pathDefinition);
+        // pathString = pathString.replace(/#\/components\/schemas\//g, '#/components/schemas/Remote_');
+        const updatedPathDefinition = JSON.parse(pathString);
+
+        // Add to combined spec under a prefixed path (e.g., /remote-api/users)
+        combinedSpec.paths[`${pathName}`] = updatedPathDefinition;
+      }
+    }
+    return combinedSpec;
+  };
+
   // Custom Swagger route to set host dynamically
   fastify.get('/custom-whitelabel-api-docs', async(req) => {
-    const originalSpec = fastify.swagger();
-    const spec = JSON.parse(JSON.stringify(originalSpec)); // deep clone
-    // const host = req.query.hostname;
-    const host = 'apiruntime.com';
+    const spec = await getMergeSpec();
+    const host = req.query.hostname || 'apiruntime.com';
     if (host) {
       spec.host = host; // safely modify per request
       // change the contact info
@@ -153,10 +189,15 @@ export const registerRoutes = async(fastifyApp) => {
         spec.info.contact = {
           name: 'API Support Team',
           email: req.query.email || '',
-          url: `https://${req.query.hostname.replace('server.', '')}`
+          url: `https://${host.replace('outreach-api.', '')}`
         };
       }
     }
     return spec;
+  });
+
+  // clone local swagger
+  fastify.get('/docs/merged', async(req) => {
+    return getMergeSpec();
   });
 };
