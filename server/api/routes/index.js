@@ -197,7 +197,7 @@ export const registerRoutes = async(fastifyApp) => {
   });
 
   // clone local swagger
-  fastify.get('/docs/merged', async(req) => {
+  fastify.get('/docs/merged', async() => {
     return getMergeSpec();
   });
 };
