@@ -126,7 +126,7 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
     // set logged_in cookie for frontend to check if user is logged in
     res.setCookie('logged_in', 'true', {
       httpOnly: false,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
       path: '/',
       domain: '.skysenders.local',
@@ -135,7 +135,7 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
 
     return res.setCookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
       path: '/',
       domain: '.skysenders.local',
@@ -186,7 +186,7 @@ export const clearRefreshTokenCookie = (res, reqOrigin) => {
   } else if (isSkysendersLocalDomain) {
     res.clearCookie('logged_in', {
       httpOnly: false,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
       path: '/',
       domain: '.skysenders.local',
@@ -194,7 +194,7 @@ export const clearRefreshTokenCookie = (res, reqOrigin) => {
     // clear refresh token from http only cookie
     res.clearCookie('refresh_token', {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
       path: '/',
       domain: '.skysenders.local',
