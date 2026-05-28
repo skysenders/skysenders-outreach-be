@@ -1,7 +1,7 @@
 // mailboxes
 import { fetchMailboxDetailsById } from '../../controller/internal/mailboxes/fetchMailboxDetailsById';
 import { fetchRandomWarmupMailbox } from '../../controller/internal/mailboxes/fetchRandomWarmupMailbox';
-import { handleSenderFailureErrors, handleMailboxForwardingErrors,
+import { handleSenderFailureErrors,
   handleImapFailureErrors, resetMailboxDisconnectStatus } from '../../controller/internal/mailboxes/handleMailboxErrors';
 import { updateMailboxLastFetchUuid } from '../../controller/internal/mailboxes/updateMailboxLastFetchUuid';
 
@@ -193,54 +193,6 @@ export default async function internalRoutes(fastify) {
       },
     },
     handleSenderFailureErrors
-  );
-  // route to handle mailbox forwarding errors
-  fastify.post(
-    '/handle-mailbox-forwarding-errors',
-    {
-      schema: {
-        tags: ['Internal'],
-        summary: 'Handle mailbox forwarding errors',
-        description: 'Handle mailbox forwarding errors and update the mailbox status accordingly',
-        operationId: 'handleMailboxForwardingErrors',
-        hide: true,
-        querystring: {
-          type: 'object',
-          required: ['auth-token'],
-          properties: {
-            'auth-token': {
-              type: 'string',
-              description: 'Authentication token required to authorize this request'
-            },
-          },
-        },
-        body: {
-          type: 'object',
-          required: [ 'partner_id', 'workspace_id', 'mailbox_id', 'error_message' ],
-          properties: {
-            partner_id: { type: 'integer' },
-            workspace_id: { type: 'integer' },
-            mailbox_id: { type: 'integer' },
-            error_message: { type: 'string' },
-          },
-        },
-        response: {
-          200: {
-            description: '',
-            type: 'object',
-            additionalProperties: true,
-          },
-          500: {
-            description: 'Internal server error',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    handleMailboxForwardingErrors
   );
 
   // Route to update mailbox last fetch uid

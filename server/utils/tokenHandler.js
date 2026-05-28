@@ -101,6 +101,7 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
   const isLocalhost = hostname === 'localhost' || hostname.includes('.localhost');
 
   const isSkySendersDomain = hostname.endsWith('.skysenders.ai');
+  const isSkysendersLocalDomain = hostname.endsWith('.skysenders.local');
 
   if (isSkySendersDomain) {
     // set logged_in cookie for frontend to check if user is logged in
@@ -121,9 +122,26 @@ export const setRefreshTokenCookie = (res, refreshToken, reqOrigin) => {
       domain: '.skysenders.ai',
       maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
     });
-  }
+  } else if (isSkysendersLocalDomain) {
+    // set logged_in cookie for frontend to check if user is logged in
+    res.setCookie('logged_in', 'true', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.local',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
 
-  if (isLocalhost) {
+    return res.setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.local',
+      maxAge: JWT.REFRESH_TOKEN_EXPIRY_IN_SECONDS,
+    });
+  } else if (isLocalhost) {
     return res.setCookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
@@ -147,6 +165,7 @@ export const clearRefreshTokenCookie = (res, reqOrigin) => {
   const hostname = reqOrigin ? new URL(reqOrigin).hostname : '';
   const isLocalhost = hostname === 'localhost' || hostname.includes('.localhost');
   const isSkySendersDomain = hostname.endsWith('.skysenders.ai');
+  const isSkysendersLocalDomain = hostname.endsWith('.skysenders.local');
 
   if (isSkySendersDomain) {
     res.clearCookie('logged_in', {
@@ -164,9 +183,23 @@ export const clearRefreshTokenCookie = (res, reqOrigin) => {
       path: '/',
       domain: '.skysenders.ai',
     });
-  }
-
-  if (isLocalhost) {
+  } else if (isSkysendersLocalDomain) {
+    res.clearCookie('logged_in', {
+      httpOnly: false,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.local',
+    });
+    // clear refresh token from http only cookie
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      domain: '.skysenders.local',
+    });
+  } else if (isLocalhost) {
     res.clearCookie('refresh_token', {
       httpOnly: true,
       secure: true,
