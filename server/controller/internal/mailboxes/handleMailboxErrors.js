@@ -6,12 +6,12 @@ import { makeWarmupProxyAPICall } from '../../../api/routes/proxy/warmup-proxy';
 
 export const handleSenderFailureErrors = async(req, res) => {
   const logger = Container.get('logger');
-  const DomainMailboxesHandler = Container.get('DomainMailboxesHandler');
+  const MailboxesModelHandler = Container.get('MailboxesModelHandler');
   let isReplySent = false;
   try {
 
     // validate auth token
-    if (req.query['auth-token'] !== 'Test1234!') {
+    if (req.query['auth-token'] !== AUTH_TOKEN) {
       return res.status(StatusCodes.OK).send({
         message: 'Fetching eligible warmup mailboxes failed | Auth validation failed.'
       });
@@ -30,14 +30,14 @@ export const handleSenderFailureErrors = async(req, res) => {
 
     if (Number(disconnectStage) < 3) {
       await Promise.all([
-        DomainMailboxesHandler.updateDomainMailbox({
+        MailboxesModelHandler.updateMailbox({
           disconnect_stage: disconnectStage,
           disconnect_reason: disconnectReason,
         }, {
           partner_id: partnerId,
           id: mailboxId
         }),
-        makeWarmupProxyAPICall(`/api/internal/add-mailbox-to-warmup-pool?auth-token=${AUTH_TOKEN}`, 'POST', {
+        makeWarmupProxyAPICall('/api/warmup/internal/add-mailbox-to-warmup-pool', 'POST', {
           partner_id: partnerId,
           workspace_id: workspaceId,
           mailbox_id: mailboxId,
@@ -46,7 +46,7 @@ export const handleSenderFailureErrors = async(req, res) => {
       ]);
     } else {
       await Promise.all([
-        DomainMailboxesHandler.updateDomainMailbox({
+        MailboxesModelHandler.updateMailbox({
           status: 'DISCONNECTED',
           disconnect_stage: null,
           disconnect_reason: disconnectReason,
@@ -54,7 +54,7 @@ export const handleSenderFailureErrors = async(req, res) => {
           partner_id: partnerId,
           id: mailboxId
         }),
-        makeWarmupProxyAPICall(`/api/internal/block-warmup-mailbox?auth-token=${AUTH_TOKEN}`, 'POST', {
+        makeWarmupProxyAPICall('/api/warmup/internal/block-warmup-mailbox', 'POST', {
           partner_id: partnerId,
           workspace_id: workspaceId,
           mailbox_id: mailboxId,
@@ -75,12 +75,12 @@ export const handleSenderFailureErrors = async(req, res) => {
 
 export const handleImapFailureErrors = async(req, res) => {
   const logger = Container.get('logger');
-  const DomainMailboxesHandler = Container.get('DomainMailboxesHandler');
+  const MailboxesModelHandler = Container.get('MailboxesModelHandler');
   let isReplySent = false;
   try {
 
     // validate auth token
-    if (req.query['auth-token'] !== 'Test1234!') {
+    if (req.query['auth-token'] !== AUTH_TOKEN) {
       return res.status(StatusCodes.OK).send({
         message: 'Mailbox imap failure handler auth fails | Auth validation failed.'
       });
@@ -99,7 +99,7 @@ export const handleImapFailureErrors = async(req, res) => {
 
     if (Number(disconnectStage) < 3) {
       await Promise.all([
-        DomainMailboxesHandler.updateDomainMailbox({
+        MailboxesModelHandler.updateMailbox({
           disconnect_stage: disconnectStage,
           disconnect_reason: disconnectReason,
         }, {
@@ -109,7 +109,7 @@ export const handleImapFailureErrors = async(req, res) => {
       ]);
     } else {
       await Promise.all([
-        DomainMailboxesHandler.updateDomainMailbox({
+        MailboxesModelHandler.updateMailbox({
           status: 'DISCONNECTED',
           disconnect_stage: null,
           disconnect_reason: disconnectReason,
@@ -117,7 +117,7 @@ export const handleImapFailureErrors = async(req, res) => {
           partner_id: partnerId,
           id: mailboxId
         }),
-        makeWarmupProxyAPICall(`/api/internal/block-warmup-mailbox?auth-token=${AUTH_TOKEN}`, 'POST', {
+        makeWarmupProxyAPICall('/api/warmup/internal/block-warmup-mailbox', 'POST', {
           partner_id: partnerId,
           workspace_id: workspaceId,
           mailbox_id: mailboxId,
@@ -137,12 +137,12 @@ export const handleImapFailureErrors = async(req, res) => {
 
 export const resetMailboxDisconnectStatus = async(req, res) => {
   const logger = Container.get('logger');
-  const DomainMailboxesHandler = Container.get('DomainMailboxesHandler');
+  const MailboxesModelHandler = Container.get('MailboxesModelHandler');
   let isReplySent = false;
   try {
 
     // validate auth token
-    if (req.query['auth-token'] !== 'Test1234!') {
+    if (req.query['auth-token'] !== AUTH_TOKEN) {
       return res.status(StatusCodes.OK).send({
         message: 'Reset mailbox disconnect status auth fails | Auth validation failed.'
       });
@@ -155,7 +155,7 @@ export const resetMailboxDisconnectStatus = async(req, res) => {
     });
     isReplySent = true;
 
-    await DomainMailboxesHandler.updateDomainMailbox({
+    await MailboxesModelHandler.updateMailbox({
       disconnect_stage: null,
       disconnect_reason: null,
     }, {

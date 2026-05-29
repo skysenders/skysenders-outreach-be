@@ -16,7 +16,7 @@ export const getOutlookAuthorizeUrl = async(req, res) => {
     }, req.user.tenant_id);
 
     // redirect to Google authentication URL
-    return res.redirect(authorizeUrl);
+    return res.status(StatusCodes.OK).send({ auth_url: authorizeUrl });
   } catch (error) {
     logger.error('Error fetching Outlook authorize URL: %o', error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: error.message || 'Failed to fetch Outlook authorize URL' });

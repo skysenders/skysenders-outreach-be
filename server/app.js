@@ -52,6 +52,7 @@ export const startFastifyServer = async() => {
   // middleware to skip swagger documentation other than /api/v1
   fastify.addHook('onRoute', (routeOptions) => {
     const isApiRoute = routeOptions.url.startsWith('/api/v1');
+    // skipping proxy route to be added on swagger
     const isWarmupRoute = routeOptions.url.startsWith('/api/warmup') || routeOptions.url.startsWith('/api/v1/warmup');
     // Hide everything except public api + warmup
     if (isWarmupRoute || !isApiRoute) {
@@ -68,7 +69,8 @@ export const startFastifyServer = async() => {
       request.url.startsWith('/documentation') ||
       request.url.startsWith('/docs') ||
       request.url.startsWith('/api/internal') ||
-      request.url.startsWith('/api/queue-server')
+      request.url.startsWith('/api/queue-server') ||
+      request.url.startsWith('/api/warmup/internal')
     ) {
       return; // Skip JWT validation for Swagger documentation
     }

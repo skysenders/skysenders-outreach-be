@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import Container from 'typedi';
 import { refreshGmailToken } from './refreshGmailAuthToken';
 import { refreshOutlookToken } from './refreshOutlookAuthToken';
-import { DOMAIN_MAILBOX_ESP_TYPE, AUTH_TOKEN, MAILBOX_AUTH_TYPE } from '../../../config/constants';
+import { AUTH_TOKEN, MAILBOX_TYPE, MAILBOX_AUTH_TYPE } from '../../../config/constants';
 
 export const fetchMailboxDetailsById = async(req, res) => {
 
@@ -36,14 +36,17 @@ export const fetchMailboxDetailsById = async(req, res) => {
         logger.info(`Token expired for mailbox ID - ${req.query.mailbox_id}. Refreshing token...`);
 
         // GMAIL
-        if (mailboxes.esp_type === DOMAIN_MAILBOX_ESP_TYPE.GMAIL) {
+        if (mailboxes.provider === MAILBOX_TYPE.GMAIL) {
           const token = await refreshGmailToken(mailboxes);
           mailboxes.access_token = token.access_token;
           mailboxes.refresh_token = token.refresh_token;
           mailboxes.token_expiry = token.token_expiry;
           // OUTLOOK
-        } else if (mailboxes.esp_type === DOMAIN_MAILBOX_ESP_TYPE.OUTLOOK) {
-          mailboxes.access_token = await refreshOutlookToken(mailboxes);
+        } else if (mailboxes.provider === MAILBOX_TYPE.OUTLOOK) {
+          const token = await refreshOutlookToken(mailboxes);
+          mailboxes.access_token = token.access_token;
+          mailboxes.refresh_token = token.refresh_token;
+          mailboxes.token_expiry = token.token_expiry;
         }
       }
 

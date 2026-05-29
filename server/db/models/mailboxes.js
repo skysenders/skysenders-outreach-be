@@ -91,6 +91,9 @@ module.exports = (sequelize, DataTypes) => {
     last_sync_at: {
       type: DataTypes.DATE
     },
+    disconnect_stage: {
+      type: DataTypes.INTEGER,
+    },
     disconnect_reason: {
       type: DataTypes.JSONB
     },

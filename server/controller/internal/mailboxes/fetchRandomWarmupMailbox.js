@@ -17,8 +17,7 @@ export const fetchRandomWarmupMailbox = async(req, res) => {
     }
 
     // fetch next warmup mailbox from Redis pool
-    const warmupAccountDetails = await makeWarmupProxyAPICall(`/api/internal/fetch-next-mailbox-from-warmup-pool?auth-token=${AUTH_TOKEN}`, 'GET');
-
+    const warmupAccountDetails = await makeWarmupProxyAPICall('/api/warmup/internal/fetch-next-mailbox-from-warmup-pool', 'GET');
     /**
      * Step 2: Fetch mailbox details
      */

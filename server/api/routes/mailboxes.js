@@ -301,11 +301,11 @@ export default async function mailboxRoutes(fastify) {
         hide: true,
         response: {
           // redirect response will not be handled by fastify, but we can document the expected response for better API documentation
-          302: {
-            description: 'Redirect to Google for authentication',
+          200: {
+            description: 'Authorize url to connect google mailbox',
             type: 'object',
             properties: {
-              message: { type: 'string' },
+              auth_url: { type: 'string' },
             },
           },
           400: {
@@ -386,11 +386,11 @@ export default async function mailboxRoutes(fastify) {
         hide: true,
         response: {
           // redirect response will not be handled by fastify, but we can document the expected response for better API documentation
-          302: {
-            description: 'Redirect to Microsoft for authentication',
+          200: {
+            description: 'Authorize url to connect Microsoft mailbox',
             type: 'object',
             properties: {
-              message: { type: 'string' },
+              auth_url: { type: 'string' },
             },
           },
           400: {

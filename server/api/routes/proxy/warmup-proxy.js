@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WARMUP_PROXY_URL } from '../../../config/constants.js';
+import { WARMUP_PROXY_URL, AUTH_TOKEN } from '../../../config/constants.js';
 
 const warmupProxyConfig = {
   upstream: WARMUP_PROXY_URL,
@@ -7,9 +7,9 @@ const warmupProxyConfig = {
 
   replyOptions: {
     rewriteRequestHeaders: (originalReq, headers) => {
-      headers['x-partner-id'] = originalReq.workspace?.tenant_id;
-      headers['x-workspace-id'] = originalReq.workspace?.id;
-      headers['x-user-id'] = originalReq.user?.id;
+      headers['x-partner-id'] = originalReq.user?.tenant_id || 1;
+      headers['x-workspace-id'] = originalReq.workspace?.id || 1;
+      headers['x-user-id'] = originalReq.user?.id || 1;
       return headers;
     },
   },
@@ -43,23 +43,26 @@ export const warmupProxy = (fastifyHttpProxy, fastify) => {
   });
 };
 
-export const makeWarmupProxyAPICall = async(endpoint, method = 'GET', data = {}) => {
+export const makeWarmupProxyAPICall = async(endpoint, method = 'GET', data = {}, params = {
+  'auth-token': AUTH_TOKEN
+}) => {
   const url = `${WARMUP_PROXY_URL}${endpoint}`;
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
     },
+    params,
   };
 
   if (method === 'POST' || method === 'PUT') {
-    options.body = JSON.stringify(data);
+    options.data = data;
   }
 
   try {
     const response = await axios(url, options);
     const responseData = await response.data;
-    return { status: response.status, data: responseData };
+    return responseData;
   } catch (error) {
     console.error('Error making warmup proxy API call:', error);
     throw error;

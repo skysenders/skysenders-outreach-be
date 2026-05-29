@@ -11,6 +11,8 @@ import stripeWebhook from './stripe-webhook';
 // domains & mailbxoes
 import domains from './domains';
 import mailboxes from './mailboxes';
+import internal from './internal';
+import hasura from './hasura_events';
 
 // other imports
 import Logger from '../../loaders/logger';
@@ -135,6 +137,8 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(stripeWebhook, { prefix: '/api/stripe-webhook' });
   fastifyApp.register(domains, { prefix: '/api/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
+  fastifyApp.register(internal, { prefix: '/api/internal' });
+  fastifyApp.register(hasura, { prefix: '/api/hasura' });
 
   // register public v1 api routes
   fastifyApp.register(users, { prefix: '/api/v1/users' });

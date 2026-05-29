@@ -117,6 +117,8 @@ export const JWT_ALLOWED_URLS = {
   '/api/mailboxes/connect/outlook/callback': true,
   // fetch mailboxes for internal use
   '/api/mailboxes/internal/fetch-all': true,
+  // hasura events
+  '/api/hasura/events': true,
 };
 
 
@@ -148,6 +150,8 @@ export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
   '/api/mailboxes/outlook/oauth-callback': true,
   // fetch mailboxes for internal use
   '/api/mailboxes/internal/fetch-all': true,
+  // hasura events
+  '/api/hasura/events': true,
 };
 
 export const RESTRICTED_API_URLS = [
@@ -428,3 +432,7 @@ export const WORKSPACE_ROLE_PERMISSIONS = {
 };
 
 export const WARMUP_PROXY_URL = process.env.WARMUP_PROXY_URL || 'http://localhost:3001';
+
+export const HASURA_EVENTS = {
+  WARMUP_STATUS_UPDATE: 'warmup_status_update',
+};
