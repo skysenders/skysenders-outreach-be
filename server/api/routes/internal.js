@@ -76,6 +76,10 @@ export default async function internalRoutes(fastify) {
               type: 'string',
               description: 'Authentication token required to authorize this request'
             },
+            mailbox_id: {
+              type: 'integer',
+              description: 'ID of the warmup account to exclude from the random selection'
+            }
           },
         },
         response: {

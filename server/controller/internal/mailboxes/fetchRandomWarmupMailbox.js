@@ -17,7 +17,10 @@ export const fetchRandomWarmupMailbox = async(req, res) => {
     }
 
     // fetch next warmup mailbox from Redis pool
-    const warmupAccountDetails = await makeWarmupProxyAPICall('/api/warmup/internal/fetch-next-mailbox-from-warmup-pool', 'GET');
+    const warmupAccountDetails = await makeWarmupProxyAPICall('/api/warmup/internal/fetch-next-mailbox-from-warmup-pool', 'GET', null, {
+      'auth-token': AUTH_TOKEN,
+      mailbox_id: req.query.mailbox_id // pass the mailbox id to exclude from the random selection in the warmup pool
+    });
     /**
      * Step 2: Fetch mailbox details
      */
