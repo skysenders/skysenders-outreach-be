@@ -60,9 +60,9 @@ export const handleGoogleOAuthCallback = async(req, res) => {
 
     // if there was an error during connection (after successful verification), return the error message
     if (error) {
-      return res.redirect(`${redirectUrl}/app/mailbox?error=${error.message}`);
+      return res.redirect(`${redirectUrl}?error=${error.message}`);
     }
-    return res.redirect(`${redirectUrl}/app/mailbox/${success.mailbox.id}/warmup?connectionSuccess=true&email=${email}&mailbox_id=${success.mailbox.id}`);
+    return res.redirect(`${redirectUrl}?connectionSuccess=true&email=${email}&mailbox_id=${success.mailbox.id}`);
   } catch (error) {
     logger.error(`Error handling Google OAuth callback: ${error}`);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: error.message || 'Failed to handle Google OAuth callback' });
