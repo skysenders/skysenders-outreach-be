@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import Container from 'typedi';
-import { MAILBOX_TYPE, MAILBOX_DEFAULT_SEND_LIMTS, MAILBOX_AUTH_TYPE } from '../../../config/constants';
+import { MAILBOX_TYPE, MAILBOX_DEFAULT_SEND_LIMTS, MAILBOX_AUTH_TYPE, MAILBOX_STATUS } from '../../../config/constants';
 
 export const verifyAndCreateSMTPMailbox = async(req, res) => {
   const logger = Container.get('logger');
@@ -55,6 +55,8 @@ export const verifyAndCreateSMTPMailbox = async(req, res) => {
       {
         name: req.body.name || email,
         email,
+        status: MAILBOX_STATUS.ACTIVE,
+        signature: req.body.signature,
         sending_limit_per_day: req.body.sending_limit_per_day || MAILBOX_DEFAULT_SEND_LIMTS.sending_limit_per_day,
         minimum_time_gap_mins: req.body.minimum_time_gap_mins || MAILBOX_DEFAULT_SEND_LIMTS.minimum_time_gap_mins,
         different_reply_to: req.body.different_reply_to,

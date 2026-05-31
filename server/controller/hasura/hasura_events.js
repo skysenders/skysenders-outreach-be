@@ -14,7 +14,6 @@ import { prcoessWarmupStatusUpdate } from './../../services/hasura/events/prcoes
 export const parseEvents = async(req, res) => {
   try {
     const body = req.body;
-    console.log('Received Hasura event:', JSON.stringify(body));
     switch (get(body, 'trigger.name')) {
       case HASURA_EVENTS.WARMUP_STATUS_UPDATE:
         return await prcoessWarmupStatusUpdate(req, res);

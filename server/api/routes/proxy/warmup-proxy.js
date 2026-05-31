@@ -45,12 +45,13 @@ export const warmupProxy = (fastifyHttpProxy, fastify) => {
 
 export const makeWarmupProxyAPICall = async(endpoint, method = 'GET', data = {}, params = {
   'auth-token': AUTH_TOKEN
-}) => {
+}, customHeaders = {}) => {
   const url = `${WARMUP_PROXY_URL}${endpoint}`;
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...customHeaders
     },
     params,
   };

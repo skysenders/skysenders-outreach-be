@@ -81,9 +81,9 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
       const isAddOnPlan = ADD_ON_ENTERPRISE_PLAN[planName];
       const subscriptionItemQuantity = mainPlanItem?.quantity || 1;
 
-      const planEmailCount = isAddOnPlan ? partnerPaymentDetails?.PLAN_EMAIL_COUNT[planName] : subscriptionItemQuantity * PLAN_EMAIL_COUNT[planName];
-      const planMaxFUPMailboxCount = isAddOnPlan ? partnerPaymentDetails?.PLAN_FUP_MAILBOX_COUNT[planName] : subscriptionItemQuantity * PLAN_FUP_MAILBOX_COUNT[planName];
-      const planMaxFUPContactCount = isAddOnPlan ? partnerPaymentDetails?.PLAN_FUP_CONTACT_COUNT[planName] : subscriptionItemQuantity * PLAN_FUP_CONTACT_COUNT[planName];
+      const planEmailCount = isAddOnPlan ? subscriptionItemQuantity * PLAN_EMAIL_COUNT[planName] : PLAN_EMAIL_COUNT[planName];
+      const planMaxFUPMailboxCount = isAddOnPlan ? subscriptionItemQuantity * PLAN_FUP_MAILBOX_COUNT[planName] : PLAN_FUP_MAILBOX_COUNT[planName];
+      const planMaxFUPContactCount = isAddOnPlan ? subscriptionItemQuantity * PLAN_FUP_CONTACT_COUNT[planName] : PLAN_FUP_CONTACT_COUNT[planName];
 
       // Prepare subscription update data
       const subscriptionUpdateData = {

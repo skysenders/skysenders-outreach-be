@@ -73,8 +73,8 @@ export const listMailboxes = async(req, res) => {
   const {
     search_text: searchText,
     provider,
-    is_active: isActive,
     warmup_enabled: warmupEnabled,
+    status,
     offset = 0,
     limit = 20
   } = req.query;
@@ -96,7 +96,7 @@ export const listMailboxes = async(req, res) => {
 
     if (provider) where.provider = provider;
 
-    if (typeof isActive === 'boolean') where.is_active = isActive;
+    if (status) where.status = status;
 
     if (typeof warmupEnabled === 'boolean') {
       where.warmup_enabled = warmupEnabled;

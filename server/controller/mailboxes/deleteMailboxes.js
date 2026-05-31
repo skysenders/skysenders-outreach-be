@@ -58,7 +58,7 @@ export const bulkDeleteMailboxes = async(req, res) => {
       mailbox_ids: mailboxIds,
       search_text: searchText,
       provider,
-      is_active: isActive,
+      status,
       warmup_enabled: warmupEnabled,
     } = req.body || {};
 
@@ -84,13 +84,13 @@ export const bulkDeleteMailboxes = async(req, res) => {
       isFilterProvided = true;
     }
 
-    if (typeof isActive === 'boolean') {
-      where.is_active = isActive;
+    if (typeof warmupEnabled === 'boolean') {
+      where.warmup_enabled = warmupEnabled;
       isFilterProvided = true;
     }
 
-    if (typeof warmupEnabled === 'boolean') {
-      where.warmup_enabled = warmupEnabled;
+    if (status) {
+      where.status = status;
       isFilterProvided = true;
     }
 

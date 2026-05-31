@@ -10,7 +10,7 @@ import { getGoogleAuthorizeUrl, handleGoogleOAuthCallback } from '../../controll
 import { getOutlookAuthorizeUrl, handleOutlookOAuthCallback } from '../../controller/mailboxes/connect/connectMicrosoftMailbox';
 
 // cosntants
-import { MAILBOX_TYPE } from '../../config/constants';
+import { MAILBOX_TYPE, MAILBOX_STATUS } from '../../config/constants';
 
 export default async function mailboxRoutes(fastify) {
 
@@ -34,7 +34,7 @@ export default async function mailboxRoutes(fastify) {
           properties: {
             search_text: { type: 'string', maxLength: 255 },
             provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
-            is_active: { type: 'boolean' },
+            status: { type: 'string', enum: Object.values(MAILBOX_STATUS) },
             warmup_enabled: { type: 'boolean' },
             offset: { type: 'integer', minimum: 0, default: 0 },
             limit: {type: 'integer', minimum: 1, maximum: 100, default: 20 }
@@ -61,14 +61,15 @@ export default async function mailboxRoutes(fastify) {
                     email: { type: 'string' },
                     provider: { type: 'string' },
                     auth_type: { type: 'string' },
-                    is_authenticated: { type: 'boolean' },
-                    is_active: { type: 'boolean' },
                     warmup_enabled: { type: 'boolean' },
                     warmup_first_started_at: { type: 'string' },
                     sending_limit_per_day: { type: 'number' },
                     emails_sent_today: { type: 'number' },
                     minimum_time_gap_mins: { type: 'number' },
                     health_score: { type: 'number' },
+                    status: { type: 'string' },
+                    bcc_to_crm: { type: 'string' },
+                    signature: { type: 'string' },
                     last_connected_at: { type: 'string' },
                     last_sync_at: { type: 'string' },
                     created_at: { type: 'string' }
@@ -173,13 +174,14 @@ export default async function mailboxRoutes(fastify) {
               email: { type: 'string' },
               provider: { type: 'string' },
               auth_type: { type: 'string' },
-              is_authenticated: { type: 'boolean' },
-              is_active: { type: 'boolean' },
               warmup_enabled: { type: 'boolean' },
               warmup_first_started_at: { type: 'string' },
               sending_limit_per_day: { type: 'number' },
               emails_sent_today: { type: 'number' },
               minimum_time_gap_mins: { type: 'number' },
+              status: { type: 'string' },
+              bcc_to_crm: { type: 'string' },
+              signature: { type: 'string' },
               health_score: { type: 'number' },
               last_connected_at: { type: 'string' },
               last_sync_at: { type: 'string' },
@@ -249,7 +251,8 @@ export default async function mailboxRoutes(fastify) {
             imap_username: { type: 'string' },
             imap_password: { type: 'string' },
             different_reply_to: { type: 'boolean' },
-            bcc_to_crm: { type: 'boolean' },
+            bcc_to_crm: { type: 'string' },
+            signature: { type: 'string' },
             sending_limit_per_day: { type: 'number' },
             minimum_time_gap_mins: { type: 'number' }
           }
@@ -269,8 +272,7 @@ export default async function mailboxRoutes(fastify) {
                   email: { type: 'string' },
                   provider: { type: 'string' },
                   auth_type: { type: 'string' },
-                  is_authenticated: { type: 'boolean' },
-                  is_active: { type: 'boolean' },
+                  status: { type: 'string' },
                 }
               }
             }
@@ -485,10 +487,11 @@ export default async function mailboxRoutes(fastify) {
           type: 'object',
           properties: {
             name: { type: 'string' },
-            is_active: { type: 'boolean' },
             warmup_enabled: { type: 'boolean' },
             sending_limit_per_day: { type: 'number' },
-            minimum_time_gap_mins: { type: 'number' }
+            minimum_time_gap_mins: { type: 'number' },
+            bcc_to_crm: { type: 'string' },
+            signature: { type: 'string' },
           }
         },
         response: {
@@ -502,8 +505,9 @@ export default async function mailboxRoutes(fastify) {
               email: { type: 'string' },
               provider: { type: 'string' },
               auth_type: { type: 'string' },
-              is_authenticated: { type: 'boolean' },
-              is_active: { type: 'boolean' },
+              status: { type: 'string' },
+              bcc_to_crm: { type: 'string' },
+              signature: { type: 'string' },
               warmup_enabled: { type: 'boolean' },
               warmup_first_started_at: { type: 'string' },
               sending_limit_per_day: { type: 'number' },
@@ -565,17 +569,18 @@ export default async function mailboxRoutes(fastify) {
                 mailbox_ids: { type: 'array', items: { type: 'number' } },
                 search_text: { type: 'string', maxLength: 255 },
                 provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
-                is_active: { type: 'boolean' },
+                status: { type: 'string', enum: Object.values(MAILBOX_STATUS) },
                 warmup_enabled: { type: 'boolean' },
               },
             },
             update_fields: {
               type: 'object',
               properties: {
-                is_active: { type: 'boolean' },
                 warmup_enabled: { type: 'boolean' },
                 sending_limit_per_day: { type: 'number' },
-                minimum_time_gap_mins: { type: 'number' }
+                minimum_time_gap_mins: { type: 'number' },
+                bcc_to_crm: { type: 'string' },
+                signature: { type: 'string' }
               },
             },
           },
@@ -616,6 +621,7 @@ export default async function mailboxRoutes(fastify) {
       },
     }, bulkUpdateMailboxes
   );
+
   // Route to delete mailbox by id
   fastify.delete(
     '/:id',
@@ -686,8 +692,8 @@ export default async function mailboxRoutes(fastify) {
             mailbox_ids: { type: 'array', items: { type: 'number' } },
             search_text: { type: 'string', maxLength: 255 },
             provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
-            is_active: { type: 'boolean' },
             warmup_enabled: { type: 'boolean' },
+            status: { type: 'string', enum: Object.values(MAILBOX_STATUS) },
           },
         },
         response: {

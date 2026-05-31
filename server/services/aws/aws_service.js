@@ -70,16 +70,24 @@ export const sendSQSMessage = async(queueUrl, messageBody) => {
  * @param {string} queueUrl - The URL of the SQS queue.
  * @param {object} messageBody - The body of the message to be sent.
  * @param {string} region - The region of the SQS queue.
+ * @param {number} delay - The delay in seconds for the message to be visible in the queue.
  * @returns {Promise<object>} - A promise that resolves to the response data from sending the message.
  */
-export const sendSQSMessageByRegion = async(queueUrl, messageBody, region = process.env.AWS_DEFAULT_REGION) => {
+export const sendSQSMessageByRegion = async(queueUrl, messageBody, region = process.env.AWS_DEFAULT_REGION, delay) => {
   const logger = Container.get('logger');
   try {
+    // if delay not exists, set it to random 1-10 seconds
+    if (!delay) {
+      delay = Math.floor(Math.random() * 10) + 1;
+    }
+
     // frame the params
     const params = {
       QueueUrl: queueUrl,
       MessageBody: JSON.stringify(messageBody),
+      DelaySeconds: delay,
     };
+
     // intialize the SQS client for the given region
     const sqsRegionClient = getSQSClient(region);
     // pusht to sqq

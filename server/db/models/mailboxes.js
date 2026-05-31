@@ -51,14 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       ),
       defaultValue: 'SMTP_PASSWORD'
     },
-    is_authenticated: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
     is_deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -112,6 +104,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     bcc_to_crm: {
       type: DataTypes.STRING,
+    },
+    signature: {
+      type: DataTypes.TEXT,
     }
   }, {
     tableName: 'mailboxes',

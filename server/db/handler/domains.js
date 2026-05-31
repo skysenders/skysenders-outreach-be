@@ -130,7 +130,6 @@ export const softDeleteDomain = async(where) => {
       {
         is_deleted: true,
         deleted_at: new Date(),
-        is_active: false,
         updated_at: new Date()
       },
       { where, returning: ['id', 'domain_name'], }

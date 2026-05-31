@@ -20,13 +20,6 @@ import * as UserSessionModelHandler from '../db/handler/user_sessions';
 import * as DomainsModelHandler from '../db/handler/domains';
 import * as MailboxesModelHandler from '../db/handler/mailboxes';
 import * as MailboxCredentialsModelHandler from '../db/handler/mailbox_credentials';
-import * as WarmupMessagesModelHandler from '../db/handler/warmup_messages';
-import * as WarmupProfileDetailsModelHandler from '../db/handler/warmup_profile_details';
-import * as MailboxWarmupDetailsModelHandler from '../db/handler/mailbox_warmup_details';
-import * as WarmupTriggerDetailsModelHandler from '../db/handler/warmup_trigger_details';
-import * as WarmupReplyTriggersModelHandler from '../db/handler/warmup_reply_triggers';
-import * as MailboxBlockHistoryModelHandler from '../db/handler/mailbox_block_history';
-import * as WarmupSentLogsModelHandler from '../db/handler/warmup_sent_logs';
 
 // Billing Modules
 import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
@@ -88,13 +81,6 @@ const injectorInstance = async() => {
     Container.set('DomainsModelHandler', DomainsModelHandler);
     Container.set('MailboxesModelHandler', MailboxesModelHandler);
     Container.set('MailboxCredentialsModelHandler', MailboxCredentialsModelHandler);
-    Container.set('WarmupMessagesModelHandler', WarmupMessagesModelHandler);
-    Container.set('WarmupProfileDetailsModelHandler', WarmupProfileDetailsModelHandler);
-    Container.set('MailboxWarmupDetailsModelHandler', MailboxWarmupDetailsModelHandler);
-    Container.set('WarmupTriggerDetailsModelHandler', WarmupTriggerDetailsModelHandler);
-    Container.set('WarmupReplyTriggersModelHandler', WarmupReplyTriggersModelHandler);
-    Container.set('MailboxBlockHistoryModelHandler', MailboxBlockHistoryModelHandler);
-    Container.set('WarmupSentLogsModelHandler', WarmupSentLogsModelHandler);
 
     // Services
     Container.set('AwsService', AwsService);
