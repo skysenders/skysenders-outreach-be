@@ -48,9 +48,9 @@ export const updateMailboxLastFetchUuid = async(req, res) => {
     bindValues.push(workspaceId);
     bindValues.push(mailboxId);
 
-    const partnerIdPos = bindValues.length - 3;
-    const workspaceIdPos = bindValues.length - 2;
-    const mailboxIdPos = bindValues.length - 1;
+    const partnerIdPos = bindValues.length - 2;
+    const workspaceIdPos = bindValues.length - 1;
+    const mailboxIdPos = bindValues.length;
 
     const queryString = `
       UPDATE mailboxes_sync_state 

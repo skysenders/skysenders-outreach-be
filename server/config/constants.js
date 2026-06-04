@@ -432,6 +432,7 @@ export const WORKSPACE_ROLE_PERMISSIONS = {
 };
 
 export const WARMUP_PROXY_URL = process.env.WARMUP_PROXY_URL || 'http://localhost:3001';
+export const STATS_PROXY_URL = process.env.STATS_PROXY_URL || 'http://localhost:3002';
 
 export const HASURA_EVENTS = {
   WARMUP_STATUS_UPDATE: 'warmup_status_update',

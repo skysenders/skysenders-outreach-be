@@ -54,8 +54,9 @@ export const startFastifyServer = async() => {
     const isApiRoute = routeOptions.url.startsWith('/api/v1');
     // skipping proxy route to be added on swagger
     const isWarmupRoute = routeOptions.url.startsWith('/api/warmup') || routeOptions.url.startsWith('/api/v1/warmup');
+    const isStatsRoute = routeOptions.url.startsWith('/api/stats') || routeOptions.url.startsWith('/api/v1/stats');
     // Hide everything except public api + warmup
-    if (isWarmupRoute || !isApiRoute) {
+    if (isWarmupRoute || isStatsRoute || !isApiRoute) {
       routeOptions.schema = routeOptions.schema || {};
       routeOptions.schema.hide = true;
       return;
@@ -70,7 +71,8 @@ export const startFastifyServer = async() => {
       request.url.startsWith('/docs') ||
       request.url.startsWith('/api/internal') ||
       request.url.startsWith('/api/queue-server') ||
-      request.url.startsWith('/api/warmup/internal')
+      request.url.startsWith('/api/warmup/internal') ||
+      request.url.startsWith('/api/stats/internal')
     ) {
       return; // Skip JWT validation for Swagger documentation
     }

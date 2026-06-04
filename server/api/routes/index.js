@@ -106,6 +106,8 @@ export const initialize = async(fastifyApp, redisClient) => {
         { name: 'Workspaces', description: 'Endpoints for managing workspaces' },
         { name: 'Domains', description: 'Endpoints for managing domains' },
         { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
+        { name: 'Warmup', description: 'Endpoints for managing warmup processes' },
+        { name: 'Statistics', description: 'Endpoints for fetching stats and analytics' },
       ],
       docExpansion: 'none',
       deepLinking: true,

@@ -120,6 +120,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
       mailbox_ids: mailboxIds,
       search_text: searchText,
       provider,
+      status,
       warmup_enabled: warmupEnabled,
     } = req.body.filter || {};
 
@@ -147,6 +148,11 @@ export const bulkUpdateMailboxes = async(req, res) => {
       isFilterProvided = true;
     }
 
+    if (status) {
+      where.status = status;
+      isFilterProvided = true;
+    }
+
     if (typeof warmupEnabled === 'boolean') {
       where.warmup_enabled = warmupEnabled;
       isFilterProvided = true;
@@ -157,7 +163,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Warmup profile ID must be provided when bulk updating warmup status.' });
     }
 
-    if (!isFilterProvided) {
+    if (!isFilterProvided && !req.body.filter.select_all) {
       logger.warn('No filter provided for bulk update');
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk update.' });
     }
