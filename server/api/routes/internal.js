@@ -4,6 +4,7 @@ import { fetchRandomWarmupMailbox } from '../../controller/internal/mailboxes/fe
 import { handleSenderFailureErrors,
   handleImapFailureErrors, resetMailboxDisconnectStatus } from '../../controller/internal/mailboxes/handleMailboxErrors';
 import { updateMailboxLastFetchUuid } from '../../controller/internal/mailboxes/updateMailboxLastFetchUuid';
+import { fetchMailboxesForSync } from '../../controller/internal/mailboxes/fetchMailboxesForSync';
 
 export default async function internalRoutes(fastify) {
   // mailboxes
@@ -298,4 +299,40 @@ export default async function internalRoutes(fastify) {
     },
     resetMailboxDisconnectStatus
   );
+  // sync mailboxes for tracking replies
+  fastify.post(
+    '/sync-mailbox-for-tracking-replies',
+    {
+      schema: {
+        tags: ['Internal'],
+        summary: 'Sync mailbox for tracking replies',
+        description: 'Sync mailbox for tracking replies and update the last fetch uid',
+        operationId: 'syncMailboxForTrackingReplies',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['auth-token'],
+          properties: {
+            'auth-token': {
+              type: 'string',
+              description: 'Authentication token required to authorize this request'
+            },
+          },
+        },
+        response: {
+          200: {
+            description: '',
+            type: 'object',
+            additionalProperties: true,
+          },
+          500: {
+            description: 'Internal server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, fetchMailboxesForSync);
 }

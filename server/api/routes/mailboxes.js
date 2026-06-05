@@ -488,10 +488,12 @@ export default async function mailboxRoutes(fastify) {
           properties: {
             name: { type: 'string' },
             warmup_enabled: { type: 'boolean' },
+            warmup_profile_id: { type: 'number' },
             sending_limit_per_day: { type: 'number' },
             minimum_time_gap_mins: { type: 'number' },
             bcc_to_crm: { type: 'string' },
             signature: { type: 'string' },
+            clear_signature: { type: 'boolean' },
           }
         },
         response: {
@@ -578,10 +580,12 @@ export default async function mailboxRoutes(fastify) {
               type: 'object',
               properties: {
                 warmup_enabled: { type: 'boolean' },
+                warmup_profile_id: { type: 'number' },
                 sending_limit_per_day: { type: 'number' },
                 minimum_time_gap_mins: { type: 'number' },
                 bcc_to_crm: { type: 'string' },
-                signature: { type: 'string' }
+                signature: { type: 'string' },
+                clear_signature: { type: 'boolean' },
               },
             },
           },

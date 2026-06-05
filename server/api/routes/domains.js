@@ -264,9 +264,11 @@ export default async function domainsRoutes(fastify) {
           type: 'object',
           properties: {
             ids: {
-              type: 'array', items: { type: 'integer' } },
+              type: 'array', items: { type: 'integer' }
+            },
             search_text: { type: 'string', maxLength: 255 },
             provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
+            select_all: { type: 'boolean', default: false }
           }
         },
         response: {

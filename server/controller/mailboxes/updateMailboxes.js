@@ -9,6 +9,7 @@ const getUpdateData = (updateFields) => {
   if (updateFields.sending_limit_per_day) updateData.sending_limit_per_day = updateFields.sending_limit_per_day;
   if (updateFields.minimum_time_gap_mins) updateData.minimum_time_gap_mins = updateFields.minimum_time_gap_mins;
   if (updateFields.bcc_to_crm) updateData.bcc_to_crm = updateFields.bcc_to_crm;
+  if (updateFields.clear_signature) updateData.signature = '';
   if (updateFields.signature) updateData.signature = updateFields.signature;
   return updateData;
 };
@@ -122,6 +123,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
       provider,
       status,
       warmup_enabled: warmupEnabled,
+      select_all: selectAll = false,
     } = req.body.filter || {};
 
     let isFilterProvided = false;
@@ -163,7 +165,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Warmup profile ID must be provided when bulk updating warmup status.' });
     }
 
-    if (!isFilterProvided && !req.body.filter.select_all) {
+    if (!isFilterProvided && !selectAll) {
       logger.warn('No filter provided for bulk update');
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk update.' });
     }

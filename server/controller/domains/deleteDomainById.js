@@ -78,6 +78,7 @@ export const bulkDeleteDomains = async(req, res) => {
       domain_ids: domainIds,
       search_text: searchText,
       provider,
+      select_all: selectAll
     } = req.body || {};
 
     let isFilterProvided = false;
@@ -102,7 +103,7 @@ export const bulkDeleteDomains = async(req, res) => {
       isFilterProvided = true;
     }
 
-    if (!isFilterProvided) {
+    if (!isFilterProvided && !selectAll) {
       logger.warn('No filter provided for bulk delete');
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk delete.' });
     }
