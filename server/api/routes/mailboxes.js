@@ -112,6 +112,7 @@ export default async function mailboxRoutes(fastify) {
           properties: {
             partner_id: { type: 'number' },
             workspace_id: { type: 'number' },
+            domain_id: { type: 'number' },
             search_text: { type: 'string', maxLength: 255 },
             mailbox_ids: { type: 'string' },
           }

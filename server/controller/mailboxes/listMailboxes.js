@@ -16,6 +16,7 @@ export const listMailboxesInternal = async(req, res) => {
   const {
     search_text: searchText,
     mailbox_ids: mailboxIds,
+    domain_id: domainId
   } = req.query;
 
   try {
@@ -43,7 +44,11 @@ export const listMailboxesInternal = async(req, res) => {
       where.id = { [Op.in]: idsArray };
     }
 
-    const mailboxes = await MailboxesModelHandler.getAllMailboxesByWhere(where);
+    if (domainId) {
+      where.domain_id = domainId;
+    }
+
+    const mailboxes = await MailboxesModelHandler.getAllInternalMailboxesByWhere(where);
 
     return res.status(StatusCodes.OK).send(mailboxes);
 

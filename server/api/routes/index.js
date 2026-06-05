@@ -18,7 +18,7 @@ import hasura from './hasura_events';
 import Logger from '../../loaders/logger';
 
 import { StatusCodes } from 'http-status-codes';
-import { BE_URL, WARMUP_PROXY_URL } from '../../config/constants';
+import { BE_URL, WARMUP_PROXY_URL, STATS_PROXY_URL } from '../../config/constants';
 
 import { apiRateLimiterMiddleware, trackAPIstatisticsMiddleware } from '../../middleware/track-api-requests';
 import axios from 'axios';
@@ -107,7 +107,8 @@ export const initialize = async(fastifyApp, redisClient) => {
         { name: 'Domains', description: 'Endpoints for managing domains' },
         { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
         { name: 'Warmup', description: 'Endpoints for managing warmup processes' },
-        { name: 'Statistics', description: 'Endpoints for fetching stats and analytics' },
+        { name: 'Mailbox Statistics', description: 'Endpoints for managing mailbox statistics' },
+        { name: 'Domain Statistics', description: 'Endpoints for managing domain statistics' },
       ],
       docExpansion: 'none',
       deepLinking: true,
@@ -148,39 +149,63 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(domains, { prefix: '/api/v1/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
 
+
+  const fetchOpenApiSpec = async(url) => {
+    const { data } = await axios.get(url);
+    return data;
+  };
+
+  const mergeSchemas = (combinedSpec, remoteSpec, prefix = 'Remote') => {
+    if (!remoteSpec?.components?.schemas) return;
+
+    combinedSpec.components = combinedSpec.components || {};
+    combinedSpec.components.schemas = combinedSpec.components.schemas || {};
+
+    for (const [name, schema] of Object.entries(remoteSpec.components.schemas)) {
+      combinedSpec.components.schemas[`${prefix}_${name}`] = schema;
+    }
+  };
+
+  const mergePaths = (combinedSpec, remoteSpec, prefix = 'Remote') => {
+    if (!remoteSpec?.paths) return;
+
+    combinedSpec.paths = combinedSpec.paths || {};
+
+    for (const [path, definition] of Object.entries(remoteSpec.paths)) {
+      let pathString = JSON.stringify(definition);
+
+      // Rewrite schema refs if needed
+      pathString = pathString.replace(
+        /#\/components\/schemas\//g,
+        `#/components/schemas/${prefix}_`
+      );
+
+      const updatedDefinition = JSON.parse(pathString);
+
+      combinedSpec.paths[`${path}`] = updatedDefinition;
+    }
+  };
+
   const getMergeSpec = async() => {
     const localSpec = fastify.swagger();
 
-    // Fetch remote spec
-    const response = await axios.get(`${WARMUP_PROXY_URL}/docs/json`);
-    const remoteSpec = await response.data;
+    let remoteSpec;
+    let combinedSpec = JSON.parse(JSON.stringify(localSpec));
 
-    // Create a clean base clone of your local spec
-    const combinedSpec = JSON.parse(JSON.stringify(localSpec));
+    // merge warmup proxy spec into local spec
+    remoteSpec = await fetchOpenApiSpec(
+      `${WARMUP_PROXY_URL}/docs/json`
+    );
+    mergeSchemas(combinedSpec, remoteSpec, 'Remote');
+    mergePaths(combinedSpec, remoteSpec, 'Remote');
 
-    // 1. Move Remote Schemas over with a prefix (e.g., "Remote_User" instead of "User")
-    if (remoteSpec.components && remoteSpec.components.schemas) {
-      combinedSpec.components = combinedSpec.components || {};
-      combinedSpec.components.schemas = combinedSpec.components.schemas || {};
+    // merge stats proxy spec into local spec
+    remoteSpec = await fetchOpenApiSpec(
+      `${STATS_PROXY_URL}/docs/json`
+    );
+    mergeSchemas(combinedSpec, remoteSpec, 'Remote');
+    mergePaths(combinedSpec, remoteSpec, 'Remote');
 
-      for (const [schemaName, schemaDefinition] of Object.entries(remoteSpec.components.schemas)) {
-        combinedSpec.components.schemas[`Remote_${schemaName}`] = schemaDefinition;
-      }
-    }
-
-    // 2. Move Remote Paths over with a prefix to prevent route overwrites
-    if (remoteSpec.paths) {
-      for (const [pathName, pathDefinition] of Object.entries(remoteSpec.paths)) {
-
-        // Convert any internal $ref pointers inside the remote paths to point to the new 'Remote_' schemas
-        let pathString = JSON.stringify(pathDefinition);
-        // pathString = pathString.replace(/#\/components\/schemas\//g, '#/components/schemas/Remote_');
-        const updatedPathDefinition = JSON.parse(pathString);
-
-        // Add to combined spec under a prefixed path (e.g., /remote-api/users)
-        combinedSpec.paths[`${pathName}`] = updatedPathDefinition;
-      }
-    }
     return combinedSpec;
   };
 
