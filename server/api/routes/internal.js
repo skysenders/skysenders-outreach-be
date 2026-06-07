@@ -1,6 +1,7 @@
 // mailboxes
 import { fetchMailboxDetailsById } from '../../controller/internal/mailboxes/fetchMailboxDetailsById';
 import { fetchRandomWarmupMailbox } from '../../controller/internal/mailboxes/fetchRandomWarmupMailbox';
+import { updateMailboxWarmupStatus } from '../../controller/internal/mailboxes/updateMailboxWarmupStatus';
 import { handleSenderFailureErrors,
   handleImapFailureErrors, resetMailboxDisconnectStatus } from '../../controller/internal/mailboxes/handleMailboxErrors';
 import { updateMailboxLastFetchUuid } from '../../controller/internal/mailboxes/updateMailboxLastFetchUuid';
@@ -335,4 +336,50 @@ export default async function internalRoutes(fastify) {
         },
       },
     }, fetchMailboxesForSync);
+  // ROute to update mailbox warmup status
+  fastify.post(
+    '/update-mailbox-warmup-status',
+    {
+      schema: {
+        tags: ['Internal'],
+        summary: 'Update mailbox warmup status',
+        description: 'Update the warmup status for a mailbox',
+        operationId: 'updateMailboxWarmupStatus',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['auth-token'],
+          properties: {
+            'auth-token': {
+              type: 'string',
+              description: 'Authentication token required to authorize this request'
+            },
+          },
+        },
+        body: {
+          type: 'object',
+          required: [ 'mailbox_id', 'status' ],
+          properties: {
+            mailbox_id: { type: 'integer' },
+            status: { type: 'string' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Mailbox updated successfully.',
+            type: 'object',
+            additionalProperties: true,
+          },
+          500: {
+            description: 'Internal server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    updateMailboxWarmupStatus
+  );
 }

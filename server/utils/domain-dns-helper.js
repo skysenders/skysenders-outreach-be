@@ -1,84 +1,170 @@
 import dns from 'dns/promises';
 
-/**
- * Unified DNS Health Checker
- * @param {string} domainName - Root domain (e.g., 'example.com')
- * @param {string} dkimSelector - Selector from DB, defaults to 'default'
- * @param {string} trackingHost - Custom domain host (e.g., 'link.example.com')
- * @param {string} expectedTrackingTarget - Your platform's CNAME target
- * @returns {object} Comprehensive health check results for SPF, DKIM, DMARC, MX, and Tracking
- */
+// Provider-to-selectors mapping (Unified Outlook & Gmail)
+const PROVIDER_SELECTORS = {
+  GMAIL: ['google'],
+  OUTLOOK: ['selector1', 'selector2'], // Handles OUTLOOK inputs
+  ZOHO: ['zoho', 'zmail'],
+};
+
+// Global fallback array if provider is unknown or default
+const GLOBAL_DEFAULT_SELECTORS = ['default', 'google', 'selector1', 's1', 'selector2', 's2', 'zoho', 'zmail', 'microsoft'];
+
+// 1. SPF Record Checker
+export const checkSPF = async(domainName) => {
+  const result = { pass: false, values: [], error: null };
+  try {
+    const txtRes = await dns.resolveTxt(domainName).catch(() => []);
+    const spfRecords = txtRes.map(r => r.join('')).filter(r => r.startsWith('v=spf1'));
+
+    result.values = spfRecords;
+    result.pass = spfRecords.length === 1;
+    if (!result.pass) {
+      if (spfRecords.length > 1) {
+        result.error = 'Multiple SPF records found - this will fail validation.';
+      } else {
+        result.error = 'No SPF record found.';
+      }
+    }
+  } catch (err) {
+    result.error = err.message;
+  }
+  return result;
+};
+
+// 2. DMARC Record Checker
+export const checkDMARC = async(domainName) => {
+  const result = { pass: false, values: [], error: null };
+  try {
+    const dmarcRes = await dns.resolveTxt(`_dmarc.${domainName}`).catch(() => []);
+    const dmarcRecords = dmarcRes.map(r => r.join('')).filter(r => r.startsWith('v=DMARC1'));
+
+    result.values = dmarcRecords;
+    result.pass = dmarcRecords.length > 0;
+    result.error = dmarcRecords.length === 0 ? 'No DMARC record found.' : null;
+  } catch (err) {
+    result.error = err.message;
+  }
+  return result;
+};
+
+// 3. MX Record Checker
+export const checkMX = async(domainName) => {
+  const result = { pass: false, values: [], error: null };
+  try {
+    const mxRes = await dns.resolveMx(domainName).catch(() => []);
+    result.values = mxRes;
+    result.pass = mxRes.length > 0;
+    result.error = mxRes.length === 0 ? 'No MX records found.' : null;
+  } catch (err) {
+    result.error = err.message;
+  }
+  return result;
+};
+
+// 4. Custom Tracking Domain CNAME Checker
+export const checkTracking = async(trackingHost, expectedTrackingTarget) => {
+  const result = { pass: false, values: null, error: 'Tracking url is not configured.' };
+  if (!trackingHost) return result;
+
+  try {
+    const trackingRes = await dns.resolveCname(trackingHost.trim().toLowerCase()).catch(() => []);
+    if (trackingRes.length > 0) {
+      const foundCname = trackingRes[0].toLowerCase().replace(/\.$/, '');
+      const target = expectedTrackingTarget?.toLowerCase().replace(/\.$/, '');
+
+      result.values = [foundCname];
+      result.pass = foundCname === target;
+      if (foundCname !== target) {
+        result.error = `Configured correctly but points to ${foundCname} instead of ${target}`;
+      }
+    } else {
+      result.error = `No CNAME record found for ${trackingHost}.`;
+    }
+  } catch (err) {
+    result.error = err.message;
+  }
+  return result;
+};
+
+// Helper to query a single DKIM selector
+const queryDkimSelector = async(selector, domainName) => {
+  const res = await dns.resolveTxt(`${selector}._domainkey.${domainName}`).catch(() => []);
+  return res.map(r => r.join('')).filter(r => r.startsWith('v=DKIM1'));
+};
+
+// 5. DKIM Record Checker with Smart Selector Fallbacks
+export const checkDKIM = async(domainName, domainProvider, dkimSelector) => {
+  let provider = domainProvider ? domainProvider.trim().toUpperCase() : '';
+
+  const result = { pass: false, records: [], error: 'No DKIM record found.' };
+  const cleanSelector = dkimSelector?.trim().toLowerCase();
+
+  // Determine selectors to loop over based on rules
+  let selectorsToTest = [];
+  if (cleanSelector) {
+    selectorsToTest = [cleanSelector];
+  } else if (PROVIDER_SELECTORS[provider]) {
+    selectorsToTest = PROVIDER_SELECTORS[provider]; // e.g. ['selector1', 'selector2']
+  } else {
+    selectorsToTest = GLOBAL_DEFAULT_SELECTORS; // Use general broad array fallback
+  }
+
+  try {
+    // Fire all dynamic selector queries concurrently
+    const lookups = selectorsToTest.map(sel =>
+      queryDkimSelector(sel, domainName).then(records => ({ selector: sel, values: records }))
+    );
+
+    const lookupResults = await Promise.all(lookups);
+
+    // Snag the first match that yielded records
+    const validResult = lookupResults.find(r => r.values.length > 0);
+
+    if (validResult) {
+      result.pass = true;
+      result.values = validResult.values;
+      result.matchedSelector = validResult.selector; // Optional debugging metadata
+      result.error = null;
+    }
+    // Rule: Skip check entirely if using native GMAIL or OUTLOOK infrastructure
+    // const skipDkim = provider === 'GMAIL' || provider === 'OUTLOOK';
+    // if (skipDkim) {
+    //   return { pass: true, values: [], error: `Skipped validation for managed provider: ${provider}` };
+    // }
+  } catch (err) {
+    result.error = err.message;
+  }
+
+  return result;
+};
+
+// Main Orchestrator Function
 export const checkDomainDNSConfig = async(
   domainName,
-  dkimSelector = 'default', // Defaulting to 'default' as requested
+  domainProvider,
+  dkimSelector = 'default',
   trackingHost = null,
   expectedTrackingTarget = null
 ) => {
-  // Clean input
   const cleanDomain = domainName.trim().toLowerCase();
-  const selector = (dkimSelector || 'default').trim().toLowerCase();
 
-  const results = {
+  // Fire all core individual domain checkers concurrently
+  const [spf, dmarc, mx, dkim, tracking] = await Promise.all([
+    checkSPF(cleanDomain),
+    checkDMARC(cleanDomain),
+    checkMX(cleanDomain),
+    checkDKIM(cleanDomain, domainProvider, dkimSelector),
+    checkTracking(trackingHost, expectedTrackingTarget)
+  ]);
+
+  return {
     domain: cleanDomain,
-    spf: { pass: false, records: [], error: null },
-    dkim: { pass: false, records: [], error: null },
-    dmarc: { pass: false, records: [], error: null },
-    mx: { pass: false, records: [], error: null },
-    tracking: { pass: false, value: null, error: null },
+    spf,
+    dkim,
+    dmarc,
+    mx,
+    tracking,
     lastChecked: new Date().toISOString()
   };
-
-  // Prepare DNS resolution tasks
-  const tasks = [
-    dns.resolveTxt(cleanDomain).catch(() => []),
-    dns.resolveTxt(`_dmarc.${cleanDomain}`).catch(() => []),
-    dns.resolveMx(cleanDomain).catch(() => []),
-    dns.resolveTxt(`${selector}._domainkey.${cleanDomain}`).catch(() => [])
-  ];
-
-  // Optional Tracking CNAME check
-  if (trackingHost) {
-    tasks.push(dns.resolveCname(trackingHost.trim().toLowerCase()).catch(() => []));
-  } else {
-    tasks.push(Promise.resolve('SKIP_TRACKING'));
-  }
-
-  // Execute all lookups in parallel for speed
-  const [txtRes, dmarcRes, mxRes, dkimRes, trackingRes] = await Promise.all(tasks);
-
-  // 1. SPF: Must have exactly one record starting with v=spf1
-  const spfRecords = txtRes.map(r => r.join('')).filter(r => r.startsWith('v=spf1'));
-  results.spf.records = spfRecords;
-  results.spf.pass = spfRecords.length === 1;
-  if (spfRecords.length > 1) results.spf.error = 'Multiple SPF records found - this will fail validation.';
-
-  // 2. DMARC: Looking for v=DMARC1
-  const dmarcRecords = dmarcRes.map(r => r.join('')).filter(r => r.startsWith('v=DMARC1'));
-  results.dmarc.records = dmarcRecords;
-  results.dmarc.pass = dmarcRecords.length > 0;
-
-  // 3. MX: Just checking if records exist
-  results.mx.records = mxRes;
-  results.mx.pass = mxRes.length > 0;
-
-  // 4. DKIM: Check using the provided or default selector
-  const dkimRecords = dkimRes.map(r => r.join('')).filter(r => r.startsWith('v=DKIM1'));
-  results.dkim.records = dkimRecords;
-  results.dkim.pass = dkimRecords.length > 0;
-
-  // 5. Tracking: Verify CNAME points to your platform
-  if (trackingRes !== 'SKIP_TRACKING') {
-    // Normalize by removing trailing DNS dot
-    const foundCname = trackingRes[0]?.toLowerCase().replace(/\.$/, '');
-    const target = expectedTrackingTarget?.toLowerCase().replace(/\.$/, '');
-
-    results.tracking.value = foundCname || null;
-    results.tracking.pass = !!foundCname && foundCname === target;
-
-    if (foundCname && foundCname !== target) {
-      results.tracking.error = `Configured correctly but points to ${foundCname} instead of ${target}`;
-    }
-  }
-
-  return results;
 };

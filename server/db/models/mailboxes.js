@@ -28,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
         'ACTIVE',
         'DISCONNECTED',
         'DELETED',
-        'SUSPENDED',
         'DISABLED'
       ),
     },
@@ -61,6 +60,10 @@ module.exports = (sequelize, DataTypes) => {
     warmup_enabled: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    warmup_status: {
+      type: DataTypes.STRING(20),
+      defaultValue: 'INACTIVE'
     },
     warmup_first_started_at: {
       type: DataTypes.DATE,

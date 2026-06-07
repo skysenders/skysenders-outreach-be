@@ -1,3 +1,4 @@
+import { QueryTypes } from 'sequelize';
 import { db } from '../index';
 import { Container } from 'typedi';
 
@@ -11,7 +12,7 @@ export const getDomainByWhere = async(where) => {
   }
 };
 
-export const getAllDomainsByWhere = async(where, offset, limit) => {
+export const getAllDomainsByWhere = async(where, offset = 0, limit = 1000) => {
   try {
     return await db.domains.findAll({ where, raw: true, offset, limit });
   } catch (err) {
@@ -71,22 +72,28 @@ export const deleteDomain = async(where) => {
 export const updateDomainDNSConfig = async(domain) => {
   try {
     const DomainDNSConfigHelper = Container.get('DomainDNSConfigHelper');
-    const dnsResult = await DomainDNSConfigHelper.checkDomainDNSConfig(domain.domain_name);
+    const dnsResult = await DomainDNSConfigHelper.checkDomainDNSConfig(domain.domain_name, domain.provider);
     await db.domains.update({
       spf_pass: dnsResult.spf.pass,
       dmarc_pass: dnsResult.dmarc.pass,
       mx_pass: dnsResult.mx.pass,
       dkim_pass: dnsResult.dkim.pass,
-
+      tracking_domain_pass: dnsResult.tracking.pass,
       dns_errors: {
         spf: dnsResult.spf.error,
         dmarc: dnsResult.dmarc.error,
         mx: dnsResult.mx.error,
-        dkim: dnsResult.dkim.error
+        dkim: dnsResult.dkim.error,
+        tracking: dnsResult.tracking.error
       },
-
+      dns_value: {
+        spf: dnsResult.spf.values,
+        dmarc: dnsResult.dmarc.values,
+        mx: dnsResult.mx.values,
+        dkim: dnsResult.dkim.values,
+        tracking: dnsResult.tracking.values
+      },
       dns_last_checked_at: new Date(),
-
       updated_at: new Date()
     }, {
       where: { id: domain.id }
@@ -138,6 +145,28 @@ export const softDeleteDomain = async(where) => {
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error soft deleting domain: ${err.message}`);
+    throw err;
+  }
+};
+
+export const getDomainOverallStatus = async(partnerId, workspaceId) => {
+  try {
+    const domains = await db.sequelize.query(
+      `SELECT 
+        count(id) AS connected_count,
+        count(CASE WHEN mx_pass = false OR dkim_pass = false OR spf_pass = false OR dmarc_pass = false THEN 1 END) AS authentication_error_count
+      FROM domains
+      WHERE partner_id = :partner_id AND workspace_id = :workspace_id`,
+      {
+        replacements: { partner_id: partnerId, workspace_id: workspaceId },
+        type: QueryTypes.SELECT,
+        raw: true
+      }
+    );
+    return domains[0];
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error fetching domain overall status: ${err.message}`);
     throw err;
   }
 };

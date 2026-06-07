@@ -2,7 +2,8 @@ import { listDomains } from '../../controller/domains/listDomains';
 import { getDomainById } from '../../controller/domains/getDomainById';
 import { updateDomainDetails } from '../../controller/domains/updateDomainDetails';
 import { deleteDomainById, bulkDeleteDomains } from '../../controller/domains/deleteDomainById';
-import { checkDomainDns } from '../../controller/domains/checkDomainDns';
+import { checkDomainDns, bulkCheckDomainDns } from '../../controller/domains/checkDomainDns';
+import { fetchDomainOverallStatus } from '../../controller/domains/fetchDomainOverallStatus';
 
 // cosntants
 import { MAILBOX_TYPE } from '../../config/constants';
@@ -59,9 +60,10 @@ export default async function domainsRoutes(fastify) {
                     dmarc_pass: { type: 'boolean' },
                     mx_pass: { type: 'boolean' },
                     tracking_domain_pass: { type: 'boolean' },
-                    created_at: { type: 'string' },
                     dns_last_checked_at: { type: 'string' },
-                    dns_errors: { type: 'object', additionalProperties: true }
+                    dns_errors: { type: 'object', additionalProperties: true },
+                    dns_value: { type: 'object', additionalProperties: true },
+                    created_at: { type: 'string' },
                   }
                 }
               }
@@ -105,8 +107,9 @@ export default async function domainsRoutes(fastify) {
               dmarc_pass: { type: 'boolean' },
               mx_pass: { type: 'boolean' },
               tracking_domain_pass: { type: 'boolean' },
-              dns_errors: { type: 'object', additionalProperties: true },
               dns_last_checked_at: { type: 'string' },
+              dns_errors: { type: 'object', additionalProperties: true },
+              dns_value: { type: 'object', additionalProperties: true },
               created_at: { type: 'string' },
             }
           },
@@ -251,6 +254,44 @@ export default async function domainsRoutes(fastify) {
     },
     checkDomainDns
   );
+  // Route to bulk check domain DNS configuration
+  fastify.post(
+    '/bulk-check-dns',
+    {
+      schema: {
+        tags: ['Domains'],
+        summary: 'Bulk check domain DNS configuration',
+        description: 'Checks the DNS configuration for multiple domains and updates the results in the database',
+        operationId: 'bulkCheckDomainDns',
+        body: {
+          type: 'object',
+          properties: {
+            ids: {
+              type: 'array', items: { type: 'integer' }
+            },
+            search_text: { type: 'string', maxLength: 255 },
+            provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
+            select_all: { type: 'boolean', default: false }
+          }
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              dns_check_domains_count: { type: 'integer' },
+            }
+          },
+          400: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    }, bulkCheckDomainDns
+  );
   // route to bulk delete domains by IDs
   fastify.put(
     '/bulk-delete',
@@ -293,5 +334,27 @@ export default async function domainsRoutes(fastify) {
       }
     },
     bulkDeleteDomains
+  );
+  // Route to fetch overall domain status for the workspace
+  fastify.get(
+    '/overall-status',
+    {
+      schema: {
+        tags: ['Domains'],
+        summary: 'Fetch overall domain status',
+        description: 'Fetches the overall domain status for the workspace including total connected domains and domains with authentication errors',
+        operationId: 'fetchDomainOverallStatus',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              connected_count: { type: 'integer' },
+              authentication_error_count: { type: 'integer' }
+            }
+          }
+        }
+      }
+    },
+    fetchDomainOverallStatus
   );
 }

@@ -84,6 +84,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: {}
     },
 
+    dns_value: {
+      type: DataTypes.JSONB,
+      defaultValue: {}
+    },
+
     created_at: {
       type: DataTypes.DATE
     },

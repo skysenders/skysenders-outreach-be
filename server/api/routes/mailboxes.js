@@ -2,6 +2,7 @@ import { listMailboxes, listMailboxesInternal } from '../../controller/mailboxes
 import { fetchMailboxById } from '../../controller/mailboxes/fetchMailboxById';
 import { updateMailboxById, bulkUpdateMailboxes } from '../../controller/mailboxes/updateMailboxes';
 import { deleteMailboxById, bulkDeleteMailboxes } from '../../controller/mailboxes/deleteMailboxes';
+import { fetchMailboxOverallStatus } from '../../controller/mailboxes/fetchMailboxOverallStatus';
 // connect and save smtp mailbox
 import { verifyAndCreateSMTPMailbox } from '../../controller/mailboxes/connect/connectSMTPMailbox';
 // google mailbox oauth
@@ -737,5 +738,41 @@ export default async function mailboxRoutes(fastify) {
         },
       },
     }, bulkDeleteMailboxes
+  );
+  // Route to fetch mailbox overall status
+  fastify.get(
+    '/overall-status',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'Fetch mailbox overall status',
+        description: 'Fetch overall status of mailboxes for a workspace',
+        operationId: 'fetchMailboxOverallStatus',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Mailbox overall status fetched successfully',
+            type: 'object',
+            properties: {
+              connected_count: { type: 'number' },
+              disconnected_count: { type: 'number' },
+              warmup_error_count: { type: 'number' },
+            }
+          },
+          500: {
+            description: 'Failed to fetch mailbox overall status',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      },
+    }, fetchMailboxOverallStatus
   );
 }

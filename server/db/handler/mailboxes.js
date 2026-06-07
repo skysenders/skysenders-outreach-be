@@ -160,3 +160,26 @@ export const deleteMailbox = async(where) => {
     throw err;
   }
 };
+
+export const getMailboxesOverallStatus = async(partnerId, workspaceId) => {
+  try {
+    const mailboxes = await db.sequelize.query(
+      `SELECT 
+        SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) AS connected_count,
+        SUM(CASE WHEN status = 'DISCONNECTED' THEN 1 ELSE 0 END) AS disconnected_count,
+        SUM(CASE WHEN warmup_status = 'BLOCKED' THEN 1 ELSE 0 END) AS warmup_error_count
+      FROM mailboxes
+      WHERE partner_id = :partner_id AND workspace_id = :workspace_id AND is_deleted = false`,
+      {
+        replacements: { partner_id: partnerId, workspace_id: workspaceId },
+        type: QueryTypes.SELECT,
+        raw: true
+      }
+    );
+    return mailboxes[0];
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error fetching mailbox overall status: ${err.message}`);
+    throw err;
+  }
+};

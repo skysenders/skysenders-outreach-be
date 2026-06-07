@@ -5,7 +5,10 @@ import { makeWarmupProxyAPICall } from '../../api/routes/proxy/warmup-proxy';
 
 const getUpdateData = (updateFields) => {
   const updateData = {};
-  if (typeof updateFields.warmup_enabled === 'boolean') updateData.warmup_enabled = updateFields.warmup_enabled;
+  if (typeof updateFields.warmup_enabled === 'boolean') {
+    updateData.warmup_enabled = updateFields.warmup_enabled;
+    updateData.warmup_status = updateFields.warmup_enabled ? 'ACTIVE' : 'INACTIVE';
+  }
   if (updateFields.sending_limit_per_day) updateData.sending_limit_per_day = updateFields.sending_limit_per_day;
   if (updateFields.minimum_time_gap_mins) updateData.minimum_time_gap_mins = updateFields.minimum_time_gap_mins;
   if (updateFields.bcc_to_crm) updateData.bcc_to_crm = updateFields.bcc_to_crm;
@@ -56,6 +59,16 @@ export const updateMailboxById = async(req, res) => {
     if (updateData.warmup_enabled && !req.body.warmup_profile_id) {
       logger.warn('Warmup profile ID must be provided when enabling warmup');
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Warmup profile ID must be provided when enabling warmup.' });
+    }
+
+    // make sure warmup_status BLOCKED mailboxes are not updated with warmup_enabled true
+    if (typeof updateData.warmup_enabled === 'boolean') {
+      where.warmup_status = {
+        [Op.or]: [
+          { [Op.ne]: 'BLOCKED' },
+          null
+        ]
+      };
     }
 
     const mailbox = await MailboxesModelHandler.updateMailbox(updateData, where);
@@ -170,6 +183,15 @@ export const bulkUpdateMailboxes = async(req, res) => {
       return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk update.' });
     }
 
+    // make sure warmup_status BLOCKED mailboxes are not updated with warmup_enabled true
+    if (typeof updateData.warmup_enabled === 'boolean') {
+      where.warmup_status = {
+        [Op.or]: [
+          { [Op.ne]: 'BLOCKED' },
+          null
+        ]
+      };
+    }
     // bulk update mailboxes matching the where condition with the updateData
     const updatedMailboxes = await MailboxesModelHandler.updateMailboxes(updateData, where);
 
