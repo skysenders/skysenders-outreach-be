@@ -1,5 +1,5 @@
 import { listDomains } from '../../controller/domains/listDomains';
-import { getDomainById } from '../../controller/domains/getDomainById';
+import { getDomainById, getDomainDnsAuthResultById } from '../../controller/domains/getDomainById';
 import { updateDomainDetails } from '../../controller/domains/updateDomainDetails';
 import { deleteDomainById, bulkDeleteDomains } from '../../controller/domains/deleteDomainById';
 import { checkDomainDns, bulkCheckDomainDns } from '../../controller/domains/checkDomainDns';
@@ -123,6 +123,51 @@ export default async function domainsRoutes(fastify) {
       }
     },
     getDomainById
+  );
+  /*
+  GET DOMAIN DNS auth result BY ID
+  */
+  fastify.get(
+    '/:id/dns-auth-result',
+    {
+      schema: {
+        tags: ['Domains'],
+        summary: 'Get domain DNS auth result by ID',
+        description: 'Fetch the DNS authentication result for a single domain by ID for the current workspace',
+        operationId: 'getDomainDnsAuthResultById',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' }
+          }
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              domain_name: { type: 'string' },
+              spf_pass: { type: 'boolean' },
+              dkim_pass: { type: 'boolean' },
+              dmarc_pass: { type: 'boolean' },
+              mx_pass: { type: 'boolean' },
+              tracking_domain_pass: { type: 'boolean' },
+              dns_last_checked_at: { type: 'string' },
+              dns_errors: { type: 'object', additionalProperties: true },
+              dns_value: { type: 'object', additionalProperties: true },
+            }
+          },
+          404: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getDomainDnsAuthResultById
   );
   /*
   UPDATE DOMAIN DETAILS (DKIM + Tracking)

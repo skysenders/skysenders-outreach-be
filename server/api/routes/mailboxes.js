@@ -36,6 +36,7 @@ export default async function mailboxRoutes(fastify) {
             search_text: { type: 'string', maxLength: 255 },
             provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
             status: { type: 'string', enum: Object.values(MAILBOX_STATUS) },
+            domain_id: { type: 'number' },
             warmup_enabled: { type: 'boolean' },
             offset: { type: 'integer', minimum: 0, default: 0 },
             limit: {type: 'integer', minimum: 1, maximum: 100, default: 20 }

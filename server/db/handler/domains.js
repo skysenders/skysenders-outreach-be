@@ -12,6 +12,16 @@ export const getDomainByWhere = async(where) => {
   }
 };
 
+export const getDomainWithAttribute = async(where, attributes) => {
+  try {
+    return await db.domains.findOne({ where, attributes, raw: true });
+  } catch (err) {
+    const logger = Container.get('logger');
+    logger.error(`Error fetching domain: ${err.message}`);
+    throw err;
+  }
+};
+
 export const getAllDomainsByWhere = async(where, offset = 0, limit = 1000) => {
   try {
     return await db.domains.findAll({ where, raw: true, offset, limit });
