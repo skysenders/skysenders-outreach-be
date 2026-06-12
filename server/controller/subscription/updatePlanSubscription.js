@@ -3,6 +3,13 @@ import { Container } from 'typedi';
 import { HttpStatusCode } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
+const canUpdateSubscriptionStatus = {
+  'active': true,
+  'trialing': true,
+  'past_due': true,
+  'unpaid': true
+};
+
 // Function to create a new subscription
 const createSubscription = async(partnerId, customer, paymentMethodId, planId, subscriptionQuantity, coupon = '', isINRPayment = false) => {
   const StripeAPIServices = Container.get('StripeAPIServices');
@@ -96,7 +103,7 @@ const updateSubscription = async(partnerId, customerId, PLAN_TYPE, subId, paymen
   try {
     const stripeSubDetails = await StripeAPIServices.getSubscriptionWithExpandInvoice(partnerId, subId);
 
-    if (isEmpty(stripeSubDetails) || stripeSubDetails.status !== 'active') {
+    if (isEmpty(stripeSubDetails) || !canUpdateSubscriptionStatus[stripeSubDetails.status]) {
       logger.info('Subscription is canceled. Creating a new subscription.');
       return await createSubscription(partnerId, customerId, paymentMethodId, planId, subscriptionQuantity, coupon, isINRPayment);
     }
@@ -219,7 +226,7 @@ export const updatePlanSubscription = async(req, res) => {
 
     const isAddOnPlan = ADD_ON_ENTERPRISE_PLAN[planName];
 
-    if (planDetails.plan_name === planName && subscriptionDetails?.is_active && !isAddOnPlan) {
+    if (subscriptionDetails?.is_active && planDetails.plan_name === planName && planDetails.subscription_quantity === subscriptionQuantity) {
       throw new Error('Cannot upgrade to the same plan.');
     }
 

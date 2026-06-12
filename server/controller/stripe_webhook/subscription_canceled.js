@@ -2,6 +2,13 @@ import { filter, get, isEmpty } from 'lodash';
 import { Container } from 'typedi';
 import { HttpStatusCode } from 'axios';
 
+const validSubscriptionStatuses = {
+  'active': true,
+  'trialing': true,
+  'past_due': true,
+  'unpaid': true
+};
+
 const processUserSubscription = async(partnerId, workspaceId, subscriptionEventData, subscriptionItems, validDate, currentDate) => {
   const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
   const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
@@ -93,7 +100,28 @@ export const handleSubscriptionCanceled = async(event, res) => {
       const mainPlanItem = filter(subscriptionEventData?.items?.data, (item) => PLAN_TYPE[item?.plan?.nickname])[0];
 
       if (!isEmpty(mainPlanItem)) {
-      // Determine the valid date from the webhook data, fall back to current date if not found
+
+        // before downgrading to trial plan, just check the user has any other active subscription
+        if (userSubscriptionDetails.sub_id !== subscriptionEventData.id) {
+          LOGGER.info('Active subscription exists for the user');
+          // check if the subscription is active or not
+          const existingSub = await StripeAPIServices.getSubscription(partnerId, userSubscriptionDetails.sub_id);
+
+          if (validSubscriptionStatuses(existingSub.status)) {
+            LOGGER.info('Existing subscription is active. Ignoring the webhook and sending response.');
+            // Return a success response once the operations are completed
+            return res.status(HttpStatusCode.Ok).send({
+              ok: false,
+              data: {
+                sub_id: subscriptionEventData.id,
+                existing_sub_id: userSubscriptionDetails.sub_id,
+                paid_date: currentDate,
+              },
+            });
+          }
+        }
+
+        // Determine the valid date from the webhook data, fall back to current date if not found
         let validDate = get(mainPlanItem, 'current_period_end');
         validDate = validDate ? new Date(validDate * 1000).toISOString() : currentDate;
 
