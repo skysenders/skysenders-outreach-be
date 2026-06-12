@@ -102,22 +102,26 @@ export const handleSubscriptionCanceled = async(event, res) => {
       if (!isEmpty(mainPlanItem)) {
 
         // before downgrading to trial plan, just check the user has any other active subscription
-        if (userSubscriptionDetails.sub_id !== subscriptionEventData.id) {
+        if (userSubscriptionDetails.subscription_id && userSubscriptionDetails.subscription_id !== subscriptionEventData.id) {
           LOGGER.info('Active subscription exists for the user');
+          try {
           // check if the subscription is active or not
-          const existingSub = await StripeAPIServices.getSubscription(partnerId, userSubscriptionDetails.sub_id);
+            const existingSub = await StripeAPIServices.getSubscription(partnerId, userSubscriptionDetails.subscription_id);
 
-          if (validSubscriptionStatuses(existingSub.status)) {
-            LOGGER.info('Existing subscription is active. Ignoring the webhook and sending response.');
-            // Return a success response once the operations are completed
-            return res.status(HttpStatusCode.Ok).send({
-              ok: false,
-              data: {
-                sub_id: subscriptionEventData.id,
-                existing_sub_id: userSubscriptionDetails.sub_id,
-                paid_date: currentDate,
-              },
-            });
+            if (validSubscriptionStatuses(existingSub.status)) {
+              LOGGER.info('Existing subscription is active. Ignoring the webhook and sending response.');
+              // Return a success response once the operations are completed
+              return res.status(HttpStatusCode.Ok).send({
+                ok: false,
+                data: {
+                  sub_id: subscriptionEventData.id,
+                  existing_sub_id: userSubscriptionDetails.sub_id,
+                  paid_date: currentDate,
+                },
+              });
+            }
+          } catch (error) {
+            LOGGER.error(`Error while fetching existing subscription details - ${error.message}`);
           }
         }
 
