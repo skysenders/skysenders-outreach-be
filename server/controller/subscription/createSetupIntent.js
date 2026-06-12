@@ -13,7 +13,7 @@ export const createSetupIntent = async(req, res) => {
   logger.info(`Creating setup intent for user - ${req.user.email}`);
   try {
     // token varaible
-    const partnerId = req.user.partner_id;
+    const partnerId = req.user.tenant_id;
     const workspaceId = req.workspace?.id;
     const userId = req.user.id;
 
@@ -53,7 +53,7 @@ export const createSetupIntent = async(req, res) => {
     // if customerId is not present, create a new customer
     if (!customerId) {
       // fetch the workspace owner user_id to add in the metadata while creating the customer in stripe
-      const workspaceOwnerDetails = await WorkspaceModelHandler.fetchWorkspaceOwnerDetails(partnerId, workspaceId);
+      const workspaceOwnerDetails = await WorkspaceModelHandler.fetchWorkspaceOwnerDetails(workspaceId);
 
       // create stripe customer
       const customerData = {

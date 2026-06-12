@@ -20,7 +20,7 @@ export const planUnsubscribe = async(req, res) => {
   const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
 
   // Extract user ID and reason for unsubscribing from the request
-  const partnerId = req.user.partner_id;
+  const partnerId = req.user.tenant_id;
   const workspaceId = req.workspace?.id;
   const userId = req.user.id;
 

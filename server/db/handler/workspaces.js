@@ -96,6 +96,7 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
         jsonb_build_object(
           'id', pd.id,
           'plan_name', pd.plan_name,
+          'has_api_access': pd.has_api_access,
           'trial_start_date', pd.trial_start_date,
           'trial_end_date', pd.trial_end_date,
           'plan_end_date', pd.plan_end_date

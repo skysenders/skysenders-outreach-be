@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
 
     last_reset_date: DataTypes.DATE,
 
+    has_api_access: DataTypes.BOOLEAN,
     is_sub_active: DataTypes.BOOLEAN,
     is_payment_failed: DataTypes.BOOLEAN,
 

@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { WORKSPACE_API_CACHE, PLAN_TYPE_API_ACCESS } from './config/constants';
+import { WORKSPACE_API_CACHE } from './config/constants';
 import { isEmpty, get } from 'lodash';
 
 const updateUserTokenDataBasedonRoute = (req, tokenData) => {
@@ -58,11 +58,12 @@ export const verifyToken = async(req, res) => {
       }
 
       // If the user's plan doesn't include API access, return unauthorized access
+      const hasAPIAccess = get(workspace, 'plan_details.has_api_access');
       const planName = get(workspace, 'plan_details.plan_name');
 
-      if (!PLAN_TYPE_API_ACCESS[planName]) {
+      if (!hasAPIAccess) {
         return res.status(StatusCodes.UNAUTHORIZED).send({
-          message: `The current plan (${planName}) does not include API access. Please upgrade to a supported plan.`,
+          message: `The current plan ${planName} does not include API access. Please upgrade to a supported plan.`,
         });
       }
 

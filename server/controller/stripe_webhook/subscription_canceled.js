@@ -14,6 +14,7 @@ const processUserSubscription = async(partnerId, workspaceId, subscriptionEventD
       email_credits: 0,
       max_leads_count: 0,
       max_mailbox_count: 0,
+      has_api_access: false,
       plan_name: 'TRIAL_PLAN',
       plan_end_date: validDate,
       last_reset_date: currentDate,
@@ -26,6 +27,7 @@ const processUserSubscription = async(partnerId, workspaceId, subscriptionEventD
       end_date: validDate,
       subscription_id: null,
       is_active: false,
+      plan_name: 'TRIAL_PLAN',
       payment_status: {
         status: 'FAILED',
         amount: (subscriptionEventData.plan.amount / 100).toFixed(2),

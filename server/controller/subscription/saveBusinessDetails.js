@@ -23,7 +23,7 @@ export const saveBusinessDetails = async(req, res) => {
   logger.info(`Saving business details for user - ${req.user.email}`);
   try {
     // Extract user ID and reason for unsubscribing from the request
-    const partnerId = req.user.partner_id;
+    const partnerId = req.user.tenant_id;
     const workspaceId = req.workspace?.id;
     const userId = req.user.id;
 
@@ -61,7 +61,7 @@ export const saveBusinessDetails = async(req, res) => {
     let customerId = subscriptionDetails?.customer_id;
 
     // fetch the workspace owner user_id to add in the metadata while creating the customer in stripe
-    const workspaceOwnerDetails = await WorkspaceModelHandler.fetchWorkspaceOwnerDetails(partnerId, workspaceId);
+    const workspaceOwnerDetails = await WorkspaceModelHandler.fetchWorkspaceOwnerDetails(workspaceId);
 
     // create stripe customer
     const customerData = {

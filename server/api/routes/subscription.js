@@ -202,7 +202,10 @@ export default async function subscriptionRoutes(fastify) {
       response: {
         200: {
           description: 'New portal session created successfully!',
-          type: 'string',
+          type: 'object',
+          properties: {
+            url: { type: 'string' }
+          }
         },
         500: {
           description: 'Internal server error',

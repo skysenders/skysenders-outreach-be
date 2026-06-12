@@ -37,14 +37,23 @@ export const PARTNER_SAMPLE_PAYMENT_CONFIG = {
     ENTERPRISE_PLAN_100K: 400000,
     ENTERPRISE_PLAN_1M: 4000000,
   },
+  PLAN_API_ACCESS: {
+    TRIAL_PLAN: false,
+    LAUNCH_PLAN: false,
+    GROWTH_PLAN: true,
+    SCALE_PLAN: true,
+    ENTERPRISE_PLAN: true,
+    ENTERPRISE_PLAN_100K: true,
+    ENTERPRISE_PLAN_1M: true
+  },
   PLAN_PRICE_ID_MAP: {
     TRIAL_PLAN: 'price_1TVuCNSH8JhoP1shUVWQo982',
     LAUNCH_PLAN: 'price_1TVuEBSH8JhoP1shqPIhap4R',
     GROWTH_PLAN: 'price_1Smqrb2L8DkCRgfyGdOJj2j1',
     SCALE_PLAN: 'price_1TVuF6SH8JhoP1shCwhQjAYZ',
     ENTERPRISE_PLAN: 'price_1TVuHkSH8JhoP1shPHDeIdAd',
-    ENTERPRISE_PLAN_100K: 'price_1TWcVdSH8JhoP1shvqyeir8y',
-    ENTERPRISE_PLAN_1M: 'price_1TWcWvSH8JhoP1shxC0SIwkc',
+    ENTERPRISE_PLAN_100K: 'price_1ThQ6YSH8JhoP1shqhor57sw',
+    ENTERPRISE_PLAN_1M: 'price_1ThQ6ZSH8JhoP1shFg63g5DN',
   },
   INDIA_PLAN_PRICE_ID_MAP: {
     TRIAL_PLAN: 'price_1TVuCNSH8JhoP1shqTyhj26N',
@@ -52,8 +61,8 @@ export const PARTNER_SAMPLE_PAYMENT_CONFIG = {
     GROWTH_PLAN: 'price_1Smqrb2L8DkCRgfyGdOJj2j1',
     SCALE_PLAN: 'price_1TVuF6SH8JhoP1shp3zTrdam',
     ENTERPRISE_PLAN: 'price_1TVuHkSH8JhoP1shZNsS9HkT',
-    ENTERPRISE_PLAN_100K: 'price_1TWcVcSH8JhoP1shLnDf5Mvq',
-    ENTERPRISE_PLAN_1M: 'price_1TWcWvSH8JhoP1shHB9sv912',
+    ENTERPRISE_PLAN_100K: 'price_1ThQ6ZSH8JhoP1shwPrzygky',
+    ENTERPRISE_PLAN_1M: 'price_1ThQ6YSH8JhoP1shN19wxGDF',
   },
   ADD_ON_ENTERPRISE_PLAN: {
     ENTERPRISE_PLAN_100K: true,
@@ -102,14 +111,23 @@ export const TEST_PARTNER_SAMPLE_PAYMENT_CONFIG = {
     ENTERPRISE_PLAN_100K: 400000,
     ENTERPRISE_PLAN_1M: 4000000,
   },
+  PLAN_API_ACCESS: {
+    TRIAL_PLAN: false,
+    LAUNCH_PLAN: false,
+    GROWTH_PLAN: true,
+    SCALE_PLAN: true,
+    ENTERPRISE_PLAN: true,
+    ENTERPRISE_PLAN_100K: true,
+    ENTERPRISE_PLAN_1M: true
+  },
   PLAN_PRICE_ID_MAP: {
     TRIAL_PLAN: 'price_1TVuCNSH8JhoP1shUVWQo982',
     LAUNCH_PLAN: 'price_1TVuEBSH8JhoP1shqPIhap4R',
     GROWTH_PLAN: 'price_1Smqrb2L8DkCRgfyGdOJj2j1',
     SCALE_PLAN: 'price_1TVuF6SH8JhoP1shCwhQjAYZ',
     ENTERPRISE_PLAN: 'price_1TVuHkSH8JhoP1shPHDeIdAd',
-    ENTERPRISE_PLAN_100K: 'price_1TWcVdSH8JhoP1shvqyeir8y',
-    ENTERPRISE_PLAN_1M: 'price_1TWcWvSH8JhoP1shxC0SIwkc',
+    ENTERPRISE_PLAN_100K: 'price_1ThQ6YSH8JhoP1shqhor57sw',
+    ENTERPRISE_PLAN_1M: 'price_1ThQ6ZSH8JhoP1shFg63g5DN',
   },
   INDIA_PLAN_PRICE_ID_MAP: {
     TRIAL_PLAN: 'price_1TVuCNSH8JhoP1shqTyhj26N',
@@ -117,13 +135,13 @@ export const TEST_PARTNER_SAMPLE_PAYMENT_CONFIG = {
     GROWTH_PLAN: 'price_1Smqrb2L8DkCRgfyGdOJj2j1',
     SCALE_PLAN: 'price_1TVuF6SH8JhoP1shp3zTrdam',
     ENTERPRISE_PLAN: 'price_1TVuHkSH8JhoP1shZNsS9HkT',
-    ENTERPRISE_PLAN_100K: 'price_1TWcVcSH8JhoP1shLnDf5Mvq',
-    ENTERPRISE_PLAN_1M: 'price_1TWcWvSH8JhoP1shHB9sv912',
+    ENTERPRISE_PLAN_100K: 'price_1ThQ6ZSH8JhoP1shwPrzygky',
+    ENTERPRISE_PLAN_1M: 'price_1ThQ6YSH8JhoP1shN19wxGDF',
   },
   ADD_ON_ENTERPRISE_PLAN: {
     ENTERPRISE_PLAN_100K: true,
     ENTERPRISE_PLAN_1M: true,
   },
   STRIPE_REDIRECT_URL: 'https://outreach.skysenders.ai/app/settings/subscription',
-  STRIPE_GST_TAX_ID: 'txr_1Rkgu4SH8JhoP1shBteolayc'
+  STRIPE_GST_TAX_ID: 'txr_1Ri8P1SH8JhoP1shSDsIUYDz'
 };

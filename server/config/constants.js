@@ -108,6 +108,9 @@ export const JWT_ALLOWED_URLS = {
   '/api/workspaces/redis/api-limit-by-apikey': true,
   '/api/workspaces/redis/set-user-custom-rate-limit': true,
 
+  // stripe webhook
+  '/api/stripe-webhook/process-webhook': true,
+
   // scalar api docs for whitelabel clients
   '/custom-whitelabel-api-docs': true,
 
@@ -195,50 +198,6 @@ export const WORKSPACE_USER_MAPPING_STATUS = {
 export const STRIPE_PAY_KEY = process.env.STRIPE_PAY_KEY;
 
 export const PORT = process.env.PORT;
-
-export const PLAN_TYPE = {
-  TRIAL_PLAN: 'TRIAL_PLAN',
-  STARTER_PLAN: 'STARTER_PLAN',
-  GROWTH_PLAN: 'GROWTH_PLAN',
-  ESSENTIAL_PLAN: 'ESSENTIAL_PLAN',
-  ENTERPRISE_PLAN: 'ENTERPRISE_PLAN',
-  PARTNER_PLAN: 'PARTNER_PLAN',
-};
-
-export const PLAN_TYPE_API_ACCESS = {
-  TRIAL_PLAN: false,
-  STARTER_PLAN: false,
-  GROWTH_PLAN: true,
-  ESSENTIAL_PLAN: true,
-  ENTERPRISE_PLAN: true,
-  PRO_PLAN: true,
-  PARTNER_PLAN: true
-};
-
-export const CUSTOM_PLAN_QUANTITY = {
-  TRIAL_PLAN: false,
-  STARTER_PLAN: false,
-  GROWTH_PLAN: false,
-  ESSENTIAL_PLAN: false,
-  ENTERPRISE_PLAN: true,
-  PARTNER_PLAN: true
-};
-
-export const PLAN_PRICE_ID_MAP = {
-  STARTER_PLAN: IS_PRODUCTION ? 'price_1TGcmTSH8JhoP1shJNAPzMfd' : 'price_1TGcb1SH8JhoP1sh1tnWaTEf',
-  GROWTH_PLAN: IS_PRODUCTION ? 'price_1TGcmZSH8JhoP1shoLSLAhQs' : 'price_1TGce8SH8JhoP1shyCGeFuYC',
-  ESSENTIAL_PLAN: IS_PRODUCTION ? 'price_1TGcmcSH8JhoP1shA9RG08ce' : 'price_1TGcgTSH8JhoP1sh2IoDsMaM',
-  ENTERPRISE_PLAN: IS_PRODUCTION ? 'price_1TGcmeSH8JhoP1shOB6BaULx' : 'price_1TGcjLSH8JhoP1shp8qiH1xM',
-  PARTNER_PLAN: IS_PRODUCTION ? 'price_1TGcmiSH8JhoP1shTsXutuZN' : 'price_1TGcldSH8JhoP1shlgm3M8I6',
-};
-
-export const INDIA_PLAN_PRICE_ID_MAP = {
-  STARTER_PLAN: IS_PRODUCTION ? 'price_1TGcmTSH8JhoP1shs9w1AAWV' : 'price_1TGcbpSH8JhoP1shEJezMqQn',
-  GROWTH_PLAN: IS_PRODUCTION ? 'price_1TGcmZSH8JhoP1shvDAMtun3' : 'price_1TGce8SH8JhoP1sh7UTyK4GO',
-  ESSENTIAL_PLAN: IS_PRODUCTION ? 'price_1TGcmcSH8JhoP1shycxW02kR' : 'price_1TGcgTSH8JhoP1shZgBMahSk',
-  ENTERPRISE_PLAN: IS_PRODUCTION ? 'price_1TGcmeSH8JhoP1sh1BfT6924' : 'price_1TGcjLSH8JhoP1shKDMTZKnX',
-  PARTNER_PLAN: IS_PRODUCTION ? 'price_1TGcmiSH8JhoP1shmx4XAUaS' : 'price_1TGcm3SH8JhoP1shahWBhIJv',
-};
 
 export const USD_INR_VALUE = 94;
 

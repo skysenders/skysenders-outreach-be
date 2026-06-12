@@ -144,9 +144,12 @@ export const updatePlanSubscription = async(req, res) => {
   const WorkspaceSubscriptionItemsModelHandler = Container.get('WorkspaceSubscriptionItemsModelHandler');
   const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
 
-  const { plan_name: planName, quantity: subscriptionQuantity, is_inr_payment: isINRPayment } = req.body;
+  const { is_inr_payment: isINRPayment } = req.body;
+  let planName = req.body.plan_name;
+  let subscriptionQuantity = req.body.quantity;
+
   // Extract user ID and reason for unsubscribing from the request
-  const partnerId = req.user.partner_id;
+  const partnerId = req.user.tenant_id;
   const workspaceId = req.workspace?.id;
   const userId = req.user.id;
 
@@ -157,7 +160,7 @@ export const updatePlanSubscription = async(req, res) => {
   const { email } = req.user;
   const currentDate = new Date();
 
-  logger.info(`Updating subscription for user: ${email}, plan: ${planName}, workspace_id: ${workspaceId}`);
+  logger.info(`Updating subscription for user: ${email}, plan: ${planName} with quantity: ${subscriptionQuantity}, workspace_id: ${workspaceId}`);
   try {
 
     // if workspaceId is null or empty throw invalid request error
@@ -189,6 +192,7 @@ export const updatePlanSubscription = async(req, res) => {
     // fetch partner payment details
     const partnerPaymentDetails = await StripeAPIServices.fetchPartnerPaymentDetails(partnerId);
     const PLAN_TYPE = partnerPaymentDetails.PLAN_TYPE;
+    const PLAN_EMAIL_COUNT = partnerPaymentDetails.PLAN_EMAIL_COUNT;
     const ADD_ON_ENTERPRISE_PLAN = partnerPaymentDetails.ADD_ON_ENTERPRISE_PLAN;
     const PLAN_PRICE_ID_MAP = partnerPaymentDetails.PLAN_PRICE_ID_MAP;
     const INDIA_PLAN_PRICE_ID_MAP = partnerPaymentDetails.INDIA_PLAN_PRICE_ID_MAP;
@@ -197,6 +201,20 @@ export const updatePlanSubscription = async(req, res) => {
 
     if (!PLAN_TYPE[planName]) {
       throw new Error('Invalid plan name.');
+    }
+
+    // update the planName to add on based on quantity if the plan is enterprise plan and quantity is more than ENTERPRISE_PLAN
+    if (planName === PLAN_TYPE.ENTERPRISE_PLAN) {
+      if (subscriptionQuantity > PLAN_EMAIL_COUNT.ENTERPRISE_PLAN) {
+        // this is hard coded for skysenders, as we charge per 100K emails in subscription
+        subscriptionQuantity = subscriptionQuantity / 100000;
+        // round off to whole number
+        subscriptionQuantity = Math.ceil(subscriptionQuantity);
+        // update plan name to enterprise add on if quantity is more than 1
+        planName = subscriptionQuantity > 9 ? PLAN_TYPE.ENTERPRISE_PLAN_1M : PLAN_TYPE.ENTERPRISE_PLAN_100K;
+      } else {
+        subscriptionQuantity = 1;
+      }
     }
 
     const isAddOnPlan = ADD_ON_ENTERPRISE_PLAN[planName];
@@ -281,11 +299,11 @@ export const updatePlanSubscription = async(req, res) => {
       {
         subscription_id: subscription.id,
         customer_id: subscription.customer,
-        sub_plan_name: planName,
+        plan_name: planName,
         payment_method_id: paymentMethodId,
         is_inr_payment: isINRPayment,
         early_access: subscriptionDetails.early_access,
-        sub_payment_status: {
+        payment_status: {
           status: 'STARTED',
           planName,
           subscriptionQuantity,

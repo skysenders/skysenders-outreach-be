@@ -50,6 +50,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
     const PLAN_EMAIL_COUNT = partnerPaymentDetails.PLAN_EMAIL_COUNT;
     const PLAN_FUP_MAILBOX_COUNT = partnerPaymentDetails.PLAN_FUP_MAILBOX_COUNT;
     const PLAN_FUP_CONTACT_COUNT = partnerPaymentDetails.PLAN_FUP_CONTACT_COUNT;
+    const PLAN_API_ACCESS = partnerPaymentDetails.PLAN_API_ACCESS;
 
     // Identify the main subscription item based on the plan type
     const mainPlanItem = filter(stripeSubscription?.items?.data, (item) =>
@@ -88,12 +89,13 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
       // Prepare subscription update data
       const subscriptionUpdateData = {
         subscription_id: stripeSubscription.id,
+        plan_name: isAddOnPlan ? PLAN_TYPE.ENTERPRISE_PLAN : planName,
         is_active: true,
         last_invoice_url: webhookData.invoice_pdf,
         paid_date: currentDate,
-        sub_start_date: subscriptionStartDate,
-        sub_end_date: subscriptionEndDate,
-        sub_payment_status: {
+        start_date: subscriptionStartDate,
+        end_date: subscriptionEndDate,
+        payment_status: {
           status: 'SUCCESS',
           planName,
           lastUpdatedAt: currentDate,
@@ -102,10 +104,11 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
 
       // Prepare plan update data
       const planUpdateData = {
-        plan_name: planName,
+        plan_name: isAddOnPlan ? PLAN_TYPE.ENTERPRISE_PLAN : planName,
         email_credits: planEmailCount,
         max_leads_count: planMaxFUPContactCount,
         max_mailbox_count: planMaxFUPMailboxCount,
+        has_api_access: PLAN_API_ACCESS[planName],
         last_reset_date: currentDate,
         plan_end_date: subscriptionEndDate,
         is_sub_active: true,
@@ -131,6 +134,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
           email_credits: planEmailCount,
           max_leads_count: planMaxFUPContactCount,
           max_mailbox_count: planMaxFUPMailboxCount,
+          has_api_access: PLAN_API_ACCESS[planName],
         }
       };
 

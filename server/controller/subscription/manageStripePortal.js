@@ -19,7 +19,7 @@ export const newPartnerPortalSession = async(req, res) => {
   const StripeAPIServices = Container.get('StripeAPIServices');
 
   // token varaible
-  const partnerId = req.user.partner_id;
+  const partnerId = req.user.tenant_id;
   const workspaceId = req.workspace?.id;
   const userId = req.user.id;
 
@@ -42,17 +42,15 @@ export const newPartnerPortalSession = async(req, res) => {
     // Fetch subsription details by partnerId
     const subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
       partner_id: partnerId,
-      worspace_id: workspaceId,
+      workspace_id: workspaceId,
     });
 
-    /** If found, redirect users to the Stripe's portal. Else, user is not
-     * allowed.
+    /** If found, sent the redirect url by calling stripe createCustomerPortalSession Method
      */
     if (subscriptionDetails) {
-
       // create session and get the url to redirect
       const sessionUrl = await StripeAPIServices.createCustomerPortalSession(partnerId, subscriptionDetails.customer_id);
-      return res.send(sessionUrl);
+      return res.status(StatusCodes.OK).send({ url: sessionUrl });
     }
 
     return res.status(StatusCodes.NOT_ACCEPTABLE).send({ message: 'Partner Customer portal not found' });
