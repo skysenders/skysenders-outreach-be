@@ -41,7 +41,6 @@ export const newPartnerPortalSession = async(req, res) => {
 
     // Fetch subsription details by partnerId
     const subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      partner_id: partnerId,
       workspace_id: workspaceId,
     });
 

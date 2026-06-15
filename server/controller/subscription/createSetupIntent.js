@@ -32,9 +32,8 @@ export const createSetupIntent = async(req, res) => {
       return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
     }
 
-    // Fetch subsription details by partnerId
+    // Fetch subsription details
     let subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      partner_id: partnerId,
       workspace_id: workspaceId,
     });
 

@@ -14,23 +14,14 @@ export const checkDomainDns = async(req, res) => {
   const DomainDNSConfigHelper = Container.get('DomainDNSConfigHelper');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
 
   const { id } = req.params;
-
-  if (!workspaceId) {
-    logger.warn('Workspace not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace not found.'
-    });
-  }
 
   try {
 
     const domain = await DomainsModelHandler.getDomainByWhere({
       id,
       workspace_id: workspaceId,
-      partner_id: partnerId
     });
 
     if (!domain) {
@@ -84,7 +75,6 @@ export const checkDomainDns = async(req, res) => {
       {
         id,
         workspace_id: workspaceId,
-        partner_id: partnerId
       }
     );
 
@@ -111,17 +101,9 @@ export const bulkCheckDomainDns = async(req, res) => {
 
   const { ids, search_text: searchText, provider, select_all: selectAll } = req.body;
 
-  if (!workspaceId) {
-    logger.warn('Workspace not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace not found.'
-    });
-  }
-
   try {
 
     const whereClause = {
-      partner_id: req.user.tenant_id,
       workspace_id: workspaceId,
     };
 

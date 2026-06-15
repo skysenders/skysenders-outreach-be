@@ -14,11 +14,11 @@ export const updateMailboxLastFetchUuid = async(req, res) => {
       });
     }
 
-    const { partner_id: partnerId, workspace_id: workspaceId, mailbox_id: mailboxId } = req.body;
+    const { mailbox_id: mailboxId } = req.body;
 
-    if (!partnerId || !mailboxId || !workspaceId) {
+    if (!mailboxId) {
       return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Invalid payload: partner_id, workspace_id, and mailbox_id are required'
+        message: 'Invalid payload: mailbox_id is required'
       });
     }
 
@@ -44,18 +44,14 @@ export const updateMailboxLastFetchUuid = async(req, res) => {
     }
 
     // Add identifiers to bind values for the WHERE clause
-    bindValues.push(partnerId);
-    bindValues.push(workspaceId);
     bindValues.push(mailboxId);
 
-    const partnerIdPos = bindValues.length - 2;
-    const workspaceIdPos = bindValues.length - 1;
-    const mailboxIdPos = bindValues.length;
+    const mailboxIdPos = bindValues.length - 1;
 
     const queryString = `
       UPDATE mailboxes_sync_state 
       SET ${updates.join(', ')} 
-      WHERE partner_id = $${partnerIdPos} AND workspace_id = $${workspaceIdPos} AND mailbox_id = $${mailboxIdPos}
+      WHERE mailbox_id = $${mailboxIdPos}
     `;
 
     // 3. Execute (Awaiting ensures the DB actually registers the change)

@@ -9,15 +9,6 @@ export const getDomainById = async(req, res) => {
   const DomainsModelHandler = Container.get('DomainsModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace not found in request');
-
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace not found.'
-    });
-  }
 
   const { id } = req.params;
 
@@ -25,7 +16,6 @@ export const getDomainById = async(req, res) => {
 
     const domain = await DomainsModelHandler.getDomainByWhere({
       id,
-      partner_id: partnerId,
       workspace_id: workspaceId,
     });
 
@@ -54,15 +44,6 @@ export const getDomainDnsAuthResultById = async(req, res) => {
   const DomainsModelHandler = Container.get('DomainsModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace not found in request');
-
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace not found.'
-    });
-  }
 
   const { id } = req.params;
 
@@ -70,7 +51,6 @@ export const getDomainDnsAuthResultById = async(req, res) => {
 
     const domain = await DomainsModelHandler.getDomainWithAttribute({
       id,
-      partner_id: partnerId,
       workspace_id: workspaceId,
     }, [
       'id',

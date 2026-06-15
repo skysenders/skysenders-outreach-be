@@ -46,14 +46,9 @@ export const updateMailboxById = async(req, res) => {
   const workspaceId = req.workspace.id;
   const partnerId = req.user.tenant_id;
 
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
-
   try {
 
-    const where = { partner_id: partnerId, workspace_id: workspaceId, id };
+    const where = { workspace_id: workspaceId, id };
     const updateData = getUpdateData(req.body);
 
     if (updateData.warmup_enabled && !req.body.warmup_profile_id) {
@@ -140,7 +135,7 @@ export const bulkUpdateMailboxes = async(req, res) => {
     } = req.body.filter || {};
 
     let isFilterProvided = false;
-    const where = { partner_id: partnerId, workspace_id: workspaceId, is_deleted: false };
+    const where = { workspace_id: workspaceId, is_deleted: false };
 
     // if mailboxIds are provided, filter by those IDs
     if (mailboxIds && Array.isArray(mailboxIds) && mailboxIds.length > 0) {

@@ -83,7 +83,7 @@ export const handleInvoicePaymentFailure = async(event, res) => {
     const partnerId = event.partner_id;
 
     // Fetch user subscription details and Stripe subscription
-    const worksapceSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ partner_id: partnerId, customer_id: webhookData.customer });
+    const worksapceSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: webhookData.customer });
 
     // If no subscription details found, ignore the webhook
     if (!worksapceSubscriptionDetails) {

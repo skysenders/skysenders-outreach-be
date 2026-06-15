@@ -44,7 +44,6 @@ export const planUnsubscribe = async(req, res) => {
 
     // Fetch subsription details by partnerId
     const subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      partner_id: partnerId,
       workspace_id: workspaceId,
     });
 
@@ -69,14 +68,14 @@ export const planUnsubscribe = async(req, res) => {
       await WorkspaceSubscriptionModelHandler.updateSubscription({
         is_sub: false,
         sub_id: null,
-      }, { workspace_id: workspaceId, partner_id: partnerId });
+      }, { workspace_id: workspaceId });
     }
 
     // If the user provided a reason, update the plan details with it
     if (unsubscribeReason) {
       WorkspacePlanDetailsModelHandler.updatePlanDetails(
         { reason_for_unsubscribe: unsubscribeReason },
-        { workspace_id: workspaceId, partner_id: partnerId }
+        { workspace_id: workspaceId }
       );
     }
 

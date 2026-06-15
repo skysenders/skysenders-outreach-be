@@ -21,7 +21,6 @@ export const fetchMailboxDetailsById = async(req, res) => {
      * Step 2: Fetch mailbox details
      */
     const mailboxes = await MailboxesModelHandler.getMailboxAndAllCredsByWhere({
-      partnerId: req.query.partner_id,
       workspaceId: req.query.workspace_id,
       id: req.query.mailbox_id
     });

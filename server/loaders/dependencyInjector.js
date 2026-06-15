@@ -20,6 +20,11 @@ import * as UserSessionModelHandler from '../db/handler/user_sessions';
 import * as DomainsModelHandler from '../db/handler/domains';
 import * as MailboxesModelHandler from '../db/handler/mailboxes';
 import * as MailboxCredentialsModelHandler from '../db/handler/mailbox_credentials';
+import * as ContactsModelHandler from '../db/handler/contacts';
+import * as ListsModelHandler from '../db/handler/lists';
+import * as ContactListMappingsModelHandler from '../db/handler/contact_list_mappings';
+import * as ListImportJobsModelHandler from '../db/handler/list_import_jobs';
+import * as GlobalSuppressionsModelHandler from '../db/handler/global_suppressions';
 
 // Billing Modules
 import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
@@ -81,7 +86,11 @@ const injectorInstance = async() => {
     Container.set('DomainsModelHandler', DomainsModelHandler);
     Container.set('MailboxesModelHandler', MailboxesModelHandler);
     Container.set('MailboxCredentialsModelHandler', MailboxCredentialsModelHandler);
-
+    Container.set('ContactsModelHandler', ContactsModelHandler);
+    Container.set('ListsModelHandler', ListsModelHandler);
+    Container.set('ContactListMappingsModelHandler', ContactListMappingsModelHandler);
+    Container.set('ListImportJobsModelHandler', ListImportJobsModelHandler);
+    Container.set('GlobalSuppressionsModelHandler', GlobalSuppressionsModelHandler);
     // Services
     Container.set('AwsService', AwsService);
     Container.set('StripeAPIServices', StripeAPIServices);

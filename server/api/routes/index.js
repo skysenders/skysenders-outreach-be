@@ -11,6 +11,7 @@ import stripeWebhook from './stripe-webhook';
 // domains & mailbxoes
 import domains from './domains';
 import mailboxes from './mailboxes';
+import contacts from './contacts';
 import internal from './internal';
 import hasura from './hasura_events';
 
@@ -140,6 +141,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(stripeWebhook, { prefix: '/api/stripe-webhook' });
   fastifyApp.register(domains, { prefix: '/api/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
+  fastifyApp.register(contacts, { prefix: '/api/contacts' });
   fastifyApp.register(internal, { prefix: '/api/internal' });
   fastifyApp.register(hasura, { prefix: '/api/hasura' });
 
@@ -148,7 +150,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
   fastifyApp.register(domains, { prefix: '/api/v1/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
-
+  fastifyApp.register(contacts, { prefix: '/api/v1/contacts' });
 
   const fetchOpenApiSpec = async(url) => {
     const { data } = await axios.get(url);

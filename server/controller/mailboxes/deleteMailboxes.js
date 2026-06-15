@@ -11,15 +11,9 @@ export const deleteMailboxById = async(req, res) => {
 
   const id = req.params.id;
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   try {
-    const mailbox = await MailboxesModelHandler.softDeleteMailbox({ partner_id: partnerId, workspace_id: workspaceId, id });
+    const mailbox = await MailboxesModelHandler.softDeleteMailbox({ workspace_id: workspaceId, id });
 
     // if mailbox not found, return 404
     if (!(mailbox && mailbox[0])) {
@@ -45,12 +39,6 @@ export const bulkDeleteMailboxes = async(req, res) => {
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   try {
 
@@ -63,7 +51,7 @@ export const bulkDeleteMailboxes = async(req, res) => {
     } = req.body || {};
 
     let isFilterProvided = false;
-    const where = { partner_id: partnerId, workspace_id: workspaceId, is_deleted: false };
+    const where = { workspace_id: workspaceId, is_deleted: false };
 
     // if mailboxIds are provided, filter by those IDs
     if (mailboxIds && Array.isArray(mailboxIds) && mailboxIds.length > 0) {

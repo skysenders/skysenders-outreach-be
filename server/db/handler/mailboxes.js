@@ -22,7 +22,7 @@ export const countMailboxesByWhere = async(where) => {
   }
 };
 
-export const getMailboxWithCredsByWhere = async({ partnerId, workspaceId, id }) => {
+export const getMailboxWithCredsByWhere = async({ workspaceId, id }) => {
   try {
     const mailbox = await db.sequelize.query(
       `SELECT m.*, 
@@ -30,10 +30,10 @@ export const getMailboxWithCredsByWhere = async({ partnerId, workspaceId, id }) 
       c.imap_host, c.imap_port, c.imap_username, c.imap_password, c.imap_secure
       FROM mailboxes m
       JOIN mailbox_credentials c ON m.id = c.mailbox_id
-      WHERE m.partner_id = :partner_id AND m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false
+      WHERE m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false
       LIMIT 1`,
       {
-        replacements: { partner_id: partnerId, workspace_id: workspaceId, id },
+        replacements: { workspace_id: workspaceId, id },
         type: QueryTypes.SELECT,
         raw: true
       }
@@ -46,16 +46,16 @@ export const getMailboxWithCredsByWhere = async({ partnerId, workspaceId, id }) 
   }
 };
 
-export const getMailboxAndAllCredsByWhere = async({ partnerId, workspaceId, id }) => {
+export const getMailboxAndAllCredsByWhere = async({ workspaceId, id }) => {
   try {
     const mailbox = await db.sequelize.query(
       `SELECT m.*, c.*
       FROM mailboxes m
       JOIN mailbox_credentials c ON m.id = c.mailbox_id
-      WHERE m.partner_id = :partner_id AND m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false
+      WHERE m.workspace_id = :workspace_id AND m.id = :id AND m.is_deleted = false
       LIMIT 1`,
       {
-        replacements: { partner_id: partnerId, workspace_id: workspaceId, id },
+        replacements: { workspace_id: workspaceId, id },
         type: QueryTypes.SELECT,
         raw: true
       }
@@ -161,7 +161,7 @@ export const deleteMailbox = async(where) => {
   }
 };
 
-export const getMailboxesOverallStatus = async(partnerId, workspaceId) => {
+export const getMailboxesOverallStatus = async(workspaceId) => {
   try {
     const mailboxes = await db.sequelize.query(
       `SELECT 
@@ -169,9 +169,9 @@ export const getMailboxesOverallStatus = async(partnerId, workspaceId) => {
         SUM(CASE WHEN status = 'DISCONNECTED' THEN 1 ELSE 0 END) AS disconnected_count,
         SUM(CASE WHEN warmup_status = 'BLOCKED' THEN 1 ELSE 0 END) AS warmup_error_count
       FROM mailboxes
-      WHERE partner_id = :partner_id AND workspace_id = :workspace_id AND is_deleted = false`,
+      WHERE workspace_id = :workspace_id AND is_deleted = false`,
       {
-        replacements: { partner_id: partnerId, workspace_id: workspaceId },
+        replacements: { workspace_id: workspaceId },
         type: QueryTypes.SELECT,
         raw: true
       }

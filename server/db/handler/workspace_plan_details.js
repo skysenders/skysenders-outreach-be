@@ -64,16 +64,16 @@ export const deletePlanDetails = async(where) => {
   }
 };
 
-export const fetchWorkspaceContactMailboxCount = async(partnerId, workspaceId) => {
+export const fetchWorkspaceContactMailboxCount = async(workspaceId) => {
   const logger = Container.get('logger');
   try {
-    logger.info(`Fetching workspace mailboxes and contacts live count for user ID: ${partnerId}, workspace ID: ${workspaceId}`);
+    logger.info(`Fetching workspace mailboxes and contacts live count for workspace ID: ${workspaceId}`);
     // const query = `SELECT
-    //       (SELECT COUNT(*) FROM mailboxes WHERE partner_id = :partnerId AND workspace_id = :workspaceId AND is_deleted = false') AS mailboxes_count,
-    //       (SELECT COUNT(*) FROM contacts WHERE partner_id = :partnerId AND workspace_id = :workspaceId AND is_deleted = false' ) AS contacts_count`;
+    //       (SELECT COUNT(*) FROM mailboxes WHERE workspace_id = :workspaceId AND is_deleted = false') AS mailboxes_count,
+    //       (SELECT COUNT(*) FROM contacts WHERE workspace_id = :workspaceId AND is_deleted = false' ) AS contacts_count`;
 
     // return (await db.sequelize.query(query, {
-    //   replacements: { partnerId, workspaceId },
+    //   replacements: { workspaceId },
     //   type: QueryTypes.SELECT,
     // }))[0] || {};
 

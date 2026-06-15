@@ -25,7 +25,7 @@ export const fetchRandomWarmupMailbox = async(req, res) => {
      * Step 2: Fetch mailbox details
      */
     const mailboxes = await MailboxesModelHandler.getMailboxByWhere({
-      partner_id: warmupAccountDetails.partnerId,
+      workspace_id: warmupAccountDetails.workspaceId,
       id: warmupAccountDetails.mailboxId
     });
 

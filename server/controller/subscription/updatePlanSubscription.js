@@ -187,11 +187,9 @@ export const updatePlanSubscription = async(req, res) => {
 
     const [subscriptionDetails, planDetails] = await Promise.all([
       WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-        partner_id: partnerId,
         workspace_id: workspaceId,
       }),
       WorkspacePlanDetailsModelHandler.getPlanDetailsByWhere({
-        partner_id: partnerId,
         workspace_id: workspaceId,
       }),
     ]);
@@ -240,7 +238,7 @@ export const updatePlanSubscription = async(req, res) => {
       planContactCount = (subscriptionQuantity * PLAN_FUP_CONTACT_COUNT.ENTERPRISE_PLAN_ADD_ON) + PLAN_FUP_CONTACT_COUNT.ENTERPRISE_PLAN;
     }
 
-    const { mailboxes_count: actualMailboxCount = 0, contacts_count: actualContactCount = 0 } = await WorkspacePlanDetailsModelHandler.fetchWorkspaceContactMailboxCount(partnerId, workspaceId);
+    const { mailboxes_count: actualMailboxCount = 0, contacts_count: actualContactCount = 0 } = await WorkspacePlanDetailsModelHandler.fetchWorkspaceContactMailboxCount(workspaceId);
 
     // Check if the workspace has any extra mailboxes
     if (planMailboxCount < Number(actualMailboxCount)) {

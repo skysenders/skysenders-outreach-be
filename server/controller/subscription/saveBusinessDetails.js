@@ -44,7 +44,6 @@ export const saveBusinessDetails = async(req, res) => {
 
     // Fetch subsription details by partnerId and workspaceId
     let subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      partner_id: partnerId,
       workspace_id: workspaceId,
     });
 
@@ -111,7 +110,6 @@ export const saveBusinessDetails = async(req, res) => {
       },
     }, {
       workspace_id: workspaceId,
-      partner_id: partnerId,
     });
 
     logger.info(`Business details saved successfully for user - ${req.user.email}`);

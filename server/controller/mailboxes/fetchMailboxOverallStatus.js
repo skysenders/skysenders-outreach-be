@@ -6,15 +6,9 @@ export const fetchMailboxOverallStatus = async(req, res) => {
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   try {
-    const result = await MailboxesModelHandler.getMailboxesOverallStatus(partnerId, workspaceId);
+    const result = await MailboxesModelHandler.getMailboxesOverallStatus(workspaceId);
 
     return res.status(StatusCodes.OK).send(result);
   } catch (error) {

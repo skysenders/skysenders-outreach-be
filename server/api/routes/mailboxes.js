@@ -110,9 +110,8 @@ export default async function mailboxRoutes(fastify) {
         },
         querystring: {
           type: 'object',
-          required: ['partner_id', 'workspace_id'],
+          required: ['workspace_id'],
           properties: {
-            partner_id: { type: 'number' },
             workspace_id: { type: 'number' },
             domain_id: { type: 'number' },
             search_text: { type: 'string', maxLength: 255 },

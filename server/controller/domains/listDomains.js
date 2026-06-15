@@ -10,10 +10,6 @@ export const listDomains = async(req, res) => {
   const DomainsModelHandler = Container.get('DomainsModelHandler');
 
   const workspaceId = req.workspace.id;
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   const {
     search_text: searchText = '',
@@ -25,7 +21,6 @@ export const listDomains = async(req, res) => {
   try {
 
     const whereClause = {
-      partner_id: req.user.tenant_id,
       workspace_id: workspaceId,
     };
 

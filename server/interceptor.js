@@ -30,6 +30,7 @@ export const verifyToken = async(req, res) => {
   const logger = Container.get('logger');
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
   const redisClient = Container.get('redisClient');
+  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
   try {
     // check if the API path starts with /api/v1/
     if (req.url && req.url.startsWith('/api/v1')) {
@@ -93,6 +94,20 @@ export const verifyToken = async(req, res) => {
         const tokenData = await req.jwtVerify();
         if (!tokenData) {
           return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid token'});
+        }
+        // cross check whether user has acess to workspace or not
+        if (tokenData.type !== 'partner' && tokenData.user.id) {
+          if (req.headers['x-workspace-id']) {
+            const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
+              userId: tokenData.user.id,
+              workspaceId: req.headers['x-workspace-id']
+            });
+            if (!hasAccess) {
+              return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Unauthorized: No access to workspace'});
+            }
+          } else {
+            return res.status(StatusCodes.BAD_REQUEST).send({message: 'Workspace ID is required in header x-workspace-id'});
+          }
         }
         // Set user data into request object
         updateUserTokenDataBasedonRoute(req, tokenData);

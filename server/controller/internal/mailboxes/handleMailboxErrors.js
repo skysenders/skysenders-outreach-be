@@ -34,7 +34,6 @@ export const handleSenderFailureErrors = async(req, res) => {
           disconnect_stage: disconnectStage,
           disconnect_reason: disconnectReason,
         }, {
-          partner_id: partnerId,
           id: mailboxId
         }),
         makeWarmupProxyAPICall('/api/warmup/internal/add-mailbox-to-warmup-pool', 'POST', {
@@ -51,7 +50,6 @@ export const handleSenderFailureErrors = async(req, res) => {
           disconnect_stage: null,
           disconnect_reason: disconnectReason,
         }, {
-          partner_id: partnerId,
           id: mailboxId
         }),
         makeWarmupProxyAPICall('/api/warmup/internal/block-warmup-mailbox', 'POST', {
@@ -103,7 +101,6 @@ export const handleImapFailureErrors = async(req, res) => {
           disconnect_stage: disconnectStage,
           disconnect_reason: disconnectReason,
         }, {
-          partner_id: partnerId,
           id: mailboxId
         }),
       ]);
@@ -114,7 +111,6 @@ export const handleImapFailureErrors = async(req, res) => {
           disconnect_stage: null,
           disconnect_reason: disconnectReason,
         }, {
-          partner_id: partnerId,
           id: mailboxId
         }),
         makeWarmupProxyAPICall('/api/warmup/internal/block-warmup-mailbox', 'POST', {
@@ -147,7 +143,7 @@ export const resetMailboxDisconnectStatus = async(req, res) => {
         message: 'Reset mailbox disconnect status auth fails | Auth validation failed.'
       });
     }
-    const { partner_id: partnerId, workspace_id: workspaceId, mailbox_id: mailboxId } = req.body;
+    const { workspace_id: workspaceId, mailbox_id: mailboxId } = req.body;
 
     // sent ressponse and process the request
     res.status(StatusCodes.OK).send({
@@ -159,7 +155,6 @@ export const resetMailboxDisconnectStatus = async(req, res) => {
       disconnect_stage: null,
       disconnect_reason: null,
     }, {
-      partner_id: partnerId,
       workspace_id: workspaceId,
       id: mailboxId
     });

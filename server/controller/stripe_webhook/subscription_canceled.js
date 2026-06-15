@@ -80,7 +80,7 @@ export const handleSubscriptionCanceled = async(event, res) => {
       const PLAN_TYPE = partnerPaymentDetails.PLAN_TYPE;
 
       // Fetch user subscription details using the customer ID from the event
-      const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ partner_id: partnerId, customer_id: subscriptionEventData.customer });
+      const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: subscriptionEventData.customer });
 
       // check if it is a partner subscription
       if (!userSubscriptionDetails) {

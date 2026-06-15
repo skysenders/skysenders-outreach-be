@@ -11,23 +11,14 @@ export const deleteDomainById = async(req, res) => {
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
 
   const { id } = req.params;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace ID not found.'
-    });
-  }
 
   try {
 
     const domain = await DomainsModelHandler.getDomainByWhere({
       id,
       workspace_id: workspaceId,
-      partner_id: partnerId
     });
 
     if (!domain) {
@@ -39,11 +30,10 @@ export const deleteDomainById = async(req, res) => {
     await DomainsModelHandler.softDeleteDomain({
       id,
       workspace_id: workspaceId,
-      partner_id: partnerId
     });
 
     // soft delete domain mailboxes
-    await MailboxesModelHandler.deleteDomain({ partner_id: partnerId, workspace_id: workspaceId, domain_id: id });
+    await MailboxesModelHandler.deleteDomain({ workspace_id: workspaceId, domain_id: id });
 
     return res.status(StatusCodes.OK).send({
       success: true,
@@ -65,12 +55,6 @@ export const bulkDeleteDomains = async(req, res) => {
   const DomainsModelHandler = Container.get('DomainsModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   try {
 
@@ -82,7 +66,7 @@ export const bulkDeleteDomains = async(req, res) => {
     } = req.body || {};
 
     let isFilterProvided = false;
-    const where = { partner_id: partnerId, workspace_id: workspaceId };
+    const where = { workspace_id: workspaceId };
 
     // if domainIds are provided, filter by those IDs
     if (domainIds && Array.isArray(domainIds) && domainIds.length > 0) {

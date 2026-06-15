@@ -11,7 +11,6 @@ export const listMailboxesInternal = async(req, res) => {
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
   const workspaceId = req.query.workspace_id;
-  const partnerId = req.query.partner_id;
 
   const {
     search_text: searchText,
@@ -27,7 +26,6 @@ export const listMailboxesInternal = async(req, res) => {
     }
 
     const where = {
-      partner_id: partnerId,
       workspace_id: workspaceId,
       is_deleted: false
     };
@@ -68,12 +66,6 @@ export const listMailboxes = async(req, res) => {
   const MailboxesModelHandler = Container.get('MailboxesModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   const {
     search_text: searchText,
@@ -88,7 +80,6 @@ export const listMailboxes = async(req, res) => {
   try {
 
     const where = {
-      partner_id: partnerId,
       workspace_id: workspaceId,
       is_deleted: false
     };

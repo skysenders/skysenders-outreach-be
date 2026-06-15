@@ -21,15 +21,11 @@ export default async function internalRoutes(fastify) {
         hide: true,
         querystring: {
           type: 'object',
-          required: ['auth-token', 'partner_id', 'workspace_id', 'mailbox_id'],
+          required: ['auth-token', 'workspace_id', 'mailbox_id'],
           properties: {
             'auth-token': {
               type: 'string',
               description: 'Authentication token required to authorize this request'
-            },
-            partner_id: {
-              type: 'integer',
-              description: 'Partner ID to identify which Google OAuth client to use'
             },
             workspace_id: {
               type: 'integer',
@@ -223,10 +219,8 @@ export default async function internalRoutes(fastify) {
         },
         body: {
           type: 'object',
-          required: [ 'partner_id', 'workspace_id', 'mailbox_id' ],
+          required: [ 'mailbox_id' ],
           properties: {
-            partner_id: { type: 'integer' },
-            workspace_id: { type: 'integer' },
             mailbox_id: { type: 'integer' },
             last_tracking_details: { type: 'object' },
             last_checked_at: { type: 'string' },
@@ -275,9 +269,8 @@ export default async function internalRoutes(fastify) {
         },
         body: {
           type: 'object',
-          required: [ 'partner_id', 'workspace_id', 'mailbox_id' ],
+          required: [ 'workspace_id', 'mailbox_id' ],
           properties: {
-            partner_id: { type: 'integer' },
             workspace_id: { type: 'integer' },
             mailbox_id: { type: 'integer' },
           },

@@ -10,15 +10,9 @@ export const fetchMailboxById = async(req, res) => {
 
   const id = req.params.id;
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
-
-  if (!workspaceId) {
-    logger.warn('Workspace ID not found in request');
-    return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID not found.' });
-  }
 
   try {
-    const mailbox = await MailboxesModelHandler.getMailboxWithCredsByWhere({partnerId, workspaceId, id});
+    const mailbox = await MailboxesModelHandler.getMailboxWithCredsByWhere({ workspaceId, id});
 
     // if mailbox not found, return 404
     if (!mailbox) {

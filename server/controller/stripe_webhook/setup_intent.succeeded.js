@@ -22,7 +22,7 @@ export const handleSetupIntentSucceeded = async(event, res) => {
     const paymentMethodId = webhookData.payment_method;
 
     // Fetch user subscription details and Stripe subscription
-    const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ partner_id: partnerId, customer_id: customerId });
+    const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: customerId });
 
 
     // If no subscription details found, ignore the webhook

@@ -159,16 +159,16 @@ export const softDeleteDomain = async(where) => {
   }
 };
 
-export const getDomainOverallStatus = async(partnerId, workspaceId) => {
+export const getDomainOverallStatus = async(workspaceId) => {
   try {
     const domains = await db.sequelize.query(
       `SELECT 
         count(id) AS connected_count,
         count(CASE WHEN mx_pass = false OR dkim_pass = false OR spf_pass = false OR dmarc_pass = false THEN 1 END) AS authentication_error_count
       FROM domains
-      WHERE partner_id = :partner_id AND workspace_id = :workspace_id`,
+      WHERE workspace_id = :workspace_id`,
       {
-        replacements: { partner_id: partnerId, workspace_id: workspaceId },
+        replacements: { workspace_id: workspaceId },
         type: QueryTypes.SELECT,
         raw: true
       }

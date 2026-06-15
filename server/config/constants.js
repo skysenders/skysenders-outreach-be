@@ -395,3 +395,30 @@ export const STATS_PROXY_URL = process.env.STATS_PROXY_URL || 'http://localhost:
 export const HASURA_EVENTS = {
   WARMUP_STATUS_UPDATE: 'warmup_status_update',
 };
+
+export const CONTACT_IMPORT_CONFLICT_ACTION = {
+  SKIP: 'SKIP',
+  MERGE: 'MERGE'
+};
+
+export const DEFAULT_CONTACT_ATTRIBUTES = [
+  'id',
+  'email',
+  'esp_provider',
+  'first_name',
+  'last_name',
+  'phone',
+  'job_title',
+  'linkedin_url',
+  'company_name',
+  'city',
+  'state',
+  'country',
+  'unsubscribed_at',
+  'bounced_at',
+  'blocked_at',
+  'created_at',
+  'updated_at'
+];
+
+export const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

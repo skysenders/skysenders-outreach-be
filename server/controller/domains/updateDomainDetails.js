@@ -9,7 +9,6 @@ export const updateDomainDetails = async(req, res) => {
   const DomainsModelHandler = Container.get('DomainsModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.user.tenant_id;
 
   const { id } = req.params;
 
@@ -35,7 +34,6 @@ export const updateDomainDetails = async(req, res) => {
       updateColumns,
       {
         id,
-        partner_id: partnerId,
         workspace_id: workspaceId
       }
     );
