@@ -97,8 +97,9 @@ export const deleteContact = async(where) => {
 };
 
 const bulkSkipInsert = async(records) => {
-  return db.contacts.bulkCreate(records, {
-    ignoreDuplicates: true
+  return await db.contacts.bulkCreate(records, {
+    ignoreDuplicates: true,
+    returning: ['id', 'email'],
   });
 };
 
@@ -133,15 +134,15 @@ const bulkMergeInsert = async(records) => {
       r.workspace_id,
       r.email,
       r.esp_provider || 'OTHERS',
-      r.first_name,
-      r.last_name,
-      r.phone,
-      r.job_title,
-      r.linkedin_url,
-      r.company_name,
-      r.city,
-      r.state,
-      r.country,
+      r.first_name || null,
+      r.last_name || null,
+      r.phone || null,
+      r.job_title || null,
+      r.linkedin_url || null,
+      r.company_name || null,
+      r.city || null,
+      r.state || null,
+      r.country || null,
       JSON.stringify(r.custom_fields || {})
     );
   });
@@ -164,27 +165,29 @@ const bulkMergeInsert = async(records) => {
       custom_fields
     )
     VALUES ${placeholders.join(',')}
-    ON CONFLICT (workspace_id, email)
+    ON CONFLICT ON CONSTRAINT uniq_contacts_workspace_email
     DO UPDATE SET
-      esp_provider = EXCLUDED.esp_provider,
-      first_name = EXCLUDED.first_name,
-      last_name = EXCLUDED.last_name,
-      phone = EXCLUDED.phone,
-      job_title = EXCLUDED.job_title,
-      linkedin_url = EXCLUDED.linkedin_url,
-      company_name = EXCLUDED.company_name,
-      city = EXCLUDED.city,
-      state = EXCLUDED.state,
-      country = EXCLUDED.country,
+      esp_provider =  COALESCE(EXCLUDED.esp_provider, contacts.esp_provider),
+      first_name = COALESCE(EXCLUDED.first_name, contacts.first_name),
+      last_name = COALESCE(EXCLUDED.last_name, contacts.last_name),
+      phone = COALESCE(EXCLUDED.phone, contacts.phone),
+      job_title = COALESCE(EXCLUDED.job_title, contacts.job_title),
+      linkedin_url = COALESCE(EXCLUDED.linkedin_url, contacts.linkedin_url),
+      company_name = COALESCE(EXCLUDED.company_name, contacts.company_name),
+      city = COALESCE(EXCLUDED.city, contacts.city),
+      state = COALESCE(EXCLUDED.state, contacts.state),
+      country = COALESCE(EXCLUDED.country, contacts.country),
       custom_fields = contacts.custom_fields || EXCLUDED.custom_fields,
-      updated_at = NOW()
-    RETURNING id, email, xmax;
+      updated_at = NOW(),
+      deleted_at = NULL
+    RETURNING id, email, created_at = updated_at as inserted;
   `;
 
-  return db.sequelize.query(query, {
+  const result = await db.sequelize.query(query, {
     type: QueryTypes.INSERT,
     bind: values
   });
+  return result[0];
 };
 
 export const bulkCreateContacts = async(

@@ -2,7 +2,7 @@ import Container from 'typedi';
 import { StatusCodes } from 'http-status-codes';
 import { VALID_EMAIL_REGEX } from '../../config/constants';
 
-export const importContacts = async(req, reply) => {
+export const importContactsToList = async(req, reply) => {
   const logger = Container.get('logger');
   const ListImportJobsModelHandler = Container.get('ListImportJobsModelHandler');
   const GlobalSuppressionsModelHandler = Container.get('GlobalSuppressionsModelHandler');
@@ -10,14 +10,30 @@ export const importContacts = async(req, reply) => {
   const ContactsModelHandler = Container.get('ContactsModelHandler');
 
   const workspaceId = req.workspace.id;
-  const partnerId = req.workspace.partner_id;
+  const partnerId = req.user.tenant_id;
 
   const {
-    list_id: listId,
     source,
+    source_file_name: sourceFileName,
     merge_strategy: mergeStrategy,
     contacts = []
   } = req.body;
+
+  const listId = req.params.id;
+
+  const resultSummary = {
+    total_rows: contacts.length,
+    processed_rows: 0,
+    valid_count: 0,
+    unsubscribed_count: 0,
+    bounced_count: 0,
+    blocked_count: 0,
+    invalid_count: 0,
+    duplicate_count: 0,
+    already_existing_count: 0
+  };
+
+  let jobId;
 
   try {
     // 1. Create Import Job (ONLY metadata, no processing)
@@ -26,6 +42,7 @@ export const importContacts = async(req, reply) => {
       workspace_id: workspaceId,
       list_id: listId,
       source,
+      source_file_name: sourceFileName,
       import_settings: { mergeStrategy },
       total_rows: contacts.length,
       created_by: req.user.id,
@@ -38,18 +55,7 @@ export const importContacts = async(req, reply) => {
       status: job.status,
       total_rows: contacts.length
     });
-
-    const resultSummary = {
-      total_rows: contacts.length,
-      processed_rows: 0,
-      valid_count: 0,
-      unsubscribed_count: 0,
-      bounced_count: 0,
-      blocked_count: 0,
-      invalid_count: 0,
-      duplicate_count: 0,
-      already_existing_count: 0
-    };
+    jobId = job.id;
 
     const inputEmailMaps = new Set();
 
@@ -83,7 +89,7 @@ export const importContacts = async(req, reply) => {
 
       // check for these emails in global_suppressions and filter out
       const [ globalSuppressions, espProviderEmailMap ] = await Promise.all([
-        GlobalSuppressionsModelHandler.getGlobalSuppressionByWhere({
+        GlobalSuppressionsModelHandler.getAllGlobalSuppressions({
           workspace_id: workspaceId,
           email: globalSuppressionsEmailList
         }),
@@ -92,6 +98,7 @@ export const importContacts = async(req, reply) => {
 
       // frame a map for quick lookup
       const globalSuppressionMap = {};
+
       globalSuppressions.forEach(suppression => {
         if (globalSuppressionMap[suppression.email]) {
           globalSuppressionMap[suppression.email][suppression.suppression_type] = suppression.created_at;
@@ -148,11 +155,14 @@ export const importContacts = async(req, reply) => {
         contactsToUpsert.push(contactObj);
       }));
 
-      const bulkCreateResult = await ContactsModelHandler.bulkCreateContacts(contactsToUpsert);
+      const contactsAdded = await ContactsModelHandler.bulkCreateContacts(contactsToUpsert, mergeStrategy);
       // check if the contact was newly created or updated
       // if updated then update already_existing_count
-      for (const eachContact of bulkCreateResult[0]) {
-        if (eachContact?.xmax > 0) {
+      for (const eachContact of contactsAdded) {
+        if (!eachContact.id) {
+          resultSummary.already_existing_count += 1;
+          resultSummary.valid_count -= 1;
+        } else if (typeof eachContact.inserted === 'boolean' && !eachContact.inserted) {
           resultSummary.already_existing_count += 1;
         }
       }
@@ -162,7 +172,7 @@ export const importContacts = async(req, reply) => {
         {
           ...resultSummary,
           status: i + 1000 >= contacts.length ? 'COMPLETED' : 'PROCESSING',
-          updated_at: new Date()
+          completed_at: new Date()
         },
         { id: job.id }
       );
@@ -173,6 +183,17 @@ export const importContacts = async(req, reply) => {
       error: err.message,
       stack: err.stack
     });
+    if (jobId) {
+      // update the job summary after every batch
+      await ListImportJobsModelHandler.updateListImportJob(
+        {
+          ...resultSummary,
+          status: 'FAILED',
+          completed_at: new Date()
+        },
+        { id: jobId }
+      );
+    }
     if (!reply.sent) {
       return reply.code(StatusCodes.INTERNAL_SERVER_ERROR).send({
         message: 'Failed to start import job'

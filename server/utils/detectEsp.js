@@ -91,67 +91,72 @@ const extractDomain = (email) => {
 };
 
 export const detectBulkESP = async(emails = []) => {
-  if (!Array.isArray(emails) || emails.length === 0) {
-    return {};
-  }
-
-  // 1. Extract domains
-  const emailToDomain = new Map();
-  const uniqueDomains = new Set();
-
-  for (const email of emails) {
-    const domain = extractDomain(email);
-    if (!domain) continue;
-
-    emailToDomain.set(email, domain);
-    uniqueDomains.add(domain);
-  }
-
-  // 2. Resolve ESP for UNIQUE domains only
-  const domainResults = new Map();
-
-  await Promise.all(
-    Array.from(uniqueDomains).map(async(domain) => {
-      try {
-        // check cache first
-        const cached = getCachedESP(domain);
-        if (cached) {
-          domainResults.set(domain, cached);
-          return;
-        }
-
-        const mxRecords = await Promise.race([
-          dns.resolveMx(domain),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('DNS timeout')), 10000)
-          )
-        ]);
-
-        const hosts = mxRecords.map(mx => mx.exchange.toLowerCase());
-        const esp = findEspFromHosts(hosts);
-
-        setCachedESP(domain, esp);
-        domainResults.set(domain, esp);
-
-      } catch (err) {
-        setCachedESP(domain, 'OTHERS');
-        domainResults.set(domain, 'OTHERS');
-      }
-    })
-  );
-
-  // 3. Map back to emails
-  const result = {};
-
-  for (const email of emails) {
-    const domain = emailToDomain.get(email);
-    if (!domain) {
-      result[email] = 'OTHERS';
-      continue;
+  try {
+    if (!Array.isArray(emails) || emails.length === 0) {
+      return {};
     }
 
-    result[email] = domainResults.get(domain) || 'OTHERS';
-  }
+    // 1. Extract domains
+    const emailToDomain = new Map();
+    const uniqueDomains = new Set();
 
-  return result;
+    for (const email of emails) {
+      const domain = extractDomain(email);
+      if (!domain) continue;
+
+      emailToDomain.set(email, domain);
+      uniqueDomains.add(domain);
+    }
+
+    // 2. Resolve ESP for UNIQUE domains only
+    const domainResults = new Map();
+
+    await Promise.all(
+      Array.from(uniqueDomains).map(async(domain) => {
+        try {
+        // check cache first
+          const cached = getCachedESP(domain);
+          if (cached) {
+            domainResults.set(domain, cached);
+            return;
+          }
+
+          const mxRecords = await Promise.race([
+            dns.resolveMx(domain),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('DNS timeout')), 10000)
+            )
+          ]);
+
+          const hosts = mxRecords.map(mx => mx.exchange.toLowerCase());
+          const esp = findEspFromHosts(hosts);
+
+          setCachedESP(domain, esp);
+          domainResults.set(domain, esp);
+
+        } catch (err) {
+          setCachedESP(domain, 'OTHERS');
+          domainResults.set(domain, 'OTHERS');
+        }
+      })
+    );
+
+    // 3. Map back to emails
+    const result = {};
+
+    for (const email of emails) {
+      const domain = emailToDomain.get(email);
+      if (!domain) {
+        result[email] = 'OTHERS';
+        continue;
+      }
+
+      result[email] = domainResults.get(domain) || 'OTHERS';
+    }
+
+    return result;
+  } catch (err) {
+    console.error('Error in detectBulkESP:', err);
+    return {};
+  }
 };

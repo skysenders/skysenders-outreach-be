@@ -12,11 +12,11 @@ export const updateList = async(req, res) => {
 
   try {
 
-    const { listId } = req.params;
+    const { id } = req.params;
     const { name, description } = req.body;
 
     const list = await ListsModelHandler.getListByWhere({
-      id: listId,
+      id,
       workspace_id: workspaceId
     });
 
@@ -32,7 +32,7 @@ export const updateList = async(req, res) => {
         description
       },
       {
-        id: listId,
+        id,
         workspace_id: workspaceId
       }
     );

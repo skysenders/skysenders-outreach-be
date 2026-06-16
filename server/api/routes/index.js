@@ -12,6 +12,9 @@ import stripeWebhook from './stripe-webhook';
 import domains from './domains';
 import mailboxes from './mailboxes';
 import contacts from './contacts';
+import lists from './lists';
+import globalSuppressions from './global_suppressions';
+
 import internal from './internal';
 import hasura from './hasura_events';
 
@@ -108,6 +111,9 @@ export const initialize = async(fastifyApp, redisClient) => {
         { name: 'Domains', description: 'Endpoints for managing domains' },
         { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
         { name: 'Warmup', description: 'Endpoints for managing warmup processes' },
+        { name: 'Contacts', description: 'Endpoints for managing contacts' },
+        { name: 'Lists', description: 'Endpoints for managing contact lists' },
+        { name: 'Global Suppressions', description: 'Endpoints for managing global suppressions' },
         { name: 'Mailbox Statistics', description: 'Endpoints for managing mailbox statistics' },
         { name: 'Domain Statistics', description: 'Endpoints for managing domain statistics' },
       ],
@@ -142,6 +148,8 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(domains, { prefix: '/api/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
   fastifyApp.register(contacts, { prefix: '/api/contacts' });
+  fastifyApp.register(lists, { prefix: '/api/lists' });
+  fastifyApp.register(globalSuppressions, { prefix: '/api/global-suppressions' });
   fastifyApp.register(internal, { prefix: '/api/internal' });
   fastifyApp.register(hasura, { prefix: '/api/hasura' });
 
@@ -151,10 +159,16 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(domains, { prefix: '/api/v1/domains' });
   fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
   fastifyApp.register(contacts, { prefix: '/api/v1/contacts' });
-
+  fastifyApp.register(lists, { prefix: '/api/v1/lists' });
+  fastifyApp.register(globalSuppressions, { prefix: '/api/v1/global-suppressions' });
   const fetchOpenApiSpec = async(url) => {
-    const { data } = await axios.get(url);
-    return data;
+    try {
+      const { data } = await axios.get(url);
+      return data;
+    } catch (err) {
+      Logger.error(`Error fetching OpenAPI spec from ${url}: ${err.message}`);
+      return null; // Return null or handle the error as needed
+    }
   };
 
   const mergeSchemas = (combinedSpec, remoteSpec, prefix = 'Remote') => {
@@ -198,15 +212,19 @@ export const registerRoutes = async(fastifyApp) => {
     remoteSpec = await fetchOpenApiSpec(
       `${WARMUP_PROXY_URL}/docs/json`
     );
-    mergeSchemas(combinedSpec, remoteSpec, 'Remote');
-    mergePaths(combinedSpec, remoteSpec, 'Remote');
+    if (remoteSpec) {
+      mergeSchemas(combinedSpec, remoteSpec, 'Remote');
+      mergePaths(combinedSpec, remoteSpec, 'Remote');
+    }
 
     // merge stats proxy spec into local spec
     remoteSpec = await fetchOpenApiSpec(
       `${STATS_PROXY_URL}/docs/json`
     );
-    mergeSchemas(combinedSpec, remoteSpec, 'Remote');
-    mergePaths(combinedSpec, remoteSpec, 'Remote');
+    if (remoteSpec) {
+      mergeSchemas(combinedSpec, remoteSpec, 'Remote');
+      mergePaths(combinedSpec, remoteSpec, 'Remote');
+    }
 
     return combinedSpec;
   };

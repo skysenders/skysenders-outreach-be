@@ -30,6 +30,20 @@ export const getGlobalSuppressionByWhere = async(where) => {
   }
 };
 
+export const getAllGlobalSuppressions = async(where) => {
+  try {
+    return await db.global_suppressions.findAll({
+      where,
+      raw: true
+    });
+  } catch (err) {
+    Container.get('logger').error(
+      `Error fetching all suppression: ${err.message}`
+    );
+    throw err;
+  }
+};
+
 export const getAllGlobalSuppressionsByWhere = async(
   where,
   offset = 0,
@@ -144,6 +158,19 @@ export const deleteGlobalSuppression = async(where) => {
   } catch (err) {
     Container.get('logger').error(
       `Error deleting suppression: ${err.message}`
+    );
+    throw err;
+  }
+};
+
+export const bulkCreateGlobalSuppressions = async(records) => {
+  try {
+    return await db.global_suppressions.bulkCreate(records, {
+      ignoreDuplicates: true
+    });
+  } catch (err) {
+    Container.get('logger').error(
+      `Error bulk creating suppressions: ${err.message}`
     );
     throw err;
   }

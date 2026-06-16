@@ -184,7 +184,7 @@ export const bulkCheckDomainDns = async(req, res) => {
           });
         } catch (error) {
           // Handle or log error for an individual domain so it doesn't crash the whole batch
-          console.error(`Error processing domain ${domain.domain_name}:`, error);
+          logger.error(`Error processing domain ${domain.domain_name}: ${error.message}`);
         }
       });
 
