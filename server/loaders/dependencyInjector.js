@@ -25,6 +25,8 @@ import * as ListsModelHandler from '../db/handler/lists';
 import * as ContactListMappingsModelHandler from '../db/handler/contact_list_mappings';
 import * as ListImportJobsModelHandler from '../db/handler/list_import_jobs';
 import * as GlobalSuppressionsModelHandler from '../db/handler/global_suppressions';
+import * as SendingSchedulesModelHandler from '../db/handler/sending_schedules';
+import * as SendingScheduleWindowsModelHandler from '../db/handler/sending_schedule_windows';
 
 // Billing Modules
 import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
@@ -91,6 +93,8 @@ const injectorInstance = async() => {
     Container.set('ContactListMappingsModelHandler', ContactListMappingsModelHandler);
     Container.set('ListImportJobsModelHandler', ListImportJobsModelHandler);
     Container.set('GlobalSuppressionsModelHandler', GlobalSuppressionsModelHandler);
+    Container.set('SendingSchedulesModelHandler', SendingSchedulesModelHandler);
+    Container.set('SendingScheduleWindowsModelHandler', SendingScheduleWindowsModelHandler);
     // Services
     Container.set('AwsService', AwsService);
     Container.set('StripeAPIServices', StripeAPIServices);

@@ -14,6 +14,7 @@ import mailboxes from './mailboxes';
 import contacts from './contacts';
 import lists from './lists';
 import globalSuppressions from './global_suppressions';
+import sendingSchedules from './sending_schedules';
 
 import internal from './internal';
 import hasura from './hasura_events';
@@ -114,6 +115,7 @@ export const initialize = async(fastifyApp, redisClient) => {
         { name: 'Contacts', description: 'Endpoints for managing contacts' },
         { name: 'Lists', description: 'Endpoints for managing contact lists' },
         { name: 'Global Suppressions', description: 'Endpoints for managing global suppressions' },
+        { name: 'Sending Schedules', description: 'Endpoints for managing sending schedules' },
         { name: 'Mailbox Statistics', description: 'Endpoints for managing mailbox statistics' },
         { name: 'Domain Statistics', description: 'Endpoints for managing domain statistics' },
       ],
@@ -150,6 +152,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(contacts, { prefix: '/api/contacts' });
   fastifyApp.register(lists, { prefix: '/api/lists' });
   fastifyApp.register(globalSuppressions, { prefix: '/api/global-suppressions' });
+  fastifyApp.register(sendingSchedules, { prefix: '/api/sending-schedules' });
   fastifyApp.register(internal, { prefix: '/api/internal' });
   fastifyApp.register(hasura, { prefix: '/api/hasura' });
 
@@ -161,6 +164,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(contacts, { prefix: '/api/v1/contacts' });
   fastifyApp.register(lists, { prefix: '/api/v1/lists' });
   fastifyApp.register(globalSuppressions, { prefix: '/api/v1/global-suppressions' });
+  fastifyApp.register(sendingSchedules, { prefix: '/api/v1/sending-schedules' });
   const fetchOpenApiSpec = async(url) => {
     try {
       const { data } = await axios.get(url);
