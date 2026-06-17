@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { WORKSPACE_API_CACHE } from './config/constants';
+import { WORKSPACE_API_CACHE, EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS } from './config/constants';
 import { isEmpty, get } from 'lodash';
 
 const updateUserTokenDataBasedonRoute = (req, tokenData) => {
@@ -96,7 +96,7 @@ export const verifyToken = async(req, res) => {
           return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid token'});
         }
         // cross check whether user has acess to workspace or not
-        if (tokenData.type !== 'partner' && tokenData.user.id) {
+        if (tokenData.type !== 'partner' && tokenData.user.id && !EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS[req.url]) {
           if (req.headers['x-workspace-id']) {
             const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
               userId: tokenData.user.id,

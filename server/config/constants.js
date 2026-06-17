@@ -422,3 +422,19 @@ export const DEFAULT_CONTACT_ATTRIBUTES = [
 ];
 
 export const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS = {
+  // ------ workspaces ------
+  '/api/workspaces/fetch-all': true, // get all workspace
+  '/api/workspaces/': true, // create workspace
+  '/api/workspaces/join': true, // join workspace
+  '/api/workspaces/join-with-slug': true, // join workspace with slug
+  // ------ users ------
+  '/api/users/me': true, // get user details
+  '/api/users/logout': true, // logout user
+  '/api/users/update-user-details': true, // update user details
+  '/api/users/update-password': true, // update user password
+  '/api/users/get-profile-signed-url': true, // get profile signed url
+  '/api/users/update-trigger-product-tour': true, // update trigger product tour
+
+};
