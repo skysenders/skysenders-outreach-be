@@ -10,6 +10,13 @@ import { getPartnerCustomScripts, getPartnerPublicCustomScripts } from '../../co
 import { addOrUpdatePartnerCustomScript } from '../../controller/partners/addOrUpdatePartnerCustomScript';
 import { deletePartnerCustomScript } from '../../controller/partners/deletePartnerCustomScript';
 
+// partner special apis
+import { createUserForPartner } from '../../controller/users/signup';
+import { getAllWorkspacesByPartner } from '../../controller/workspaces/getAllWorkspaces';
+import { createWorkspaceByPartner } from '../../controller/workspaces/createWorkspace';
+import { updateWorkspaceByPartner } from '../../controller/workspaces/updateWorkspace';
+
+
 export default async function authRoutes(fastify) {
   // Partner Login route
   fastify.post(
@@ -714,5 +721,253 @@ export default async function authRoutes(fastify) {
       },
     },
     getPublicPartnerBranding
+  );
+
+  // Route to create a new user for a partner
+  fastify.post(
+    '/create-new-user',
+    {
+      schema: {
+        tags: ['Partners'],
+        summary: 'Create a new user for a partner',
+        description: 'Creates a new user associated with the authenticated partner',
+        operationId: 'createUserForPartner',
+        hide: true,
+        headers: {
+          type: 'object',
+          required: ['x-partner-key'],
+          properties: {
+            'x-partner-key': { type: 'string', description: 'API key for authentication' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['email', 'name', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email', description: 'Email of the new user' },
+            name: { type: 'string', description: 'Name of the new user' },
+            password: { type: 'string', description: 'Password for the new user' },
+          },
+        },
+        response: {
+          201: {
+            description: 'User created successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  email: { type: 'string' },
+                  name: { type: 'string' },
+                  status: { type: 'string' },
+                  account_id: { type: 'number' },
+                  profile_url: { type: 'string' },
+                  created_at: { type: 'string', format: 'date-time' },
+                  updated_at: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          403: {
+            description: 'Forbidden',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    createUserForPartner
+  );
+  // api to create workspace
+  fastify.post(
+    '/workspace',
+    {
+      schema: {
+        tags: ['Partners'],
+        summary: 'Create workspace by partner',
+        description: 'Create a new workspace associated with the authenticated partner',
+        operationId: 'createWorkspaceByPartner',
+        headers: {
+          type: 'object',
+          required: ['x-partner-key'],
+          properties: {
+            'x-partner-key': { type: 'string', description: 'API key for authentication' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'number', description: 'Account ID for the workspace' },
+          },
+          required: ['account_id'],
+        },
+        body: {
+          type: 'object',
+          required: ['name', 'slug'],
+          properties: {
+            name: { type: 'string', maxLength: 150 },
+            slug: { type: 'string', maxLength: 150 },
+            logo_url: { type: 'string' },
+            timezone: { type: 'string', default: 'UTC' },
+            team_size: { type: 'string' },
+            goals: { type: 'array', items: { type: 'string' } }
+          }
+        },
+
+        response: {
+          201: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              slug: { type: 'string' },
+              logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
+              theme_color: { type: 'string' },
+              timezone: { type: 'string' },
+              team_size: { type: 'string' },
+              goals: { type: 'array', items: { type: 'string' } },
+              created_at: { type: 'string', format: 'date-time' },
+              updated_at: { type: 'string', format: 'date-time' }
+            }
+          },
+          400: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    createWorkspaceByPartner
+  );
+  // update workspace details
+  fastify.put(
+    '/workspace/update',
+    {
+      schema: {
+        tags: ['Partners'],
+        summary: 'Update workspace details by partner',
+        description: 'Update workspace details like name, logo, timezone, team size etc.',
+        operationId: 'updateWorkspaceByPartner',
+        querystring: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'number', description: 'Account ID for the workspace' },
+          },
+          required: ['account_id'],
+        },
+        body: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            name: { type: 'string', maxLength: 150 },
+            logo_url: { type: 'string' },
+            logo_bg_color: { type: 'string' },
+            theme_color: { type: 'string' },
+            timezone: { type: 'string' },
+            team_size: { type: 'string' }
+          }
+        },
+
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              slug: { type: 'string' },
+              logo_url: { type: 'string' },
+              logo_bg_color: { type: 'string' },
+              theme_color: { type: 'string' },
+              timezone: { type: 'string' },
+              team_size: { type: 'string' },
+              goals: { type: 'array', items: { type: 'string' } },
+              created_at: { type: 'string', format: 'date-time' },
+              updated_at: { type: 'string', format: 'date-time' }
+            }
+          },
+          403: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    updateWorkspaceByPartner
+  );
+  // Route to get all workspaces associated to the account by partner
+  fastify.get(
+    '/workspace/all',
+    {
+      schema: {
+        tags: ['Partners'],
+        summary: 'Get all workspaces by partner',
+        description: 'Returns a list of all workspaces associated to the account by partner',
+        operationId: 'getAllWorkspacesByPartner',
+        querystring: {
+          type: 'object',
+          properties: {
+            account_id: { type: 'integer', description: 'Account ID for the workspace' },
+          },
+          required: ['account_id'],
+        },
+        response: {
+          200: {
+            description: 'Workspaces retrieved successfully',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                slug: { type: 'string' },
+                logo_url: { type: 'string' },
+                logo_bg_color: { type: 'string' },
+                theme_color: { type: 'string' },
+                role: { type: 'string' },
+                status: { type: 'string' },
+                created_at: { type: 'string', format: 'date-time' }
+              }
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getAllWorkspacesByPartner
   );
 }

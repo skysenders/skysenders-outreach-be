@@ -47,7 +47,7 @@ export default async function workspaceRoutes(fastify) {
           201: {
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -154,7 +154,7 @@ export default async function workspaceRoutes(fastify) {
             description: 'Workspace details retrieved successfully',
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -209,7 +209,7 @@ export default async function workspaceRoutes(fastify) {
             description: 'Workspace details retrieved successfully',
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -261,7 +261,7 @@ export default async function workspaceRoutes(fastify) {
             description: 'Workspace details retrieved successfully',
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -313,7 +313,7 @@ export default async function workspaceRoutes(fastify) {
             items: {
               type: 'object',
               properties: {
-                id: { type: 'string' },
+                id: { type: 'integer' },
                 name: { type: 'string' },
                 slug: { type: 'string' },
                 logo_url: { type: 'string' },
@@ -370,7 +370,7 @@ export default async function workspaceRoutes(fastify) {
           200: {
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -429,7 +429,7 @@ export default async function workspaceRoutes(fastify) {
           200: {
             type: 'object',
             properties: {
-              id: { type: 'string' },
+              id: { type: 'integer' },
               name: { type: 'string' },
               slug: { type: 'string' },
               logo_url: { type: 'string' },
@@ -627,8 +627,8 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            id: { type: 'string' },
-            userId: { type: 'string' }
+            id: { type: 'integer' },
+            userId: { type: 'integer' }
           },
           required: ['id', 'userId']
         },
@@ -691,7 +691,7 @@ export default async function workspaceRoutes(fastify) {
             items: {
               type: 'object',
               properties: {
-                user_id: { type: 'string' },
+                user_id: { type: 'integer' },
                 name: { type: 'string' },
                 email: { type: 'string' },
                 role: { type: 'string' },
@@ -731,8 +731,8 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
-            id: { type: 'string' },
-            userId: { type: 'string' }
+            id: { type: 'integer' },
+            userId: { type: 'integer' }
           },
           required: ['id', 'userId']
         },

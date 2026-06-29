@@ -21,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
     signup_otp: DataTypes.STRING,
 
     trigger_product_tour: DataTypes.BOOLEAN,
-    magic_link_expiry_date: DataTypes.DATE,
 
     created_at: DataTypes.DATE,
     deleted_at: DataTypes.DATE,

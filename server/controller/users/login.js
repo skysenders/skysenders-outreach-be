@@ -164,22 +164,22 @@ export const userMagicLinkLogin = async(req, res) => {
     const TokenHandler = Container.get('TokenHandler');
     const UserModelHandler = Container.get('UserModelHandler');
     const UserSessionModelHandler = Container.get('UserSessionModelHandler');
-    const StringHelper = Container.get('StringHelper');
+    const PartnerKeyHelper = Container.get('PartnerKeyHelper');
 
     // encode the token to handle special characters in the token
-    const decodedToken = StringHelper.decodeToken(req.query.token);
+    const decodedToken = PartnerKeyHelper.validatePartnerToken(req.headers['x-partner-key']);
 
-    // throw error if token does not have partner_id and uuid
-    if (!decodedToken.partner_id || !decodedToken.uuid) {
+    // throw error if token does not have partner_id
+    if (!decodedToken.partner_id) {
       return res
         .status(StatusCodes.BAD_REQUEST)
-        .send({ message: 'Invalid token' });
+        .send({ message: 'Invalid partner key' });
     }
 
     // check if user exists in the database
     let userDBData = await UserModelHandler.getUserByWhere({
       partner_id: decodedToken.partner_id,
-      uuid: decodedToken.uuid,
+      email: req.headers.email,
     });
 
     // if the user is not found in the database, respond with user not found
@@ -187,12 +187,6 @@ export const userMagicLinkLogin = async(req, res) => {
       return res
         .status(StatusCodes.NOT_FOUND)
         .send({ message: 'User not found' });
-    }
-
-    if (userDBData.magic_link_expiry_date < new Date()) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .send({ message: 'Magic link has expired' });
     }
 
     // generate token with user
@@ -207,7 +201,7 @@ export const userMagicLinkLogin = async(req, res) => {
       ip_address: req.ip || '',
       is_active: true,
       expires_at: token.refresh_token_expiries_at,
-      auth_provider: AUTH_PROVIDER.EMAIL
+      auth_provider: AUTH_PROVIDER.EMAIL_MAGIC_LINK
     });
 
     // set refresh token in http only cookie
@@ -217,13 +211,6 @@ export const userMagicLinkLogin = async(req, res) => {
     delete userDBData.password;
     delete token.refresh_token;
     delete token.refresh_token_expiries_at;
-
-    // reset the magic link
-    await UserModelHandler.updateUser({
-      magic_link_expiry_date: null,
-    }, {
-      id: userDBData.id
-    });
 
     // return user and token to the UI
     return res

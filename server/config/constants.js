@@ -72,6 +72,7 @@ export const API = {
 
 export const AUTH_PROVIDER = {
   EMAIL: 'email',
+  EMAIL_MAGIC_LINK: 'email_magic_link',
   GOOGLE: 'google',
   MICROSOFT: 'microsoft',
 };
@@ -116,6 +117,12 @@ export const JWT_ALLOWED_URLS = {
   '/custom-whitelabel-api-docs': true,
   // hasura events
   '/api/hasura/events': true,
+
+  // partner public api
+  '/api/partners/create-new-user': true,
+  '/api/partners/workspace': true,
+  '/api/partners/workspace/all': true,
+  '/api/partners/workspace/update': true,
 };
 
 export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
@@ -426,3 +433,6 @@ export const DEFAULT_CONTACT_ATTRIBUTES = [
 ];
 
 export const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const PARTNER_SECRET_SALT = process.env.PARTNER_SECRET_SALT;
+export const PARTNER_IV_SALT = process.env.PARTNER_IV_SALT;

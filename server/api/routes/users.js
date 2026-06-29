@@ -476,11 +476,12 @@ export default async function authRoutes(fastify) {
         description: 'API endpoint to login a user via magic link',
         operationId: 'magicLinkLogin',
         hide: true,
-        querystring: {
+        headers: {
           type: 'object',
-          required: ['token'],
+          required: ['x-partner-key', 'email'],
           properties: {
-            token: { type: 'string' },
+            'x-partner-key': { type: 'string', description: 'API key for authentication' },
+            email: { type: 'string', description: 'User email for login' }
           },
         },
         response: {
@@ -499,12 +500,12 @@ export default async function authRoutes(fastify) {
                   profile_url: { type: 'string' },
                   account_id: { type: 'number' },
                 },
-                token: {
-                  type: 'object',
-                  properties: {
-                    access_token: { type: 'string' },
-                    access_token_expiries_at: { type: 'string', format: 'date-time' },
-                  },
+              },
+              token: {
+                type: 'object',
+                properties: {
+                  access_token: { type: 'string' },
+                  access_token_expiries_at: { type: 'string', format: 'date-time' },
                 },
               },
             },

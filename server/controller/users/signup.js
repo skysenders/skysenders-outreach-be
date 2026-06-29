@@ -186,6 +186,79 @@ export const addNewUser = async(req, res) => {
   }
 };
 
+export const createUserForPartner = async(req, res) => {
+  const UserModelHandler = Container.get('UserModelHandler');
+  const AccountsModelHandler = Container.get('AccountsModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+  const PartnerKeyHelper = Container.get('PartnerKeyHelper');
+
+  try {
+    const userData = req.body;
+    // encode the token to handle special characters in the token
+    const decodedToken = PartnerKeyHelper.validatePartnerToken(req.headers['x-partner-key']);
+
+    // throw error if token does not have partner_id
+    if (!decodedToken.partner_id) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .send({ message: 'Invalid partner key' });
+    }
+
+    const partnerId = decodedToken.partner_id;
+
+    // normalize email to lowercase
+    userData.email = userData.email.toLowerCase().trim();
+    userData.partner_id = partnerId;
+
+    // normalize email to lowercase
+    userData.email = userData.email.toLowerCase().trim();
+
+    const userEmails = [userData.email];
+
+    const [existUser] = await Promise.all([
+      UserModelHandler.getUserByWhere({
+        partner_id: partnerId,
+        email: userEmails,
+        is_client: false
+      })
+    ]);
+
+    if (existUser && existUser.id && existUser.status !== USER_STATUS.INVITED) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'User exist in the system already. Please login to continue' });
+    }
+
+    // first create a account for the user
+    const account = await AccountsModelHandler.createAccount({
+      partner_id: partnerId,
+      name: userData.name,
+      email: userData.email
+    });
+
+    if (!(account && account.id)) {
+      throw new Error('Something went wrong in database while creating account');
+    }
+
+    userData.account_id = account.id;
+
+    // set user status as active and auth provider as email
+    userData.status = USER_STATUS.ACTIVE;
+
+    const newUser = await UserModelHandler.createUser(userData);
+    createAccountPlanDetails(account.id, partnerId);
+
+    // update user as SUPER_ADMIN in the redis
+    await AccountWorkspaceRedisCacheHelper.setAccountUserRole({
+      accountId: account.id,
+      userId: newUser.id,
+      role: USER_ROLE.SUPER_ADMIN
+    });
+
+    return res.status(StatusCodes.CREATED).send({ message: 'User created successfuly!', user: newUser });
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({message: `Server error: ${error.message}`});
+  }
+};
+
 export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, authProvider, providerUserId }, token, userAgent, ip) => {
   const UserModelHandler = Container.get('UserModelHandler');
   const AccountsModelHandler = Container.get('AccountsModelHandler');
