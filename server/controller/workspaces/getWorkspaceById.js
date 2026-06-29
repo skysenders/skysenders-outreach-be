@@ -5,33 +5,24 @@ export const getWorkspaceById = async(req, res) => {
   const logger = Container.get('logger');
 
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   try {
-    const workspaceId = req.workspace?.id;
+    const workspaceId = req.params.id;
     const user = req.user;
 
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Workspace ID is missing in request header'
-      });
-    }
-
-    // check if the user has access to workspace or not via cache
-    const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
-      userId: user.id,
-      workspaceId: workspaceId
+    const hasAccountAccess = await AccountWorkspaceRedisCacheHelper.hasAccountUser({
+      accountId: req.user.account_id,
+      userId: req.user.id
     });
 
-    if (!hasAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({
-        message: 'You are not authorized to access this workspace'
-      });
+    if (!hasAccountAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to access this workspace' });
     }
 
-    // check workspace exists under partner
+    // check workspace exists under account
     const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
-      partner_id: user.tenant_id,
+      account_id: user.account_id,
       id: workspaceId,
     });
 
@@ -45,7 +36,7 @@ export const getWorkspaceById = async(req, res) => {
 
   } catch (err) {
     logger.error(`Error fetching workspace: ${err.message}`);
-    throw err;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -82,7 +73,7 @@ export const getWorkspaceBySlug = async(req, res) => {
 
   } catch (err) {
     logger.error(`Error fetching workspace: ${err.message}`);
-    throw err;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
   }
 };
 

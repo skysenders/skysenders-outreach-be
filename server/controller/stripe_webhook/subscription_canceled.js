@@ -9,15 +9,15 @@ const validSubscriptionStatuses = {
   'unpaid': true
 };
 
-const processUserSubscription = async(partnerId, workspaceId, subscriptionEventData, subscriptionItems, validDate, currentDate) => {
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-  const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
+const processUserSubscription = async(partnerId, accountId, subscriptionEventData, subscriptionItems, validDate, currentDate) => {
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionLogsModelHandler = Container.get('AccountSubscriptionLogsModelHandler');
 
   // Concurrently perform multiple actions like updating plan details, subscription details, and logging
   await Promise.all([
     // Update plan details indicating the subscription payment failed
-    WorkspacePlanDetailsModelHandler.updatePlanDetails({
+    AccountPlanDetailsModelHandler.updatePlanDetails({
       email_credits: 0,
       max_leads_count: 0,
       max_mailbox_count: 0,
@@ -27,10 +27,10 @@ const processUserSubscription = async(partnerId, workspaceId, subscriptionEventD
       last_reset_date: currentDate,
       is_payment_failed: true,
       is_sub_active: false
-    }, { partner_id: partnerId, workspace_id: workspaceId }),
+    }, { account_id: accountId }),
 
     // Update subscription details to mark it as canceled
-    WorkspaceSubscriptionModelHandler.updateSubscription({
+    AccountSubscriptionModelHandler.updateSubscription({
       end_date: validDate,
       subscription_id: null,
       is_active: false,
@@ -41,12 +41,12 @@ const processUserSubscription = async(partnerId, workspaceId, subscriptionEventD
         invoice_url: subscriptionEventData.invoice_pdf,
         cancelledAt: currentDate,
       }
-    }, { partner_id: partnerId, workspace_id: workspaceId }),
+    }, { account_id: accountId }),
 
     // Log the cancellation details for future reference
-    WorkspaceSubscriptionLogsModelHandler.createSubscriptionLog({
+    AccountSubscriptionLogsModelHandler.createSubscriptionLog({
       partner_id: partnerId,
-      workspace_id: workspaceId,
+      account_id: accountId,
       created_at: currentDate,
       subscription_id: subscriptionEventData.id,
       amount: (subscriptionEventData.plan.amount / 100).toFixed(2),
@@ -61,7 +61,7 @@ const processUserSubscription = async(partnerId, workspaceId, subscriptionEventD
 export const handleSubscriptionCanceled = async(event, res) => {
   const LOGGER = Container.get('logger');
   try {
-    const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
+    const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
     const StripeAPIServices = Container.get('StripeAPIServices');
 
     // Current Date to be used for logging and updating records
@@ -80,7 +80,7 @@ export const handleSubscriptionCanceled = async(event, res) => {
       const PLAN_TYPE = partnerPaymentDetails.PLAN_TYPE;
 
       // Fetch user subscription details using the customer ID from the event
-      const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: subscriptionEventData.customer });
+      const userSubscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: subscriptionEventData.customer });
 
       // check if it is a partner subscription
       if (!userSubscriptionDetails) {
@@ -93,8 +93,8 @@ export const handleSubscriptionCanceled = async(event, res) => {
         });
       }
 
-      // find the workspaceId
-      const workspaceId = userSubscriptionDetails.workspace_id;
+      // find the accountId
+      const accountId = userSubscriptionDetails.account_id;
 
       // Identify the main subscription item based on the plan type using lodash's filter method
       const mainPlanItem = filter(subscriptionEventData?.items?.data, (item) => PLAN_TYPE[item?.plan?.nickname])[0];
@@ -131,7 +131,7 @@ export const handleSubscriptionCanceled = async(event, res) => {
 
         // Prepare subscription item data for logging and processing
         const subscriptionItems = subscriptionEventData.items.data.map((item) => ({
-          workspace_id: workspaceId,
+          account_id: accountId,
           partner_id: partnerId,
           subscription_item_id: item.id,
           subscription_id: subscriptionEventData.id,
@@ -142,7 +142,7 @@ export const handleSubscriptionCanceled = async(event, res) => {
           created_at: new Date(item.created * 1000).toISOString(),
         }));
 
-        await processUserSubscription(partnerId, workspaceId, subscriptionEventData, subscriptionItems, validDate, currentDate);
+        await processUserSubscription(partnerId, accountId, subscriptionEventData, subscriptionItems, validDate, currentDate);
       }
     }
 

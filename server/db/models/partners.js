@@ -27,8 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('active', 'inactive', 'suspended')
     },
     created_at: DataTypes.DATE,
-    deleted_at: DataTypes.DATE,
-    is_deleted: DataTypes.BOOLEAN
+    deleted_at: DataTypes.DATE
   }, {
     tableName: 'partners',
     timestamps: false

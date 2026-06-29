@@ -13,67 +13,60 @@ export const saveBusinessTaxDetails = async(partnerId, customerId, taxDetails, l
 };
 
 export const saveBusinessDetails = async(req, res) => {
-  const StripeAPIServices = Container.get('StripeAPIServices');
-  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
   const logger = Container.get('logger');
+  const StripeAPIServices = Container.get('StripeAPIServices');
+  // accounts related imports
+  const AccountsModelHandler = Container.get('AccountsModelHandler');
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   logger.info(`Saving business details for user - ${req.user.email}`);
   try {
     // Extract user ID and reason for unsubscribing from the request
     const partnerId = req.user.tenant_id;
-    const workspaceId = req.workspace?.id;
-    const userId = req.user.id;
+    const user = req.user;
 
-    // if workspaceId is null or empty throw invalid request error
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid workspace id' });
-    }
-
-    // check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: userId,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
-    // Fetch subsription details by partnerId and workspaceId
-    let subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      workspace_id: workspaceId,
+    // Fetch subsription details
+    let subscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({
+      account_id: user.account_id,
     });
 
     // Check if subscription details exist for the user
     if (!subscriptionDetails) {
-      // create a new subscription entry in the database with the partnerId and workspaceId
-      subscriptionDetails = await WorkspaceSubscriptionModelHandler.createSubscription({
+      // create a new subscription entry in the database with the partnerId and userId
+      subscriptionDetails = await AccountSubscriptionModelHandler.createSubscription({
         partner_id: partnerId,
-        workspace_id: workspaceId,
+        account_id: user.account_id,
         is_active: false,
       });
     }
 
     let customerId = subscriptionDetails?.customer_id;
 
-    // fetch the workspace owner user_id to add in the metadata while creating the customer in stripe
-    const workspaceOwnerDetails = await WorkspaceModelHandler.fetchWorkspaceOwnerDetails(workspaceId);
+    // fetch the account details to create a customer in stripe
+    const accountDetails = await AccountsModelHandler.getAccountByWhere({ id: user.account_id });
 
     // create stripe customer
     const customerData = {
-      name: workspaceOwnerDetails.name,
-      email: workspaceOwnerDetails.email,
-      address: req.body.business_address,
+      name: accountDetails.name,
+      email: accountDetails.email,
       metadata: {
-        user_id: workspaceOwnerDetails.id,
-        user_uuid: workspaceOwnerDetails.uuid,
-        workspace_id: workspaceOwnerDetails.workspace_id,
-        workspace_name: workspaceOwnerDetails.workspace_name,
-        owner_name: workspaceOwnerDetails.name,
-        tenant_id: workspaceOwnerDetails.tenant_id,
+        account_id: accountDetails.id,
+        account_name: accountDetails.name,
+        account_uuid: accountDetails.uuid,
+        user_id: req.user.id,
+        tenant_id: partnerId,
       }
     };
 
@@ -87,10 +80,11 @@ export const saveBusinessDetails = async(req, res) => {
     if (!customerId) {
       // call stripe api to create customer
       const stripeCustomerDetails = await StripeAPIServices.createCustomer(partnerId, customerData);
+
       // update customerId in subscription details
-      await WorkspaceSubscriptionModelHandler.updateSubscription({
+      await AccountSubscriptionModelHandler.updateSubscription({
         customer_id: stripeCustomerDetails.id,
-      }, { workspace_id: workspaceId });
+      }, { account_id: accountDetails.id });
 
       customerId = stripeCustomerDetails.id;
     } else {
@@ -102,14 +96,14 @@ export const saveBusinessDetails = async(req, res) => {
     const taxId = await saveBusinessTaxDetails(partnerId, customerId, req.body.tax_details, logger, StripeAPIServices);
 
     // Save business details in the plan details model
-    await WorkspacePlanDetailsModelHandler.updatePlanDetails({
+    await AccountPlanDetailsModelHandler.updatePlanDetails({
       billing_details: {
         ...req.body.business_address,
         tax_details: req.body.tax_details || {},
         tax_id: taxId || null,
       },
     }, {
-      workspace_id: workspaceId,
+      account_id: accountDetails.id,
     });
 
     logger.info(`Business details saved successfully for user - ${req.user.email}`);

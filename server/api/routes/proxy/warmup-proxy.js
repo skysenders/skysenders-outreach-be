@@ -25,8 +25,18 @@ export const warmupProxy = (fastifyHttpProxy, fastify) => {
   // internal api registration for warmup proxy
   fastify.register(fastifyHttpProxy, {
     ...warmupProxyConfig,
-    prefix: '/api/warmup',
-    rewritePrefix: '/api/warmup',
+    prefix: '/api/workspace/:workspace_id/warmup',
+    rewritePrefix: '/api/workspace/:workspace_id/warmup',
+    config: {
+      hide: true,
+    },
+  });
+
+  // internal api registration for warmup proxy
+  fastify.register(fastifyHttpProxy, {
+    ...warmupProxyConfig,
+    prefix: '/api/warmup/internal',
+    rewritePrefix: '/api/warmup/internal',
     config: {
       hide: true,
     },
@@ -35,8 +45,8 @@ export const warmupProxy = (fastifyHttpProxy, fastify) => {
   // public api registration for warmup proxy
   fastify.register(fastifyHttpProxy, {
     ...warmupProxyConfig,
-    prefix: '/api/v1/warmup',
-    rewritePrefix: '/api/v1/warmup',
+    prefix: '/api/v1/workspace/:workspace_id/warmup',
+    rewritePrefix: '/api/v1/workspace/:workspace_id/warmup',
     config: {
       hide: true,
     },

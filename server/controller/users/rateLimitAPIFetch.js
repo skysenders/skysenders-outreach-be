@@ -1,7 +1,7 @@
 import { getLeaderBoardKey } from '../../utils/redis-helper';
 import { AUTH_TOKEN, RATE_LIMITER_CONFIG } from '../../config/constants';
 import { Container } from 'typedi';
-import { WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX } from '../../config/constants';
+import { ACCOUNT_CUSTOM_RATE_LIMIT_PREFIX } from '../../config/constants';
 import { StatusCodes } from 'http-status-codes';
 
 /**
@@ -87,10 +87,10 @@ export const fetchAPIConsumedCountByAPIKey = async(req, res) => {
  *
  * @returns {void} object
  */
-export const setWorkspaceApiCustomLimitToRedis = async(req, res) => {
+export const setAccountApiCustomLimitToRedis = async(req, res) => {
   const logger = Container.get('logger');
   const redisClient = Container.get('redisClient');
-  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const AccountsModelHandler = Container.get('AccountsModelHandler');
 
   // check if auth token is valid or not
   if (req.query.auth !== AUTH_TOKEN) {
@@ -100,31 +100,28 @@ export const setWorkspaceApiCustomLimitToRedis = async(req, res) => {
   logger.info('Start fetching custom api rate limt for workspace and set to redis');
 
   try {
-    const workspaceId = req.workspace?.id;
+    const { custom_api_rate_limit: customApiRateLimit } = req.body;
+    const accountId = req.user.account_id;
 
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
-    }
+    const account = await AccountsModelHandler.getAccountByWhere({ id: accountId });
 
-    const workspace = await WorkspaceModelHandler.getWorkspaceById(workspaceId);
-
-    if (!workspace) {
-      return res.status(StatusCodes.NOT_FOUND).send({message: 'Workspace not found'});
+    if (!account) {
+      return res.status(StatusCodes.NOT_FOUND).send({message: 'Account not found'});
     }
 
     // if custom api rate limit is less than 60 than set null in table
     let updateCustomRateLimitData = {custom_api_rate_limit: null };
 
-    if (req.body.custom_api_rate_limit > RATE_LIMITER_CONFIG.MAX_REQUESTS_PER_MINUTE) {
-      updateCustomRateLimitData = { custom_api_rate_limit: req.body.custom_api_rate_limit };
-      redisClient.set(`${WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX}${workspace.api_key}`, req.body.custom_api_rate_limit);
+    if (customApiRateLimit > RATE_LIMITER_CONFIG.MAX_REQUESTS_PER_MINUTE) {
+      updateCustomRateLimitData = { custom_api_rate_limit: customApiRateLimit };
+      redisClient.set(`${ACCOUNT_CUSTOM_RATE_LIMIT_PREFIX}${account.api_key}`, customApiRateLimit);
     } else {
-      redisClient.del(`${WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX}${workspace.api_key}`);
+      redisClient.del(`${ACCOUNT_CUSTOM_RATE_LIMIT_PREFIX}${account.api_key}`);
     }
 
-    const editWorkspace = await WorkspaceModelHandler.updateWorkspace(updateCustomRateLimitData, { id: workspace.id });
+    const editAccount = await AccountsModelHandler.updateAccount(updateCustomRateLimitData, { id: account.id });
 
-    if (!editWorkspace) {
+    if (!editAccount) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({message: 'update failed'});
     }
 

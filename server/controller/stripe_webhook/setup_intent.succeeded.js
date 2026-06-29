@@ -6,7 +6,7 @@ export const handleSetupIntentSucceeded = async(event, res) => {
   const logger = Container.get('logger');
   try {
     // Retrieve necessary services and handlers from the container
-    const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
+    const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
     const StripeAPIServices = Container.get('StripeAPIServices');
 
     // Current date for logging and timestamps
@@ -22,7 +22,7 @@ export const handleSetupIntentSucceeded = async(event, res) => {
     const paymentMethodId = webhookData.payment_method;
 
     // Fetch user subscription details and Stripe subscription
-    const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: customerId });
+    const userSubscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: customerId });
 
 
     // If no subscription details found, ignore the webhook
@@ -45,7 +45,7 @@ export const handleSetupIntentSucceeded = async(event, res) => {
     ]);
 
     // update the subscription details with the payment method
-    await WorkspaceSubscriptionModelHandler.updateSubscription({
+    await AccountSubscriptionModelHandler.updateSubscription({
       payment_method_id: paymentMethodId,
       payment_card_details: {
         last4: paymentMethod.card?.last4,
@@ -56,7 +56,7 @@ export const handleSetupIntentSucceeded = async(event, res) => {
         stripe_payment_method_id: paymentMethod?.id,
         stripe_customer_id: paymentMethod?.customer,
       }
-    }, { partner_id: partnerId, id: userSubscriptionDetails.id });
+    }, { id: userSubscriptionDetails.id });
 
     // Return success response
     return res.status(HttpStatusCode.Ok).send({

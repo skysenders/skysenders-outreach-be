@@ -25,8 +25,18 @@ export const statsProxy = (fastifyHttpProxy, fastify) => {
   // internal api registration for stats proxy
   fastify.register(fastifyHttpProxy, {
     ...statsProxyConfig,
-    prefix: '/api/stats',
-    rewritePrefix: '/api/stats',
+    prefix: '/api/workspace/:workspace_id/stats',
+    rewritePrefix: '/api/workspace/:workspace_id/stats',
+    config: {
+      hide: true,
+    },
+  });
+
+  // internal api registration for stats proxy
+  fastify.register(fastifyHttpProxy, {
+    ...statsProxyConfig,
+    prefix: '/api/stats/internal',
+    rewritePrefix: '/api/stats/internal',
     config: {
       hide: true,
     },
@@ -35,8 +45,8 @@ export const statsProxy = (fastifyHttpProxy, fastify) => {
   // public api registration for stats proxy
   fastify.register(fastifyHttpProxy, {
     ...statsProxyConfig,
-    prefix: '/api/v1/stats',
-    rewritePrefix: '/api/v1/stats',
+    prefix: '/api/v1/workspace/:workspace_id/stats',
+    rewritePrefix: '/api/v1/workspace/:workspace_id/stats',
     config: {
       hide: true,
     },

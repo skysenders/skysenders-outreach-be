@@ -8,7 +8,7 @@ import { fastify, initialize, registerRoutes } from './api/routes/index';
 import fastifyCors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
-import { JWT_ALLOWED_URLS, JWT, APP, PORT } from './config/constants';
+import { JWT_ALLOWED_URLS, JWT, SKIPPED_PREFIXES, APP, PORT } from './config/constants';
 import logger from './loaders/logger';
 import { registerProxyRoutes } from './api/routes/proxy/index.js';
 
@@ -51,37 +51,54 @@ export const startFastifyServer = async() => {
 
   // middleware to skip swagger documentation other than /api/v1
   fastify.addHook('onRoute', (routeOptions) => {
-    const isApiRoute = routeOptions.url.startsWith('/api/v1');
-    // skipping proxy route to be added on swagger
-    const isWarmupRoute = routeOptions.url.startsWith('/api/warmup') || routeOptions.url.startsWith('/api/v1/warmup');
-    const isStatsRoute = routeOptions.url.startsWith('/api/stats') || routeOptions.url.startsWith('/api/v1/stats');
-    // Hide everything except public api + warmup
-    if (isWarmupRoute || isStatsRoute || !isApiRoute) {
-      routeOptions.schema = routeOptions.schema || {};
+    const { url } = routeOptions;
+
+    // Hide everything outside /api/v1
+    if (!url.startsWith('/api/v1')) {
+      routeOptions.schema ??= {};
       routeOptions.schema.hide = true;
       return;
+    }
+
+    // Hide internal proxy routes
+    if (
+      url.startsWith('/api/warmup/internal') ||
+    url.startsWith('/api/stats/internal')
+    ) {
+      routeOptions.schema ??= {};
+      routeOptions.schema.hide = true;
+      return;
+    }
+
+    // Hide workspace warmup/stats routes
+    if (
+      /^\/api(?:\/v1)\/workspace\/[^/]+\/(?:warmup|stats)/.test(url)
+    ) {
+      routeOptions.schema ??= {};
+      routeOptions.schema.hide = true;
     }
   });
 
   // Middleware to handle JWT validation with skipping certain routes
   fastify.addHook('preValidation', async(request, reply) => {
-    // exclude the swagger documentation route from JWT validation
-    if (
-      request.url.startsWith('/documentation') ||
-      request.url.startsWith('/docs') ||
-      request.url.startsWith('/api/internal') ||
-      request.url.startsWith('/api/queue-server') ||
-      request.url.startsWith('/api/warmup/internal') ||
-      request.url.startsWith('/api/stats/internal')
-    ) {
-      return; // Skip JWT validation for Swagger documentation
+    // Fastify provides the matched route path without query strings!
+  // e.g., '/api/user/:id' instead of '/api/user/123?foo=bar'
+    const routePath = request.routeOptions.url;
+
+    if (!routePath) return; // Fallback safety
+
+    // 2. O(1) Lookup for exact allowed URLs
+    if (JWT_ALLOWED_URLS[routePath]) {
+      return;
     }
-    const requestUrl = request.url.split('?')[0];
-    // Check if the current request URL is in the allowed list
-    if (JWT_ALLOWED_URLS[requestUrl]) {
-      return; // Skip JWT validation for allowed URLs
+
+    // 3. Fast prefix matching using .some()
+    const isSkippedPrefix = SKIPPED_PREFIXES.some(prefix => routePath.startsWith(prefix));
+    if (isSkippedPrefix) {
+      return;
     }
-    // Otherwise, run JWT validation
+
+    // Otherwise, validate
     await verifyToken(request, reply);
   });
 

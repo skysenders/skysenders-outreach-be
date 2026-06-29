@@ -1,12 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
-  return sequelize.define('workspace_plan_details', {
+  return sequelize.define('account_plan_details', {
     id: {
       autoIncrement: true,
       type: DataTypes.BIGINT,
       primaryKey: true
     },
     partner_id: DataTypes.INTEGER,
-    workspace_id: DataTypes.INTEGER,
+    account_id: DataTypes.INTEGER,
 
     plan_name: DataTypes.STRING,
 
@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE
   }, {
-    tableName: 'workspace_plan_details',
+    tableName: 'account_plan_details',
     timestamps: false
   });
 };

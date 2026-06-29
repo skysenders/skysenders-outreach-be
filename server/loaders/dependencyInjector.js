@@ -2,7 +2,6 @@ import { Container } from 'typedi';
 import LoggerInstance from './logger';
 import { redisClient } from '../connection/redis-client';
 
-
 // Partner Modules
 import * as PartnerModelHandler from '../db/handler/partners';
 import * as PartnerBrandingModelHandler from '../db/handler/partners_branding';
@@ -10,9 +9,9 @@ import * as PartnerCustomScriptsModelHandler from '../db/handler/partners_custom
 import * as PartnerSessionModelHandler from '../db/handler/partner_sessions';
 
 // User + Workspace Modules
+import * as AccountsModelHandler from '../db/handler/accounts';
 import * as UserModelHandler from '../db/handler/users';
 import * as WorkspaceModelHandler from '../db/handler/workspaces';
-import * as UserWorkspaceMappingModelHandler from '../db/handler/user_workspace_mappings';
 import * as WorkspaceClientMappingModelHandler from '../db/handler/workspace_client_mappings';
 import * as UserSessionModelHandler from '../db/handler/user_sessions';
 
@@ -29,11 +28,10 @@ import * as SendingSchedulesModelHandler from '../db/handler/sending_schedules';
 import * as SendingScheduleWindowsModelHandler from '../db/handler/sending_schedule_windows';
 
 // Billing Modules
-import * as WorkspacePlanDetailsModelHandler from '../db/handler/workspace_plan_details';
-import * as WorkspaceSubscriptionModelHandler from '../db/handler/workspace_subscriptions';
-import * as WorkspaceSubscriptionItemsModelHandler from '../db/handler/workspace_subscription_items';
-import * as WorkspaceSubscriptionLogsModelHandler from '../db/handler/workspace_subscription_logs';
-
+import * as AccountPlanDetailsModelHandler from '../db/handler/account_plan_details';
+import * as AccountSubscriptionModelHandler from '../db/handler/account_subscriptions';
+import * as AccountSubscriptionItemsModelHandler from '../db/handler/account_subscription_items';
+import * as AccountSubscriptionLogsModelHandler from '../db/handler/account_subscription_logs';
 
 // services
 import * as AwsService from '../services/aws/aws_service';
@@ -51,7 +49,7 @@ import * as OtpGeneratorHelper from '../utils/otpGenerator';
 import * as APIKeyGenerator from '../utils/api_key_generator';
 import * as StringHelper from '../utils/string-helper';
 import * as DetectESPHelper from '../utils/detectEsp';
-import * as WorkspaceRedisCacheHelper from '../utils/redis-handler/redis-workspace-user-cache';
+import * as AccountWorkspaceRedisCacheHelper from '../utils/redis-handler/redis-account-workspace-cache';
 import * as DomainDNSConfigHelper from '../utils/domain-dns-helper';
 import * as PartnerCacheHelper from '../utils/redis-handler/partner-cache-finder';
 
@@ -72,17 +70,17 @@ const injectorInstance = async() => {
     Container.set('PartnerSessionModelHandler', PartnerSessionModelHandler);
 
     // ---- Users / Workspace ----
+    Container.set('AccountsModelHandler', AccountsModelHandler);
     Container.set('UserModelHandler', UserModelHandler);
     Container.set('WorkspaceModelHandler', WorkspaceModelHandler);
-    Container.set('UserWorkspaceMappingModelHandler', UserWorkspaceMappingModelHandler);
     Container.set('WorkspaceClientMappingModelHandler', WorkspaceClientMappingModelHandler);
     Container.set('UserSessionModelHandler', UserSessionModelHandler);
 
-    // ---- Billing / Subscription ----
-    Container.set('WorkspacePlanDetailsModelHandler', WorkspacePlanDetailsModelHandler);
-    Container.set('WorkspaceSubscriptionModelHandler', WorkspaceSubscriptionModelHandler);
-    Container.set('WorkspaceSubscriptionItemsModelHandler', WorkspaceSubscriptionItemsModelHandler);
-    Container.set('WorkspaceSubscriptionLogsModelHandler', WorkspaceSubscriptionLogsModelHandler);
+    // user billing & subscription
+    Container.set('AccountPlanDetailsModelHandler', AccountPlanDetailsModelHandler);
+    Container.set('AccountSubscriptionModelHandler', AccountSubscriptionModelHandler);
+    Container.set('AccountSubscriptionItemsModelHandler', AccountSubscriptionItemsModelHandler);
+    Container.set('AccountSubscriptionLogsModelHandler', AccountSubscriptionLogsModelHandler);
 
     // Domains & Mailboxes
     Container.set('DomainsModelHandler', DomainsModelHandler);
@@ -111,12 +109,12 @@ const injectorInstance = async() => {
     Container.set('APIKeyGenerator', APIKeyGenerator);
     Container.set('StringHelper', StringHelper);
     Container.set('DetectESPHelper', DetectESPHelper);
-    Container.set('WorkspaceRedisCacheHelper', WorkspaceRedisCacheHelper);
+    Container.set('AccountWorkspaceRedisCacheHelper', AccountWorkspaceRedisCacheHelper);
     Container.set('DomainDNSConfigHelper', DomainDNSConfigHelper);
     Container.set('PartnerCacheHelper', PartnerCacheHelper);
     return;
   } catch (err) {
-    LoggerInstance.error('🔥 Error on dependency injector instance loader: %o', err);
+    LoggerInstance.error('Error on dependency injector instance loader: %o', err);
     throw new Error(err);
   }
 };

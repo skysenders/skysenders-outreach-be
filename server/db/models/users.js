@@ -7,13 +7,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     uuid: DataTypes.UUID,
     partner_id: DataTypes.INTEGER,
+    account_id: DataTypes.INTEGER,
     email: DataTypes.STRING,
     name: DataTypes.STRING,
     password: DataTypes.TEXT,
     auth_provider: DataTypes.ENUM('email', 'google', 'microsoft'),
+    role: DataTypes.ENUM('SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER', 'CLIENT'),
     status: DataTypes.ENUM('active', 'inactive', 'deleted', 'invited'),
     profile_url: DataTypes.STRING,
-    timezone: DataTypes.STRING,
 
     last_reset_password_date: DataTypes.DATE,
     last_sent_password_link_date: DataTypes.DATE,
@@ -23,10 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     magic_link_expiry_date: DataTypes.DATE,
 
     created_at: DataTypes.DATE,
-    updated_at: DataTypes.DATE,
     deleted_at: DataTypes.DATE,
-    is_deleted: DataTypes.BOOLEAN,
-    is_first_invite: DataTypes.BOOLEAN,
+
     is_client: DataTypes.BOOLEAN
   }, {
     tableName: 'users',

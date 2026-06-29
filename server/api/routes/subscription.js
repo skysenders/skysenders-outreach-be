@@ -6,14 +6,14 @@ import { planUnsubscribe } from '../../controller/subscription/planUnsubscribe';
 
 export default async function subscriptionRoutes(fastify) {
 
-  // Route to create a setup intent for a workspace.
+  // Route to create a setup intent.
   fastify.post(
     '/create-setup-intent',
     {
       schema: {
         tags: ['Subscription'],
         summary: 'Create a setup intent',
-        description: 'API endpoint to create a setup intent for a workspace',
+        description: 'API endpoint to create a setup intent',
         operationId: 'createSetupIntent',
         hide: true,
         body: {

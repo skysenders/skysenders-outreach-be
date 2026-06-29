@@ -4,7 +4,7 @@ import { Container } from 'typedi';
 
 export const getSubscriptionByWhere = async(where) => {
   try {
-    return await db.workspace_subscriptions.findOne({
+    return await db.account_subscriptions.findOne({
       where,
       raw: true
     });
@@ -17,7 +17,7 @@ export const getSubscriptionByWhere = async(where) => {
 
 export const getSubscriptionsByWhere = async(where) => {
   try {
-    return await db.workspace_subscriptions.findAll({
+    return await db.account_subscriptions.findAll({
       where,
       raw: true
     });
@@ -30,7 +30,7 @@ export const getSubscriptionsByWhere = async(where) => {
 
 export const createSubscription = async(data) => {
   try {
-    return await db.workspace_subscriptions.create(data);
+    return await db.account_subscriptions.create(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error creating subscription: ${err.message}`);
@@ -40,7 +40,7 @@ export const createSubscription = async(data) => {
 
 export const updateSubscription = async(data, where) => {
   try {
-    const [_, updated] = await db.workspace_subscriptions.update(data, {
+    const [_, updated] = await db.account_subscriptions.update(data, {
       where,
       returning: true,
       raw: true
@@ -55,7 +55,7 @@ export const updateSubscription = async(data, where) => {
 
 export const deleteSubscription = async(where) => {
   try {
-    return await db.workspace_subscriptions.destroy({ where });
+    return await db.account_subscriptions.destroy({ where });
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error deleting subscription: ${err.message}`);

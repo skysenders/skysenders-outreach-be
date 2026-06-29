@@ -4,16 +4,20 @@ import Container from 'typedi';
 // Generate a signed URL for workspace logo upload.
 export const getWorkspaceLogoSignedUrl = async(req, res) => {
   const AwsService = Container.get('AwsService');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
   const logger = Container.get('logger');
 
   const { filename, content_type: contentType } = req.body;
-  const workspaceId = req.workspace?.id;
+  const workspaceId = req.params.id;
   const partnerId = req.user.tenant_id; // tenant_id is used as partner_id in the token
 
-  if (!workspaceId) {
-    return res.status(StatusCodes.BAD_REQUEST).send({
-      message: 'Workspace ID is missing in request header'
-    });
+  const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+    accountId: req.user.account_id,
+    userId: req.user.id
+  });
+
+  if (!hasAdminAccess) {
+    return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to get signed URL for workspace logo' });
   }
 
   try {

@@ -15,41 +15,36 @@ export const planUnsubscribe = async(req, res) => {
 
   // Service handlers
   const StripeAPIServices = Container.get('StripeAPIServices');
-  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
 
   // Extract user ID and reason for unsubscribing from the request
   const partnerId = req.user.tenant_id;
-  const workspaceId = req.workspace?.id;
-  const userId = req.user.id;
+  const user = req.user;
 
   const { reason: unsubscribeReason } = req.body;
 
   try {
-    // if workspaceId is null or empty throw invalid request error
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid workspace id' });
-    }
-
-    // check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: userId,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
     // Fetch subsription details by partnerId
-    const subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      workspace_id: workspaceId,
+    const subscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({
+      account_id: user.account_id,
     });
 
     // Check if subscription details exist for the user
     if (!subscriptionDetails) {
-      return res.status(StatusCodes.NOT_FOUND).send({ message: 'Subscription details not found for the workspace.' });
+      return res.status(StatusCodes.NOT_FOUND).send({ message: 'Subscription details not found for the account.' });
     }
 
     // Check if the user has an active subscription
@@ -65,24 +60,24 @@ export const planUnsubscribe = async(req, res) => {
       }
 
       // Update subscription details in the database
-      await WorkspaceSubscriptionModelHandler.updateSubscription({
-        is_sub: false,
-        sub_id: null,
-      }, { workspace_id: workspaceId });
+      await AccountSubscriptionModelHandler.updateSubscription({
+        is_active: false,
+        subscription_id: null,
+      }, { account_id: user.account_id });
     }
 
     // If the user provided a reason, update the plan details with it
     if (unsubscribeReason) {
-      WorkspacePlanDetailsModelHandler.updatePlanDetails(
+      AccountPlanDetailsModelHandler.updatePlanDetails(
         { reason_for_unsubscribe: unsubscribeReason },
-        { workspace_id: workspaceId }
+        { account_id: user.account_id }
       );
     }
 
-    logger.info(`Workspace ${workspaceId} | User ${userId} unsubscribed successfully.`);
+    logger.info(`Account ${user.account_id} | User ${user.id} unsubscribed successfully.`);
     return res.status(HttpStatusCode.Ok).send({ message: 'Subscription cancelled successfully!' });
   } catch (error) {
-    logger.error(`Unexpected error while unsubscribing user ${userId}: ${error.message}`);
+    logger.error(`Unexpected error while unsubscribing user ${user.id}: ${error.message}`);
     return res.status(HttpStatusCode.InternalServerError).send({
       message: `Server error: ${error.message}`,
     });

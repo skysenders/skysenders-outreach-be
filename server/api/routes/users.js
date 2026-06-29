@@ -26,6 +26,21 @@ import { handleGoogleOAuthCallback } from '../../controller/users/google/handleG
 import { signinWithMicrosoft } from '../../controller/users/microsoft/signinWithMicrosoft';
 import { handleMicrosoftOAuthCallback } from '../../controller/users/microsoft/handleMicrosoftOAuthCallback';
 
+// invite team
+import { inviteMembers, resendInvitation } from '../../controller/users/inviteMembers';
+import { joinAccountWithToken } from '../../controller/users/joinAccountWithToken';
+import { getAccountMembers } from '../../controller/users/getAccountMembers';
+import { deleteAccountMember } from '../../controller/users/deleteAccountMember';
+import { updateTeamMemberRole } from '../../controller/users/updateTeamMemberRole';
+
+// API key
+import { generateNewAPIKey } from '../../controller/users/generateNewAPIKey';
+import { getApiKey } from '../../controller/users/getApiKey';
+import {
+  fetchAPIRateLimitStatLeaderBoard,
+  fetchAPIConsumedCountByAPIKey,
+  setAccountApiCustomLimitToRedis
+} from '../../controller/users/rateLimitAPIFetch';
 
 export default async function authRoutes(fastify) {
 
@@ -70,12 +85,11 @@ export default async function authRoutes(fastify) {
                   email: { type: 'string' },
                   name: { type: 'string' },
                   status: { type: 'string' },
+                  account_id: { type: 'number' },
                   profile_url: { type: 'string' },
-                  timezone: { type: 'string' },
                   invited_accepted: { type: 'boolean' },
-                  invited_workspace_id: { type: 'number' },
-                  invited_workspace_role: { type: 'string' },
-                  invited_workspace_join_error: { type: 'string' },
+                  invited_user_role: { type: 'string' },
+                  invited_account_join_error: { type: 'string' },
                 },
               },
               token: {
@@ -137,8 +151,8 @@ export default async function authRoutes(fastify) {
                   email: { type: 'string' },
                   name: { type: 'string' },
                   status: { type: 'string' },
+                  account_id: { type: 'number' },
                   profile_url: { type: 'string' },
-                  timezone: { type: 'string' },
                   is_client: { type: 'boolean' }
                 },
               },
@@ -377,8 +391,8 @@ export default async function authRoutes(fastify) {
                   email: { type: 'string' },
                   name: { type: 'string' },
                   status: { type: 'string' },
+                  account_id: { type: 'number' },
                   profile_url: { type: 'string' },
-                  timezone: { type: 'string' },
                 },
               },
               token: {
@@ -438,7 +452,7 @@ export default async function authRoutes(fastify) {
               name: { type: 'string' },
               status: { type: 'string' },
               profile_url: { type: 'string' },
-              timezone: { type: 'string' },
+              account_id: { type: 'number' },
             },
           },
           401: {
@@ -483,25 +497,25 @@ export default async function authRoutes(fastify) {
                   name: { type: 'string' },
                   status: { type: 'string' },
                   profile_url: { type: 'string' },
-                  timezone: { type: 'string' },
+                  account_id: { type: 'number' },
                 },
-              },
-              token: {
-                type: 'object',
-                properties: {
-                  access_token: { type: 'string' },
-                  access_token_expiries_at: { type: 'string', format: 'date-time' },
+                token: {
+                  type: 'object',
+                  properties: {
+                    access_token: { type: 'string' },
+                    access_token_expiries_at: { type: 'string', format: 'date-time' },
+                  },
                 },
               },
             },
-          },
-          404: {
-            description: 'User not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
+            404: {
+              description: 'User not found',
+              type: 'object',
+              properties: {
+                message: { type: 'string' },
+              },
             },
-          },
+          }
         }
       }
     }, userMagicLinkLogin);
@@ -537,8 +551,8 @@ export default async function authRoutes(fastify) {
                   email: { type: 'string' },
                   name: { type: 'string' },
                   status: { type: 'string' },
+                  account_id: { type: 'number' },
                   profile_url: { type: 'string' },
-                  timezone: { type: 'string' },
                 },
               },
               token: {
@@ -804,7 +818,6 @@ export default async function authRoutes(fastify) {
           properties: {
             name: { type: 'string', maxLength: 100 },
             profile_url: { type: 'string' },
-            timezone: { type: 'string' },
           },
         },
         response: {
@@ -859,4 +872,442 @@ export default async function authRoutes(fastify) {
     },
     updateTriggerProductTour
   );
+  // invite team members to workspace
+  fastify.post('/invite-members',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Invite team members',
+        description: 'Invite team members to join the team by sending them an email invitation',
+        operationId: 'inviteMembers',
+        body: {
+          type: 'object',
+          properties: {
+            members: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 10,
+              items: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string' },
+                  name: { type: 'string' },
+                  role: {
+                    type: 'string',
+                    enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
+                  },
+                },
+                required: ['email', 'name', 'role']
+              }
+            }
+          },
+          required: ['members']
+        },
+        response: {
+          200: {
+            description: 'Workspace invitations processed successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              data: {
+                type: 'object',
+                properties: {
+                  invited: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        email: { type: 'string' },
+                        status: { type: 'string' }
+                      }
+                    }
+                  },
+                  failed: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        email: { type: 'string' },
+                        reason: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          401: {
+            description: 'Unauthorized access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          422: {
+            description: 'Validation failed',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    inviteMembers
+  );
+
+  // resend invitation to workspace team members
+  fastify.post('/members/:userId/resend-invitation',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Resend invitation to team members',
+        description: 'Resend email invitation to the existing team member',
+        operationId: 'resendInvitation',
+        params: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string' }
+          },
+          required: ['userId']
+        },
+        response: {
+          200: {
+            description: 'Invitation sent successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            }
+          },
+          401: {
+            description: 'Unauthorized access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    resendInvitation
+  );
+  // Route to invite members to workspace
+  fastify.post('/join',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Join account with token',
+        description: 'API endpoint to join account using invitation token',
+        operationId: 'joinAccountWithToken',
+        hide: true,
+        body: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' }
+          },
+          required: ['token']
+        },
+        response: {
+          200: {
+            description: 'Joined account successfully',
+            type: 'object',
+            additionalProperties: true,
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Invalid or expired token',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          404: {
+            description: 'Account not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, joinAccountWithToken
+  );
+  // Route to list members of a workspace
+  fastify.get('/members',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'List account members',
+        description: 'API endpoint to list all members of an account',
+        operationId: 'getAccountMembers',
+        querystring: {
+          type: 'object',
+          properties: {
+            search_text: { type: 'string', description: 'Text to search members by name or email' },
+            role: { type: 'array', items: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER'] }, description: 'Filter members by role' },
+          },
+        },
+        response: {
+          200: {
+            description: 'Account members retrieved successfully',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                user_id: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                status: { type: 'string' },
+                created_at: { type: 'string', format: 'date-time' }
+              }
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Account not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    getAccountMembers
+  );
+  // delete a team member from workspace
+  fastify.delete('/members/:userId',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Delete a team member from account',
+        description: 'API endpoint to delete a team member from account',
+        operationId: 'deleteAccountMember',
+        params: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string' }
+          },
+          required: ['userId']
+        },
+        response: {
+          200: {
+            description: 'Member deleted successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          403: {
+            description: 'Forbidden access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Member not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    deleteAccountMember
+  );
+  // Update team member role or deactivate member
+  fastify.patch('/members/:userId',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Update team member role',
+        description: 'API endpoint to update a team member\'s role',
+        operationId: 'updateTeamMemberRole',
+        params: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string' }
+          },
+          required: ['userId']
+        },
+        body: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
+            },
+            is_active: { type: 'boolean' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Member updated successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          },
+          404: {
+            description: 'Member not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    updateTeamMemberRole
+  );
+
+
+  // get workspace api key
+  fastify.get(
+    '/api-key',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Get API key',
+        description: 'API endpoint to fetch API key',
+        operationId: 'getApiKey',
+        hide: true,
+        response: {
+          200: {
+            description: 'API key retrieved successfully',
+            type: 'object',
+            properties: {
+              api_key: { type: 'string' },
+              api_key_created_at: { type: 'string', format: 'date-time' },
+              custom_api_rate_limit: { type: 'number' }
+            },
+          },
+          404: {
+            description: 'Workspace not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    getApiKey
+  );
+
+  // generate api key route
+  fastify.post(
+    '/generate-api-key',
+    {
+      schema: {
+        tags: ['Users'],
+        summary: 'Generate API key',
+        description: 'API endpoint to create new API key',
+        operationId: 'generateApiKey',
+        hide: true,
+        response: {
+          200: {
+            description: 'API key generated successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              api_key: { type: 'string' }
+            },
+          },
+          406: {
+            description: 'Invalid request! Account not found!',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    generateNewAPIKey
+  );
+
+  // find api rate limit leader board
+  fastify.get('/redis/api-stats-leader-board', {
+    schema: {
+      hide: true,
+    }
+  }, fetchAPIRateLimitStatLeaderBoard);
+
+  // find api rate limit by api key
+  fastify.get('/redis/api-limit-by-apikey', {
+    schema: {
+      hide: true,
+    }
+  }, fetchAPIConsumedCountByAPIKey);
+
+  // update workspace api rate limit
+  fastify.post('/redis/set-custom-rate-limit',
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          properties: {
+            auth: { type: 'string' }
+          },
+          required: ['auth']
+        },
+        hide: true,
+        body: {
+          type: 'object',
+          properties: {
+            custom_api_rate_limit: { type: 'number' }
+          },
+          required: ['custom_api_rate_limit']
+        },
+        response: {
+          200: {
+            description: 'User custom api rate limit updated successfully',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          401: {
+            description: 'Unauthorized access',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          404: {
+            description: 'Account not found',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, setAccountApiCustomLimitToRedis);
 }

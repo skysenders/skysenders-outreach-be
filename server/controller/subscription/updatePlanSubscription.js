@@ -145,11 +145,12 @@ export const updatePlanSubscription = async(req, res) => {
   const logger = Container.get('logger');
   const StripeAPIServices = Container.get('StripeAPIServices');
 
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
-  const WorkspaceSubscriptionItemsModelHandler = Container.get('WorkspaceSubscriptionItemsModelHandler');
-  const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
+  const AccountSubscriptionItemsModelHandler = Container.get('AccountSubscriptionItemsModelHandler');
+  const AccountSubscriptionLogsModelHandler = Container.get('AccountSubscriptionLogsModelHandler');
 
   const { is_inr_payment: isINRPayment } = req.body;
   let planName = req.body.plan_name;
@@ -157,8 +158,7 @@ export const updatePlanSubscription = async(req, res) => {
 
   // Extract user ID and reason for unsubscribing from the request
   const partnerId = req.user.tenant_id;
-  const workspaceId = req.workspace?.id;
-  const userId = req.user.id;
+  const user = req.user;
 
   let coupon = req.body.coupon || '';
 
@@ -167,35 +167,31 @@ export const updatePlanSubscription = async(req, res) => {
   const { email } = req.user;
   const currentDate = new Date();
 
-  logger.info(`Updating subscription for user: ${email}, plan: ${planName} with quantity: ${subscriptionQuantity}, workspace_id: ${workspaceId}`);
+  logger.info(`Updating subscription for user: ${email}, plan: ${planName} with quantity: ${subscriptionQuantity}, account_id: ${user.account_id}`);
   try {
 
-    // if workspaceId is null or empty throw invalid request error
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid workspace id' });
-    }
-
-    // check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: userId,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
     const [subscriptionDetails, planDetails] = await Promise.all([
-      WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-        workspace_id: workspaceId,
+      AccountSubscriptionModelHandler.getSubscriptionByWhere({
+        account_id: user.account_id,
       }),
-      WorkspacePlanDetailsModelHandler.getPlanDetailsByWhere({
-        workspace_id: workspaceId,
+      AccountPlanDetailsModelHandler.getPlanDetailsByWhere({
+        account_id: user.account_id,
       }),
     ]);
 
     // fetch partner payment details
     const partnerPaymentDetails = await StripeAPIServices.fetchPartnerPaymentDetails(partnerId);
+
     const PLAN_TYPE = partnerPaymentDetails.PLAN_TYPE;
     const PLAN_EMAIL_COUNT = partnerPaymentDetails.PLAN_EMAIL_COUNT;
     const ADD_ON_ENTERPRISE_PLAN = partnerPaymentDetails.ADD_ON_ENTERPRISE_PLAN;
@@ -238,22 +234,22 @@ export const updatePlanSubscription = async(req, res) => {
       planContactCount = (subscriptionQuantity * PLAN_FUP_CONTACT_COUNT.ENTERPRISE_PLAN_ADD_ON) + PLAN_FUP_CONTACT_COUNT.ENTERPRISE_PLAN;
     }
 
-    const { mailboxes_count: actualMailboxCount = 0, contacts_count: actualContactCount = 0 } = await WorkspacePlanDetailsModelHandler.fetchWorkspaceContactMailboxCount(workspaceId);
+    const { mailboxes_count: actualMailboxCount = 0, contacts_count: actualContactCount = 0 } = await AccountPlanDetailsModelHandler.fetchUserContactMailboxCount(user.account_id);
 
-    // Check if the workspace has any extra mailboxes
+    // Check if the account has any extra mailboxes
     if (planMailboxCount < Number(actualMailboxCount)) {
       throw new Error(`The new plan allows fewer FUP usage mailboxes than your current count(${actualMailboxCount}).
          Please delete some mailboxes to comply with the plan FUP limit.`);
     }
 
-    // Check if the workspace has any extra contacts
+    // Check if the account has any extra contacts
     if (planContactCount < Number(actualContactCount)) {
       throw new Error(`The new plan allows fewer FUP usage contacts than your current count(${actualContactCount}).
          Please delete some contacts to comply with the plan FUP limit.`);
     }
 
     if (paymentMethodId) {
-      logger.info(`updating the new payment method id ${paymentMethodId} for workspace: ${workspaceId}, user: ${email}`);
+      logger.info(`updating the new payment method id ${paymentMethodId} for account: ${user.account_id}, user: ${email}`);
       // save the new payment method id to the db
       await StripeAPIServices.updateCustomer(partnerId, subscriptionDetails.customer_id, {
         invoice_settings: {
@@ -268,27 +264,27 @@ export const updatePlanSubscription = async(req, res) => {
     if (!coupon && subscriptionDetails?.early_access?.early_access_coupon && !subscriptionDetails?.early_access?.early_access_coupon_used) {
       coupon = subscriptionDetails.early_access.early_access_coupon;
       subscriptionDetails.early_access.early_access_coupon_used = true;
-      logger.info(`Using early access coupon: ${coupon} for workspace: ${workspaceId}, user: ${email}`);
+      logger.info(`Using early access coupon: ${coupon} for account: ${user.account_id}, user: ${email}`);
     }
 
     // check if plan_details has custom price id for the plan
     if (planDetails?.custom_plan_details?.[planName]?.price_id) {
-      logger.info(`Using custom price id for plan ${planName} for workspace: ${workspaceId}, user: ${email}`);
+      logger.info(`Using custom price id for plan ${planName} for account: ${user.account_id}, user: ${email}`);
       planPriceId = planDetails.custom_plan_details[planName].price_id;
     }
 
     // create or update the subscription
-    logger.info(`Creating or updating subscription for workspace: ${workspaceId}, user: ${email}, plan: ${planName}`);
+    logger.info(`Creating or updating subscription for account: ${user.account_id}, user: ${email}, plan: ${planName}`);
     const subscription = subscriptionDetails?.subscription_id
       ? await updateSubscription(partnerId, subscriptionDetails.customer_id, PLAN_TYPE, subscriptionDetails.subscription_id, paymentMethodId, planPriceId, subscriptionQuantity, coupon, isINRPayment)
       : await createSubscription(partnerId, subscriptionDetails.customer_id, paymentMethodId, planPriceId, subscriptionQuantity, coupon, isINRPayment);
 
-    logger.info(`Subscription created/updated successfully for workspace: ${workspaceId}, user: ${email}, plan: ${planName}`);
+    logger.info(`Subscription created/updated successfully for account: ${user.account_id}, user: ${email}, plan: ${planName}`);
 
     // update the subscription details to the database
     const subscriptionItemData = subscription.items.data.map(item => ({
       partner_id: partnerId,
-      workspace_id: workspaceId,
+      account_id: user.account_id,
       subscription_id: subscription.id,
       sub_item_id: item.id,
       item_plan_name: item.plan.nickname,
@@ -298,9 +294,9 @@ export const updatePlanSubscription = async(req, res) => {
       created_at: new Date(item.created * 1000).toISOString(),
     }));
 
-    await WorkspaceSubscriptionItemsModelHandler.deleteAndBulkAddSubscriptionItemDetails(subscriptionItemData, { partner_id: partnerId, workspace_id: workspaceId });
+    await AccountSubscriptionItemsModelHandler.deleteAndBulkAddSubscriptionItemDetails(subscriptionItemData, { partner_id: partnerId, account_id: user.account_id });
 
-    await WorkspaceSubscriptionModelHandler.updateSubscription(
+    await AccountSubscriptionModelHandler.updateSubscription(
       {
         subscription_id: subscription.id,
         customer_id: subscription.customer,
@@ -318,12 +314,12 @@ export const updatePlanSubscription = async(req, res) => {
           manualInvoiceDueDate: subscription.manualInvoiceDueDate,
         },
       },
-      { id: subscriptionDetails.id, partner_id: partnerId, workspace_id: workspaceId }
+      { id: subscriptionDetails.id, account_id: user.account_id }
     );
 
-    await WorkspaceSubscriptionLogsModelHandler.createSubscriptionLog({
+    await AccountSubscriptionLogsModelHandler.createSubscriptionLog({
       partner_id: partnerId,
-      workspace_id: workspaceId,
+      account_id: user.account_id,
       subscription_id: subscription.id,
       amount: (subscription.plan.amount / 100).toFixed(2),
       invoice_url: subscription?.latest_invoice?.invoice_pdf,
@@ -334,13 +330,12 @@ export const updatePlanSubscription = async(req, res) => {
       }
     });
 
-    await WorkspacePlanDetailsModelHandler.updatePlanDetails(
+    await AccountPlanDetailsModelHandler.updatePlanDetails(
       {
         plan_name: planName,
       },
       {
-        workspace_id: workspaceId,
-        partner_id: partnerId,
+        account_id: user.account_id,
       }
     );
 

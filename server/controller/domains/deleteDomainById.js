@@ -96,8 +96,8 @@ export const bulkDeleteDomains = async(req, res) => {
     const deletedDomains = await DomainsModelHandler.deleteDomain(where);
 
     return res.status(StatusCodes.OK).send({
-      message: `${deletedDomains ? deletedDomains.length : 0} domains deleted successfully.`,
-      deleted_domains: deletedDomains
+      message: `${deletedDomains ? `${deletedDomains.length} domains deleted successfully.` : 'No domains deleted.'}`,
+      deleted_domains: deletedDomains?.length ? deletedDomains : null
     });
   } catch (error) {
 

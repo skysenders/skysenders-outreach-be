@@ -1,27 +1,20 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { WORKSPACE_USER_ROLE } from '../../config/constants';
 
 export const updateWorkspaceClient = async(req, res) => {
   const logger = Container.get('logger');
-  const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
+  const UserModelHandler = Container.get('UserModelHandler');
   const WorkspaceClientMappingModelHandler = Container.get('WorkspaceClientMappingModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   try {
-    const { userId } = req.params;
-    const { password, is_active: isActive, permission } = req.body;
+    const { id: workspaceId, userId } = req.params;
+    const { password, role } = req.body;
     const user = req.user;
 
-    const workspaceId = req.workspace?.id;
-
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
-    }
-
     // 1. Basic Validation
-    if (!password && typeof isActive !== 'boolean') {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one of password or is_active must be provided' });
+    if (!password && !role) {
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one of password or role must be provided' });
     }
 
     // 2. Prevent Self-Modification (Security Best Practice)
@@ -29,36 +22,27 @@ export const updateWorkspaceClient = async(req, res) => {
       return res.status(StatusCodes.FORBIDDEN).send({ message: 'You cannot update your own role or status' });
     }
 
-    // 3. Permission Check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: user.id,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: req.user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
-    // 4. Check if client exists in this workspace before updating
-    const existingMapping = await UserWorkspaceMappingModelHandler.getWorkspaceMembers({
-      workspace_id: workspaceId,
-      user_id: userId,
-      role: WORKSPACE_USER_ROLE.CLIENT, // Ensure we are only fetching client mappings
-      is_deleted: false
+    // find existing client
+    // 3. Fetch target user mapping
+    const existingUser = await UserModelHandler.getUserByWhere({
+      id: userId,
+      account_id: user.account_id,
+      is_client: true,
+      deleted_at: null
     });
 
-    if (!existingMapping || existingMapping.length === 0) {
+    if (!existingUser) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Client not found in this workspace' });
-    }
-
-    // 6. Perform Update
-    if (typeof isActive === 'boolean') {
-      await UserWorkspaceMappingModelHandler.updateWorkspaceMember({
-        is_active: isActive
-      }, {
-        workspace_id: workspaceId,
-        user_id: userId,
-      });
     }
 
     const updateFields = {};
@@ -67,29 +51,23 @@ export const updateWorkspaceClient = async(req, res) => {
       updateFields.password = password;
     }
 
-    if (permission) {
-      updateFields.permission = permission;
+    if (role) {
+      await UserModelHandler.updateUser({
+        role
+      }, {
+        id: userId
+      });
+      await AccountWorkspaceRedisCacheHelper.setAccountUserRole({
+        accountId: existingUser.account_id,
+        userId: userId,
+        role
+      });
     }
 
-    await WorkspaceClientMappingModelHandler.updateWorkspaceClientMapping(updateFields, {
-      workspace_id: workspaceId,
-      user_id: userId,
-    });
-
-
-    // Sync Redis Cache
-    // If Deactivating: Remove access immediately
-    // Else If Role Change or Re-activation: Update/Restore access
-    if (typeof isActive === 'boolean' && !isActive) {
-      await WorkspaceRedisCacheHelper.removeWorkspaceAccess({
-        userId,
-        workspaceId
-      });
-    } else if (isActive === true) {
-      await WorkspaceRedisCacheHelper.updateWorkspaceAccess({
-        userId,
-        workspaceId,
-        role: WORKSPACE_USER_ROLE.CLIENT
+    if (Object.keys(updateFields).length > 0) {
+      await WorkspaceClientMappingModelHandler.updateWorkspaceClientMapping(updateFields, {
+        workspace_id: workspaceId,
+        user_id: userId,
       });
     }
 

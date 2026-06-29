@@ -4,7 +4,7 @@ import { Container } from 'typedi';
 
 export const getSubscriptionLogsByWhere = async(where) => {
   try {
-    return await db.workspace_subscription_logs.findAll({
+    return await db.account_subscription_logs.findAll({
       where,
       raw: true,
       order: [['created_at', 'DESC']]
@@ -18,7 +18,7 @@ export const getSubscriptionLogsByWhere = async(where) => {
 
 export const createSubscriptionLog = async(data) => {
   try {
-    return await db.workspace_subscription_logs.create(data);
+    return await db.account_subscription_logs.create(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error creating subscription log: ${err.message}`);
@@ -28,7 +28,7 @@ export const createSubscriptionLog = async(data) => {
 
 export const bulkCreateSubscriptionLogs = async(data) => {
   try {
-    return await db.workspace_subscription_logs.bulkCreate(data);
+    return await db.account_subscription_logs.bulkCreate(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error bulk creating subscription logs: ${err.message}`);

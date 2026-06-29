@@ -16,16 +16,12 @@ export const getAllWorkspaces = async(req, res) => {
           w.logo_url,
           w.logo_bg_color,
           w.theme_color,
-          uwm.role,
-          uwm.permission,
-          uwm.status,
-          uwm.is_active,
-          uwm.created_at as joined_at
-      FROM user_workspace_mappings uwm
-      INNER JOIN workspaces w ON uwm.workspace_id = w.id
-      WHERE uwm.user_id = :userId 
-        AND uwm.is_active = true
-        AND uwm.is_deleted = false;`;
+          u.role,
+          u.status,
+          w.created_at
+      FROM users u
+      INNER JOIN workspaces w ON u.account_id = w.account_id
+      WHERE u.id = :userId;`;
 
     const workspaces = await db.sequelize.query(query, {
       replacements: { userId: user.id },
@@ -37,6 +33,6 @@ export const getAllWorkspaces = async(req, res) => {
 
   } catch (err) {
     logger.error(`Error fetching workspace: ${err.message}`);
-    throw err;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
   }
 };

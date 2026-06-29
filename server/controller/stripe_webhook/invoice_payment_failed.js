@@ -3,15 +3,15 @@ import { Container } from 'typedi';
 import { HttpStatusCode } from 'axios';
 import { EMAIL_TEMPLATE_NAME, PARTNER_EMAIL_SETTINGS_CACHE } from '../../config/constants';
 
-const processUserSubscriptionFailure = async(partnerId, workspaceId, PLAN_TYPE, webhookData, subscriptionItems, stripeSubscription, planName, subscriptionEndDate, currentDate) => {
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-  const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
+const processUserSubscriptionFailure = async(partnerId, accountId, PLAN_TYPE, webhookData, subscriptionItems, stripeSubscription, planName, subscriptionEndDate, currentDate) => {
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountSubscriptionLogsModelHandler = Container.get('AccountSubscriptionLogsModelHandler');
 
   // Use Promise.all for concurrent updates to subscription details and logs
   await Promise.all([
     // Update plan details indicating payment failure
-    WorkspacePlanDetailsModelHandler.updatePlanDetails({
+    AccountPlanDetailsModelHandler.updatePlanDetails({
       email_credits: 0,
       max_leads_count: 0,
       max_mailbox_count: 0,
@@ -21,12 +21,11 @@ const processUserSubscriptionFailure = async(partnerId, workspaceId, PLAN_TYPE, 
       last_reset_date: currentDate,
       is_payment_failed: true
     }, {
-      partner_id: partnerId,
-      workspace_id: workspaceId
+      account_id: accountId,
     }),
 
     // Update subscription details (set to failed)
-    WorkspaceSubscriptionModelHandler.updateSubscription({
+    AccountSubscriptionModelHandler.updateSubscription({
       end_date: subscriptionEndDate,
       subscription_id: null,
       is_active: false,
@@ -36,12 +35,12 @@ const processUserSubscriptionFailure = async(partnerId, workspaceId, PLAN_TYPE, 
         lastUpdatedAt: currentDate,
         attemptCount: webhookData.attempt_count
       }
-    }, { partner_id: partnerId, workspace_id: workspaceId }),
+    }, { account_id: accountId }),
 
     // Log the failure details for future reference
-    WorkspaceSubscriptionLogsModelHandler.createSubscriptionLog({
+    AccountSubscriptionLogsModelHandler.createSubscriptionLog({
       partner_id: partnerId,
-      workspace_id: workspaceId,
+      account_id: accountId,
       created_at: currentDate,
       subscription_id: stripeSubscription.id,
       amount: (stripeSubscription.plan.amount / 100).toFixed(2),
@@ -64,9 +63,10 @@ export const handleInvoicePaymentFailure = async(event, res) => {
   const logger = Container.get('logger');
   try {
     // Retrieve necessary services and handlers from the container
-    const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-    const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
-    const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+    const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+    const AccountSubscriptionLogsModelHandler = Container.get('AccountSubscriptionLogsModelHandler');
+    const AccountsModelHandler = Container.get('AccountsModelHandler');
+
     const redisClient = Container.get('redisClient');
 
     // otehr services
@@ -83,7 +83,7 @@ export const handleInvoicePaymentFailure = async(event, res) => {
     const partnerId = event.partner_id;
 
     // Fetch user subscription details and Stripe subscription
-    const worksapceSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: webhookData.customer });
+    const worksapceSubscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: webhookData.customer });
 
     // If no subscription details found, ignore the webhook
     if (!worksapceSubscriptionDetails) {
@@ -92,17 +92,17 @@ export const handleInvoicePaymentFailure = async(event, res) => {
         data: { message: 'Webhook ignored - No subscription details found' },
       });
     }
-    // fetch worksapceId and subId form the subscription details
-    const workspaceId = worksapceSubscriptionDetails?.workspace_id;
+    // fetch accountId and subId form the subscription details
+    const accountId = worksapceSubscriptionDetails?.account_id;
     const subId = worksapceSubscriptionDetails?.subscription_id;
 
-    const [stripeSubscription, workspaceOwner, partnerPaymentDetails ] = await Promise.all([
+    const [stripeSubscription, accountDetails, partnerPaymentDetails ] = await Promise.all([
       StripeAPIServices.getSubscription(partnerId, subId),
-      WorkspaceModelHandler.fetchWorkspaceOwnerDetails(workspaceId),
+      AccountsModelHandler.getAccountByWhere({ id: accountId }),
       StripeAPIServices.fetchPartnerPaymentDetails(partnerId)
     ]);
 
-    const email = workspaceOwner.email;
+    const email = accountDetails.email;
 
     const planName = worksapceSubscriptionDetails?.sub_plan_name;
     const PLAN_TYPE = partnerPaymentDetails.PLAN_TYPE;
@@ -119,7 +119,7 @@ export const handleInvoicePaymentFailure = async(event, res) => {
       // Prepare subscription item data for logging and processing
       const subscriptionItems = stripeSubscription.items.data.map((item) => ({
         partner_id: partnerId,
-        workspace_id: workspaceId,
+        account_id: accountId,
         subscription_item_id: item.id,
         subscription_id: stripeSubscription.id,
         item_plan_name: item.plan.nickname,
@@ -131,7 +131,7 @@ export const handleInvoicePaymentFailure = async(event, res) => {
 
       // If payment has failed more than 3 times, proceed with canceling and deleting associated data
       if (webhookData.attempt_count > 3) {
-        await processUserSubscriptionFailure(partnerId, workspaceId, PLAN_TYPE, webhookData, subscriptionItems, stripeSubscription, planName, subscriptionEndDate, currentDate);
+        await processUserSubscriptionFailure(partnerId, accountId, PLAN_TYPE, webhookData, subscriptionItems, stripeSubscription, planName, subscriptionEndDate, currentDate);
 
         // fetch partner email details from the redis cache
         const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${partnerId}`);
@@ -167,7 +167,7 @@ export const handleInvoicePaymentFailure = async(event, res) => {
 
         // Log the failure and update subscription status
         await Promise.all([
-          WorkspaceSubscriptionModelHandler.updateSubscriptionDetails({
+          AccountSubscriptionModelHandler.updateSubscriptionDetails({
             payment_status: {
               status: 'FAILED',
               planName: planName,
@@ -175,12 +175,12 @@ export const handleInvoicePaymentFailure = async(event, res) => {
               attemptCount: webhookData.attempt_count
             },
             updated_at: currentDate
-          }, { partner_id: partnerId, workspace_id: workspaceId }),
+          }, { account_id: accountId }),
 
           // Log the failure details for future reference
-          WorkspaceSubscriptionLogsModelHandler.createSubscriptionLog({
+          AccountSubscriptionLogsModelHandler.createSubscriptionLog({
             partner_id: partnerId,
-            workspace_id: workspaceId,
+            account_id: accountId,
             created_at: currentDate,
             subscription_id: stripeSubscription.id,
             amount: (stripeSubscription.plan.amount / 100).toFixed(2),

@@ -1,0 +1,215 @@
+import { Container } from 'typedi';
+import { StatusCodes } from 'http-status-codes';
+import crypto from 'crypto'; // Ensure this is imported
+import {
+  USER_STATUS,
+  EMAIL_TEMPLATE_NAME,
+  PARTNER_EMAIL_SETTINGS_CACHE,
+  USER_ROLE
+} from '../../config/constants';
+
+export const inviteMembers = async(req, res) => {
+  const logger = Container.get('logger');
+  const UserModelHandler = Container.get('UserModelHandler');
+  const MailerInstance = Container.get('MailerInstance');
+  const StringHelper = Container.get('StringHelper');
+  const redisClient = Container.get('redisClient');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
+  try {
+    const { members } = req.body; // Guaranteed max 10
+    const user = req.user;
+
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
+    });
+
+    if (!hasAdminAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to invite members' });
+    }
+
+    // remove duplicate emails from the request
+    const uniqueMembersMap = {};
+    members.forEach(m => {
+      m.email = m.email.toLowerCase().trim(); // Normalize email
+      uniqueMembersMap[m.email] = m; // Last one wins if duplicates
+    });
+
+    const uniqueMembers = Object.values(uniqueMembersMap);
+
+    // 2. Pre-fetch Data
+    const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${user.tenant_id}`);
+    const parsedPartnerEmailDetails = JSON.parse(partnerEmailDetails || '{}');
+
+    const memberEmails = uniqueMembers.map(m => m.email);
+
+    // fetch existing users for the provided emails
+    const existingUsers = await UserModelHandler.getUsersByWhere({
+      email: memberEmails
+    });
+
+    const invited = [];
+    const failed = [];
+
+    const emailsToSend = [];
+
+    // 3. Process Members in Parallel (Safe for batch of 10 with unique emails)
+    await Promise.all(uniqueMembers.map(async(member) => {
+      try {
+        const { email, name, role } = member;
+
+        let targetUser = existingUsers.find(u => u.email === email);
+
+        // Create user if missing
+        if (targetUser && !targetUser.deleted_at) {
+          if (targetUser.account_id === user.account_id) {
+            if (targetUser.status === USER_STATUS.INVITED) {
+              failed.push({ email, reason: 'User already invited, please resend invitation if needed.' });
+            } else {
+              failed.push({ email, reason: 'User already exists, in your account!' });
+            }
+          } else {
+            failed.push({ email, reason: 'User already exists, cannot add team member of another account.' });
+          }
+          return;
+        } else {
+          if (targetUser && targetUser.deleted_at) {
+            targetUser = await UserModelHandler.updateUser({
+              name,
+              status: USER_STATUS.INVITED,
+              role: role || USER_ROLE.MEMBER,
+              account_id: user.account_id,
+              deleted_at: null
+            }, {
+              id: targetUser.id
+            });
+          } else {
+            targetUser = await UserModelHandler.createUser({
+              partner_id: user.tenant_id,
+              email,
+              name,
+              account_id: user.account_id,
+              password: crypto.randomUUID(), // Secure random string
+              status: USER_STATUS.INVITED,
+              role: role || USER_ROLE.MEMBER
+            });
+          }
+        }
+
+        const token = StringHelper.encodeToken({ partner_id: user.tenant_id, user_id: targetUser.id });
+
+        emailsToSend.push({
+          partnerId: user.tenant_id,
+          type: EMAIL_TEMPLATE_NAME.INVITE_NEW_TEAM_MEMBER,
+          to: targetUser.email,
+          data: {
+            inviter_name: user.name || user.email,
+            invite_expiry_days: 7,
+            token,
+            ...parsedPartnerEmailDetails
+          }
+        });
+
+        invited.push({ email, status: USER_STATUS.INVITED });
+
+      } catch (err) {
+        logger.error(`Individual invite failed for ${member.email}: ${err.message}`);
+        failed.push({ email: member.email, reason: 'Internal processing error' });
+      }
+    }));
+
+    if (emailsToSend.length > 0) {
+      await Promise.allSettled(emailsToSend.map(emailData => MailerInstance.sendMail(emailData)));
+    }
+
+    return res.status(StatusCodes.OK).send({
+      message: 'Invitation process completed',
+      data: { invited, failed }
+    });
+
+  } catch (err) {
+    logger.error(`Critical error in inviteWorkspaceMembers: ${err.message}`);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
+  }
+};
+
+export const resendInvitation = async(req, res) => {
+  const logger = Container.get('logger');
+  const UserModelHandler = Container.get('UserModelHandler');
+  const MailerInstance = Container.get('MailerInstance');
+  const redisClient = Container.get('redisClient');
+  const StringHelper = Container.get('StringHelper');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
+  try {
+    const userId = req.params.userId;
+    const user = req.user;
+
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
+    });
+
+    if (!hasAdminAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to invite members' });
+    }
+
+    // fetch the user
+    // fetch existing users for the provided emails
+    const existingUser = await UserModelHandler.getUserById(userId);
+
+    if (!existingUser || existingUser.account_id !== user.account_id) {
+      return res.status(StatusCodes.NOT_FOUND).send({ message: 'User not found in your account' });
+    }
+
+    // 2. Pre-fetch Data
+    const partnerEmailDetails = await redisClient.get(`${PARTNER_EMAIL_SETTINGS_CACHE}${user.tenant_id}`);
+    const parsedPartnerEmailDetails = JSON.parse(partnerEmailDetails || '{}');
+
+
+    // check if the resend is atleast 5 mins time before reinvite
+    const invitedAt = new Date(existingUser.created_at);
+    const now = new Date();
+
+    const diffInMs = now - invitedAt;
+    const diffInMinutes = diffInMs / (1000 * 60);
+
+    // check if resend is triggered within 5 mins
+    if (diffInMinutes < 5) {
+      return res.status(StatusCodes.BAD_REQUEST).send({
+        message: 'Resend invitation can only be triggered after 5 minutes',
+      });
+    }
+
+    const emailTemplateData = {
+      partnerId: user.tenant_id,
+      type: EMAIL_TEMPLATE_NAME.INVITE_NEW_TEAM_MEMBER,
+      to: existingUser.email,
+      data: {
+        inviter_name: user.name || user.email,
+        invite_expiry_days: 7,
+        token: StringHelper.encodeToken({ partner_id: user.tenant_id, user_id: existingUser.id }),
+        ...parsedPartnerEmailDetails
+      }
+    };
+
+    await Promise.all([
+      MailerInstance.sendMail(emailTemplateData),
+      UserModelHandler.updateUser({
+        status: USER_STATUS.INVITED,
+        created_at: new Date().toISOString()
+      }, { id: existingUser.id })
+    ]);
+
+    return res.status(StatusCodes.OK).send({
+      message: 'Invitation sent successfully'
+    });
+
+  } catch (err) {
+    logger.error(`Critical error in resendInvitation: ${err.message}`);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
+  }
+};

@@ -1,22 +1,17 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-import { WORKSPACE_USER_ROLE, WORKSPACE_USER_MAPPING_STATUS } from '../../config/constants';
+import { USER_STATUS } from '../../config/constants';
 
 export const deleteWorkspaceClient = async(req, res) => {
   const logger = Container.get('logger');
-  const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
+  const UserModelHandler = Container.get('UserModelHandler');
   const WorkspaceClientMappingModelHandler = Container.get('WorkspaceClientMappingModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
 
   try {
-    const { userId } = req.params;
+    const { id: workspaceId, userId } = req.params;
     const user = req.user;
-
-    const workspaceId = req.workspace?.id;
-
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Workspace ID is missing in request header' });
-    }
 
     // 1. Prevent Self-Deletion
     if (user.id === userId) {
@@ -25,50 +20,49 @@ export const deleteWorkspaceClient = async(req, res) => {
       });
     }
 
-    // 2. Permission Check: Only Admin or Super Admin can delete clients
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: user.id,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: req.user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to delete clients' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
     // 3. Fetch target user mapping
-    const existingMapping = await UserWorkspaceMappingModelHandler.getWorkspaceMembers({
-      workspace_id: workspaceId,
-      user_id: userId,
-      role: WORKSPACE_USER_ROLE.CLIENT, // Ensure we are only fetching client mappings
-      is_deleted: false
+    const existingUser = await UserModelHandler.getUserByWhere({
+      id: userId,
+      account_id: user.account_id,
+      is_client: true,
+      deleted_at: null
     });
 
-    if (!existingMapping || existingMapping.length === 0) {
+    if (!existingUser) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Client not found in this workspace' });
     }
 
-    const targetUserMapping = existingMapping[0];
-
     // 5. Perform the "Delete" action
-    await Promise.all([UserWorkspaceMappingModelHandler.updateWorkspaceMember({
-      status: WORKSPACE_USER_MAPPING_STATUS.DELETED, // Updated status
-      is_active: false,
-      is_deleted: true, // Marking as soft-deleted
-      deleted_at: new Date()
-    }, {
-      id: targetUserMapping.id
-    }),
-    // delete the workspace client mapping for this user
-    WorkspaceClientMappingModelHandler.deleteWorkspaceClientMapping({
-      workspace_id: workspaceId,
-      user_id: userId
-    })
+    await Promise.all([
+      UserModelHandler.updateUser({
+        status: USER_STATUS.DELETED, // Updated status
+        deleted_at: new Date().toISOString(),
+      }, {
+        id: userId,
+        account_id: user.account_id
+      }),
+
+      // delete the workspace client mapping for this user
+      WorkspaceClientMappingModelHandler.deleteWorkspaceClientMapping({
+        workspace_id: workspaceId,
+        user_id: userId
+      })
     ]);
 
-    // 6. Immediate Cache Invalidation
-    await WorkspaceRedisCacheHelper.removeWorkspaceAccess({
+    // Immediate Cache Invalidation
+    await AccountWorkspaceRedisCacheHelper.removeAccountUser({
       userId: userId,
-      workspaceId
+      accountId: user.account_id
     });
 
     return res.status(StatusCodes.OK).send({

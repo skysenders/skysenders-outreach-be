@@ -6,6 +6,12 @@ import { handleSenderFailureErrors,
   handleImapFailureErrors, resetMailboxDisconnectStatus } from '../../controller/internal/mailboxes/handleMailboxErrors';
 import { updateMailboxLastFetchUuid } from '../../controller/internal/mailboxes/updateMailboxLastFetchUuid';
 import { fetchMailboxesForSync } from '../../controller/internal/mailboxes/fetchMailboxesForSync';
+// google mailbox oauth
+import { handleGoogleOAuthCallback } from '../../controller/mailboxes/connect/connectGoogleMailbox';
+// microsoft mailbox oauth
+import { handleOutlookOAuthCallback } from '../../controller/mailboxes/connect/connectMicrosoftMailbox';
+// fetch mailbox internal
+import { listMailboxesInternal } from '../../controller/mailboxes/listMailboxes';
 
 export default async function internalRoutes(fastify) {
   // mailboxes
@@ -374,5 +380,148 @@ export default async function internalRoutes(fastify) {
       },
     },
     updateMailboxWarmupStatus
+  );
+  // route to handle google oauth callback
+  fastify.get(
+    '/mailboxes/connect/gmail/callback',
+    {
+      schema: {
+        tags: ['Internal'], // Group under "Internal" tag
+        summary: 'connect gmail account callback',
+        description: 'API endpoint to handle Google OAuth callback and connect Gmail mailbox',
+        operationId: 'handleGoogleOAuthCallback',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['code', 'state'],
+          properties: {
+            code: { type: 'string' },
+            state: { type: 'string' },
+          },
+        },
+        response: {
+          302: {
+            description: 'Redirect to frontend with success or error message after handling Google OAuth callback',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              mailbox_id: { type: 'number' },
+              email: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, handleGoogleOAuthCallback
+  );
+  // Route to handle outlook oauth callback
+  fastify.get(
+    '/mailboxes/connect/outlook/callback',
+    {
+      schema: {
+        tags: ['Mailboxes'], // Group under "Product" tag
+        summary: 'connect Outlook account callback',
+        description: 'API endpoint to handle Microsoft OAuth callback and connect Outlook mailbox',
+        operationId: 'handleOutlookOAuthCallback',
+        hide: true,
+        querystring: {
+          type: 'object',
+          required: ['code', 'state'],
+          properties: {
+            code: { type: 'string' },
+            state: { type: 'string' },
+          },
+        },
+        response: {
+          302: {
+            description: 'Redirect to frontend with success or error message after handling Microsoft OAuth callback',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              mailbox_id: { type: 'number' },
+              email: { type: 'string' },
+            },
+          },
+          400: {
+            description: 'Bad request',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+          500: {
+            description: 'Server error',
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    }, handleOutlookOAuthCallback
+  );
+  // list mailboxes with search and filters
+  fastify.get(
+    '/mailboxes/fetch-all',
+    {
+      schema: {
+        tags: ['Mailboxes'],
+        summary: 'List mailboxes for internal use',
+        description: 'Fetch all mailboxes for a workspace for internal use',
+        operationId: 'listMailboxesInternal',
+        hide: true,
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        querystring: {
+          type: 'object',
+          required: ['workspace_id'],
+          properties: {
+            workspace_id: { type: 'number' },
+            domain_id: { type: 'number' },
+            search_text: { type: 'string', maxLength: 255 },
+            mailbox_ids: { type: 'string' },
+          }
+        },
+        response: {
+          200: {
+            description: 'Mailboxes fetched successfully',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                email: { type: 'string' },
+                provider: { type: 'string' },
+              }
+            }
+          },
+          500: {
+            description: 'Failed to fetch mailboxes',
+            type: 'object',
+            properties: {
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    listMailboxesInternal
   );
 }

@@ -13,10 +13,10 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
 
   try {
     // Dependency Injection: Retrieve required services
-    const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-    const WorkspacePlanDetailsModelHandler = Container.get('WorkspacePlanDetailsModelHandler');
-    const WorkspaceSubscriptionLogsModelHandler = Container.get('WorkspaceSubscriptionLogsModelHandler');
-    const WorkspaceSubscriptionItemsModelHandler = Container.get('WorkspaceSubscriptionItemsModelHandler');
+    const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+    const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+    const AccountSubscriptionItemsModelHandler = Container.get('AccountSubscriptionItemsModelHandler');
+    const AccountSubscriptionLogsModelHandler = Container.get('AccountSubscriptionLogsModelHandler');
 
     const StripeAPIServices = Container.get('StripeAPIServices');
 
@@ -27,7 +27,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
     const partnerId = event.partner_id;
 
     // Fetch user subscription details and Stripe subscription
-    const userSubscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: webhookData.customer });
+    const userSubscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({ customer_id: webhookData.customer });
 
     // If no subscription details found, ignore the webhook
     if (!userSubscriptionDetails) {
@@ -37,7 +37,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
       });
     }
 
-    const workspaceId = userSubscriptionDetails?.workspace_id;
+    const accountId = userSubscriptionDetails?.account_id;
     const subId = userSubscriptionDetails?.subscription_id;
 
     const [ stripeSubscription, partnerPaymentDetails ] = await Promise.all([
@@ -66,7 +66,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
       // Map subscription items for bulk operations
       const subscriptionItems = stripeSubscription.items.data.map((item) => ({
         partner_id: partnerId,
-        workspace_id: workspaceId,
+        account_id: accountId,
         subscription_item_id: item.id,
         subscription_id: stripeSubscription.id,
         item_plan_name: item.plan.nickname,
@@ -117,7 +117,7 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
 
       // Log the subscription details
       const subscriptionLogData = {
-        workspace_id: workspaceId,
+        account_id: accountId,
         partner_id: partnerId,
         subscription_id: stripeSubscription.id,
         created_at: currentDate,
@@ -140,10 +140,10 @@ export const handleInvoicePaymentSucceeded = async(event, res) => {
 
       // Perform updates in parallel
       await Promise.all([
-        WorkspaceSubscriptionModelHandler.updateSubscription(subscriptionUpdateData, { partner_id: partnerId, workspace_id: workspaceId }),
-        WorkspacePlanDetailsModelHandler.updatePlanDetails(planUpdateData, { partner_id: partnerId, workspace_id: workspaceId }),
-        WorkspaceSubscriptionItemsModelHandler.deleteAndBulkAddSubscriptionItemDetails(subscriptionItems, { partner_id: partnerId, workspace_id: workspaceId }),
-        WorkspaceSubscriptionLogsModelHandler.createSubscriptionLog(subscriptionLogData),
+        AccountSubscriptionModelHandler.updateSubscription(subscriptionUpdateData, { account_id: accountId }),
+        AccountPlanDetailsModelHandler.updatePlanDetails(planUpdateData, { account_id: accountId }),
+        AccountSubscriptionItemsModelHandler.deleteAndBulkAddSubscriptionItemDetails(subscriptionItems, { account_id: accountId }),
+        AccountSubscriptionLogsModelHandler.createSubscriptionLog(subscriptionLogData),
       ]);
     }
 

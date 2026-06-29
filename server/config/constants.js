@@ -88,6 +88,10 @@ export const JWT_ALLOWED_URLS = {
   '/api/users/reset-password': true,
   '/api/users/verify-user': true,
   '/api/users/resend-verify-link': true,
+  // users api key stats
+  '/api/users/redis/api-stats-leader-board': true,
+  '/api/users/redis/api-limit-by-apikey': true,
+  '/api/users/redis/set-user-custom-rate-limit': true,
   // oauth login urls
   '/api/users/auth/google/signin': true,
   '/api/users/auth/google/callback': true,
@@ -102,28 +106,17 @@ export const JWT_ALLOWED_URLS = {
   '/api/partners/branding/public': true,
   '/api/partners/custom-scripts/public': true,
   // Rate limit ADMIN use
-  '/api/workspaces/details': true,
-  '/api/workspaces/details-by-domain': true,
-  '/api/workspaces/redis/api-stats-leader-board': true,
-  '/api/workspaces/redis/api-limit-by-apikey': true,
-  '/api/workspaces/redis/set-user-custom-rate-limit': true,
+  '/api/workspace/details': true,
+  '/api/workspace/details-by-domain': true,
 
   // stripe webhook
   '/api/stripe-webhook/process-webhook': true,
 
   // scalar api docs for whitelabel clients
   '/custom-whitelabel-api-docs': true,
-
-  // google oauth for mailboxes
-  '/api/mailboxes/connect/gmail/callback': true,
-  // mailboxes outlook oauth
-  '/api/mailboxes/connect/outlook/callback': true,
-  // fetch mailboxes for internal use
-  '/api/mailboxes/internal/fetch-all': true,
   // hasura events
   '/api/hasura/events': true,
 };
-
 
 export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
   '/api/users/login': true,
@@ -142,20 +135,23 @@ export const API_KEY_ACCESS_NOT_ALLOWED_URLS = {
   '/api/subscription/new-portal-session': true,
 
   // Rate limit ADMIN use
-  '/api/workspaces/redis/api-stats-leader-board': true,
-  '/api/workspaces/redis/api-limit-by-apikey': true,
-  '/api/workspaces/redis/set-user-custom-rate-limit': true,
+  '/api/users/redis/api-stats-leader-board': true,
+  '/api/users/redis/api-limit-by-apikey': true,
+  '/api/users/redis/set-user-custom-rate-limit': true,
   '/json-docs': true,
-
-  // mailboxes google oauth
-  '/api/mailboxes/google/oauth-callback': true,
-  // mailboxes outlook oauth
-  '/api/mailboxes/outlook/oauth-callback': true,
-  // fetch mailboxes for internal use
-  '/api/mailboxes/internal/fetch-all': true,
   // hasura events
   '/api/hasura/events': true,
 };
+
+// 1. Move static arrays to a Set for O(1) lookups outside the hook
+export const SKIPPED_PREFIXES = [
+  '/documentation',
+  '/docs',
+  '/api/internal',
+  '/api/queue-server',
+  '/api/warmup/internal',
+  '/api/stats/internal'
+];
 
 export const RESTRICTED_API_URLS = [
 ];
@@ -178,6 +174,14 @@ export const PARTNER_CUSTOM_SCRIPTS_STATUS = {
   INACTIVE: 'inactive',
 };
 
+export const USER_ROLE = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  INBOX_MANAGER: 'INBOX_MANAGER',
+  VIEWER: 'VIEWER',
+  ACCOUNT_MANAGER: 'ACCOUNT_MANAGER'
+};
 export const WORKSPACE_USER_ROLE = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   ADMIN: 'ADMIN',
@@ -227,7 +231,7 @@ export const RATE_LIMITER_CONFIG = {
   RESTRICTED_API_MAX_REQUESTS_PER_MINUTE: 10,
 };
 
-export const WORKSPACE_API_CACHE = 'workspace_api_cache:';
+export const ACCOUNT_API_CACHE = 'account_api_cache:';
 export const PARTNER_ORIGIN_CACHE = 'partner_origin_cache:';
 export const PARTNER_BRANDING_CACHE = 'partner_branding:';
 export const PARTNER_EMAIL_SETTINGS_CACHE = 'partner_email_settings:';
@@ -245,7 +249,7 @@ export const TRIM_ORIGIN_DOMAIN = (origin = '') => {
   return host;
 };
 
-export const WORKSPACE_CUSTOM_RATE_LIMIT_PREFIX = 'workspace_custom_rate_limit:';
+export const ACCOUNT_CUSTOM_RATE_LIMIT_PREFIX = 'account_custom_rate_limit:';
 
 export const GOOGLE_CONFIG = {
   REDIS_CACHE_KEY: 'partner_google_mailbox_config',
@@ -346,7 +350,7 @@ export const MAILBOX_DEFAULT_SEND_LIMTS = {
 
 export const TRACKING_DOMAIN_CNAME_TARGET = '';
 
-export const WORKSPACE_ROLE_PERMISSIONS = {
+export const ACCOUNT_ROLE_PERMISSIONS = {
   SUPER_ADMIN: {
     isSuperAdmin: true,
     canWrite: true,
@@ -381,11 +385,11 @@ export const WORKSPACE_ROLE_PERMISSIONS = {
     canManageInbox: false,
     canManageWorkspace: false,
   },
-  CLIENT: {
+  ACCOUNT_MANAGER: {
     isSuperAdmin: false,
     canWrite: false,
     canManageInbox: true,
-    canManageWorkspace: false,
+    canManageWorkspace: true,
   },
 };
 
@@ -422,19 +426,3 @@ export const DEFAULT_CONTACT_ATTRIBUTES = [
 ];
 
 export const VALID_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export const EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS = {
-  // ------ workspaces ------
-  '/api/workspaces/fetch-all': true, // get all workspace
-  '/api/workspaces/': true, // create workspace
-  '/api/workspaces/join': true, // join workspace
-  '/api/workspaces/join-with-slug': true, // join workspace with slug
-  // ------ users ------
-  '/api/users/me': true, // get user details
-  '/api/users/logout': true, // logout user
-  '/api/users/update-user-details': true, // update user details
-  '/api/users/update-password': true, // update user password
-  '/api/users/get-profile-signed-url': true, // get profile signed url
-  '/api/users/update-trigger-product-tour': true, // update trigger product tour
-
-};

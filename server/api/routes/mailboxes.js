@@ -1,4 +1,4 @@
-import { listMailboxes, listMailboxesInternal } from '../../controller/mailboxes/listMailboxes';
+import { listMailboxes } from '../../controller/mailboxes/listMailboxes';
 import { fetchMailboxById } from '../../controller/mailboxes/fetchMailboxById';
 import { updateMailboxById, bulkUpdateMailboxes } from '../../controller/mailboxes/updateMailboxes';
 import { deleteMailboxById, bulkDeleteMailboxes } from '../../controller/mailboxes/deleteMailboxes';
@@ -6,9 +6,9 @@ import { fetchMailboxOverallStatus } from '../../controller/mailboxes/fetchMailb
 // connect and save smtp mailbox
 import { verifyAndCreateSMTPMailbox } from '../../controller/mailboxes/connect/connectSMTPMailbox';
 // google mailbox oauth
-import { getGoogleAuthorizeUrl, handleGoogleOAuthCallback } from '../../controller/mailboxes/connect/connectGoogleMailbox';
+import { getGoogleAuthorizeUrl } from '../../controller/mailboxes/connect/connectGoogleMailbox';
 // microsoft mailbox oauth
-import { getOutlookAuthorizeUrl, handleOutlookOAuthCallback } from '../../controller/mailboxes/connect/connectMicrosoftMailbox';
+import { getOutlookAuthorizeUrl } from '../../controller/mailboxes/connect/connectMicrosoftMailbox';
 
 // cosntants
 import { MAILBOX_TYPE, MAILBOX_STATUS } from '../../config/constants';
@@ -91,57 +91,6 @@ export default async function mailboxRoutes(fastify) {
       }
     },
     listMailboxes
-  );
-  // list mailboxes with search and filters
-  fastify.get(
-    '/internal/fetch-all',
-    {
-      schema: {
-        tags: ['Mailboxes'],
-        summary: 'List mailboxes for internal use',
-        description: 'Fetch all mailboxes for a workspace for internal use',
-        operationId: 'listMailboxesInternal',
-        hide: true,
-        headers: {
-          type: 'object',
-          properties: {
-            apikey: { type: 'string' }
-          }
-        },
-        querystring: {
-          type: 'object',
-          required: ['workspace_id'],
-          properties: {
-            workspace_id: { type: 'number' },
-            domain_id: { type: 'number' },
-            search_text: { type: 'string', maxLength: 255 },
-            mailbox_ids: { type: 'string' },
-          }
-        },
-        response: {
-          200: {
-            description: 'Mailboxes fetched successfully',
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'number' },
-                email: { type: 'string' },
-                provider: { type: 'string' },
-              }
-            }
-          },
-          500: {
-            description: 'Failed to fetch mailboxes',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    listMailboxesInternal
   );
   // fetch mailbox by id
   fastify.get(
@@ -331,53 +280,6 @@ export default async function mailboxRoutes(fastify) {
     }, getGoogleAuthorizeUrl
   );
 
-  // route to handle google oauth callback
-  fastify.get(
-    '/connect/gmail/callback',
-    {
-      schema: {
-        tags: ['Mailboxes'], // Group under "Product" tag
-        summary: 'connect gmail account callback',
-        description: 'API endpoint to handle Google OAuth callback and connect Gmail mailbox',
-        operationId: 'handleGoogleOAuthCallback',
-        hide: true,
-        querystring: {
-          type: 'object',
-          required: ['code', 'state'],
-          properties: {
-            code: { type: 'string' },
-            state: { type: 'string' },
-          },
-        },
-        response: {
-          302: {
-            description: 'Redirect to frontend with success or error message after handling Google OAuth callback',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-              mailbox_id: { type: 'number' },
-              email: { type: 'string' },
-            },
-          },
-          400: {
-            description: 'Bad request',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          500: {
-            description: 'Server error',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    }, handleGoogleOAuthCallback
-  );
-
   // Route to connect outlook account with redirect to authorized url
   fastify.get(
     '/connect/outlook',
@@ -414,53 +316,6 @@ export default async function mailboxRoutes(fastify) {
         },
       },
     }, getOutlookAuthorizeUrl
-  );
-
-  // Route to handle outlook oauth callback
-  fastify.get(
-    '/connect/outlook/callback',
-    {
-      schema: {
-        tags: ['Mailboxes'], // Group under "Product" tag
-        summary: 'connect Outlook account callback',
-        description: 'API endpoint to handle Microsoft OAuth callback and connect Outlook mailbox',
-        operationId: 'handleOutlookOAuthCallback',
-        hide: true,
-        querystring: {
-          type: 'object',
-          required: ['code', 'state'],
-          properties: {
-            code: { type: 'string' },
-            state: { type: 'string' },
-          },
-        },
-        response: {
-          302: {
-            description: 'Redirect to frontend with success or error message after handling Microsoft OAuth callback',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-              mailbox_id: { type: 'number' },
-              email: { type: 'string' },
-            },
-          },
-          400: {
-            description: 'Bad request',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          500: {
-            description: 'Server error',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    }, handleOutlookOAuthCallback
   );
 
   // Route to update mailbox by id

@@ -12,7 +12,7 @@ export const getUserProfileSignedUrl = async(req, res) => {
 
   try {
     logger.info(`Generating signed URL for user profile for user ID: ${userId}`);
-    const signedUrl = await AwsService.getUserProfileLogoUrl(partnerId, userId, filename, contentType);
+    const signedUrl = await AwsService.getUserProfileLogoUrl(partnerId, req.user.account_id, userId, filename, contentType);
 
     const filenameUrl = new URL(signedUrl);
     logger.info(`Generated signed URL for user profile for user ID: ${userId}`);

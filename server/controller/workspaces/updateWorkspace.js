@@ -5,15 +5,10 @@ export const updateWorkspace = async(req, res) => {
   const logger = Container.get('logger');
 
   const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   try {
-    const workspaceId = req.workspace?.id;
-
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Workspace ID is missing in request header'
-      });
-    }
+    const workspaceId = req.params.id;
 
     const {
       name,
@@ -26,23 +21,13 @@ export const updateWorkspace = async(req, res) => {
 
     const user = req.user;
 
-    // check workspace exists under partner
-    const workspace = await WorkspaceModelHandler.getWorkspaceByWhere({
-      partner_id: user.tenant_id,
-      id: workspaceId,
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
     });
 
-    if (!workspace) {
-      return res.status(StatusCodes.NOT_FOUND).send({
-        message: 'Workspace not found'
-      });
-    }
-
-    // check if the user is the owner of the workspace
-    if (workspace.owner_user_id !== user.id) {
-      return res.status(StatusCodes.FORBIDDEN).send({
-        message: 'You are not authorized to update this workspace'
-      });
+    if (!hasAdminAccess) {
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update workspace' });
     }
 
     // update payload
@@ -58,13 +43,17 @@ export const updateWorkspace = async(req, res) => {
     // make sure it is the owner of the workspace who is updating the workspace
     const updatedWorkspace = await WorkspaceModelHandler.updateWorkspace(
       updatePayload,
-      { partner_id: user.tenant_id, id: workspaceId }
+      { account_id: user.account_id, id: workspaceId }
     );
+
+    if (!updatedWorkspace) {
+      return res.status(StatusCodes.NOT_FOUND).send({ message: 'Workspace not found' });
+    }
 
     return res.status(StatusCodes.OK).send(updatedWorkspace);
 
   } catch (err) {
     logger.error(`Error updating workspace: ${err.message}`);
-    throw err;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: `Error while updating workspace - ${err.message}` });
   }
 };

@@ -2,8 +2,31 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
 import { IS_PRODUCTION, PARTNER_EMAIL_SETTINGS_CACHE, EMAIL_TEMPLATE_NAME,
-  USER_STATUS, AUTH_PROVIDER } from '../../config/constants';
-import { joinWorkspace } from '../workspaces/joinWorkspaceWithToken';
+  USER_STATUS, AUTH_PROVIDER, USER_ROLE } from '../../config/constants';
+import { joinAccountByToken } from './joinAccountWithToken';
+
+const createAccountPlanDetails = async(accountId, partnerId) => {
+  const AccountPlanDetailsModelHandler = Container.get('AccountPlanDetailsModelHandler');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const logger = Container.get('logger');
+  try {
+    logger.info(`Creating account plan details for account ${accountId} and partner ${partnerId}`);
+    await Promise.all([
+      AccountPlanDetailsModelHandler.createPlanDetails({
+        partner_id: partnerId,
+        account_id: accountId,
+      }),
+      AccountSubscriptionModelHandler.createSubscription({
+        partner_id: partnerId,
+        account_id: accountId,
+      })
+    ]);
+    logger.info(`Account plan details created successfully for account ${accountId} and partner ${partnerId}`);
+  } catch (error) {
+    logger.error(`Error creating account plan details for account ${accountId}: ${error.message}`);
+    throw error;
+  }
+};
 
 /**
  * Functionality used to create a new user to the database
@@ -16,13 +39,18 @@ export const addNewUser = async(req, res) => {
     const EmailVerificationHelper = Container.get('EmailVerificationHelper');
     const userData = req.body;
 
+    const AccountsModelHandler = Container.get('AccountsModelHandler');
     const UserModelHandler = Container.get('UserModelHandler');
     const UserSessionModelHandler = Container.get('UserSessionModelHandler');
+
     const MailerInstance = Container.get('MailerInstance');
     const TokenHandler = Container.get('TokenHandler');
     const OtpGeneratorHelper = Container.get('OtpGeneratorHelper');
+
     const redisClient = Container.get('redisClient');
     const PartnerCacheHelper = Container.get('PartnerCacheHelper');
+    const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
+
     const StringHelper = Container.get('StringHelper');
     const logger = Container.get('logger');
 
@@ -52,27 +80,27 @@ export const addNewUser = async(req, res) => {
       })
     ]);
 
-    if (existUser && existUser.id && !existUser.is_first_invite) {
+    if (existUser && existUser.id && existUser.status !== USER_STATUS.INVITED) {
       return res.status(StatusCodes.FORBIDDEN).send({ message: 'User exist in the system already. Please login to continue' });
     }
     let newUser;
-    if (existUser && existUser.id && existUser.is_first_invite) {
+    if (existUser && existUser.id && existUser.status === USER_STATUS.INVITED) {
+
       // reset the status and flag
       userData.status = USER_STATUS.ACTIVE;
-      userData.is_first_invite = false;
       newUser = await UserModelHandler.updateUser(userData, {
         id: existUser.id
       });
+
       if (req.body.token) {
-        const joinWorkspaceResult = await joinWorkspace(req.body.token, newUser.id);
-        if (joinWorkspaceResult[1]) {
-          logger.error(`Error joining workspace for user ${newUser.id}: ${joinWorkspaceResult[1].message}`);
+        const joinAccountResult = await joinAccountByToken(req.body.token, newUser.id);
+        if (joinAccountResult[1]) {
+          logger.error(`Error joining account for user ${newUser.id}: ${joinAccountResult[1].message}`);
           newUser.invited_accepted = false;
-          newUser.invited_workspace_join_error = joinWorkspaceResult[1].message;
+          newUser.invited_account_join_error = joinAccountResult[1].message;
         } else {
           newUser.invited_accepted = true;
-          newUser.invited_workspace_id = joinWorkspaceResult[0].workspace_id;
-          newUser.invited_workspace_role = joinWorkspaceResult[0].role;
+          newUser.invited_user_role = joinAccountResult[0].role;
         }
       }
 
@@ -106,7 +134,27 @@ export const addNewUser = async(req, res) => {
       userData.signup_otp = otp;
       userData.partner_id = partnerId;
 
+      // first create a account for the user
+      const account = await AccountsModelHandler.createAccount({
+        partner_id: partnerId,
+        name: userData.name,
+        email: userData.email
+      });
+
+      if (!(account && account.id)) {
+        throw new Error('Something went wrong in database while creating account');
+      }
+
+      userData.account_id = account.id;
+
       newUser = await UserModelHandler.createUser(userData);
+      createAccountPlanDetails(account.id, partnerId);
+      // update user as SUPER_ADMIN in the redis
+      await AccountWorkspaceRedisCacheHelper.setAccountUserRole({
+        accountId: account.id,
+        userId: newUser.id,
+        role: USER_ROLE.SUPER_ADMIN
+      });
 
       if (!(newUser && newUser.id)) {
         throw new Error('Something went wrong in database');
@@ -140,7 +188,9 @@ export const addNewUser = async(req, res) => {
 
 export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, authProvider, providerUserId }, token, userAgent, ip) => {
   const UserModelHandler = Container.get('UserModelHandler');
+  const AccountsModelHandler = Container.get('AccountsModelHandler');
   const UserSessionModelHandler = Container.get('UserSessionModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
   const TokenHandler = Container.get('TokenHandler');
   const logger = Container.get('logger');
 
@@ -165,6 +215,7 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
       }, {
         id: existUser.id
       });
+
       logger.info(`Updated auth provider for user ${existUser.id} to ${authProvider}`);
     } else if (!existUser || !existUser.id) {
       // check if it is a client user
@@ -183,15 +234,30 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
         }
         existUser = existClientUser;
       } else {
+        // create a account for the user
+        const account = await AccountsModelHandler.createAccount({
+          partner_id: partnerId,
+          name: name,
+          email: email
+        });
+
         // else create a new user, create session and return the token
         existUser = await UserModelHandler.createUser({
           partner_id: partnerId,
           email,
           name,
           status: USER_STATUS.ACTIVE,
+          account_id: account.id,
           profile_url: profileUrl,
           auth_provider: authProvider,
           provider_user_id: providerUserId,
+        });
+        createAccountPlanDetails(account.id, partnerId);
+        // update user as SUPER_ADMIN in the redis
+        await AccountWorkspaceRedisCacheHelper.setAccountUserRole({
+          accountId: account.id,
+          userId: existUser.id,
+          role: USER_ROLE.SUPER_ADMIN
         });
         logger.info(`New user created with id ${existUser.id} through social login/signup`);
       }
@@ -214,27 +280,26 @@ export const socialLoginOrSignup = async({ partnerId, email, name, profileUrl, a
 
     // if invite token exists, then join the user to the workspace
     if (token) {
-      const joinWorkspaceResult = await joinWorkspace(token, existUser.id);
-      if (joinWorkspaceResult[1]) {
-        logger.error(`Error joining workspace for user ${existUser.id}: ${joinWorkspaceResult[1].message}`);
+      const joinAccountResult = await joinAccountByToken(token, existUser.id);
+      if (joinAccountResult[1]) {
+        logger.error(`Error joining account for user ${existUser.id}: ${joinAccountResult[1].message}`);
         existUser.invited_accepted = false;
-        existUser.invited_workspace_join_error = joinWorkspaceResult[1].message;
+        existUser.invited_account_join_error = joinAccountResult[1].message;
       } else {
         existUser.invited_accepted = true;
-        existUser.invited_workspace_id = joinWorkspaceResult[0].workspace_id;
-        existUser.invited_workspace_role = joinWorkspaceResult[0].role;
+        existUser.invited_user_role = joinAccountResult[0].role;
       }
     }
 
     // return user and token to the UI
     return { jwtToken: tokenData, user: {
+      id: existUser.id,
       name: existUser.name,
       email: existUser.email,
       is_client: existUser.is_client,
       invited_accepted: existUser.invited_accepted,
-      invited_workspace_id: existUser.invited_workspace_id,
-      invited_workspace_role: existUser.invited_workspace_role,
-      invited_workspace_join_error: existUser.invited_workspace_join_error
+      invited_user_role: existUser.invited_user_role,
+      invited_account_join_error: existUser.invited_account_join_error
     } };
   } catch (error) {
     logger.error(`Error in social login/signup: ${error.message}`);

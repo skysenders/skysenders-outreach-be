@@ -5,7 +5,7 @@ import { Container } from 'typedi';
 
 export const getPlanDetailsByWhere = async(where) => {
   try {
-    return await db.workspace_plan_details.findOne({
+    return await db.account_plan_details.findOne({
       where,
       raw: true
     });
@@ -18,7 +18,7 @@ export const getPlanDetailsByWhere = async(where) => {
 
 export const getPlansByWhere = async(where) => {
   try {
-    return await db.workspace_plan_details.findAll({
+    return await db.account_plan_details.findAll({
       where,
       raw: true
     });
@@ -31,7 +31,7 @@ export const getPlansByWhere = async(where) => {
 
 export const createPlanDetails = async(data) => {
   try {
-    return await db.workspace_plan_details.create(data);
+    return await db.account_plan_details.create(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error creating plan details: ${err.message}`);
@@ -41,7 +41,7 @@ export const createPlanDetails = async(data) => {
 
 export const updatePlanDetails = async(data, where) => {
   try {
-    const [_, updated] = await db.workspace_plan_details.update(data, {
+    const [_, updated] = await db.account_plan_details.update(data, {
       where,
       returning: true,
       raw: true
@@ -56,7 +56,7 @@ export const updatePlanDetails = async(data, where) => {
 
 export const deletePlanDetails = async(where) => {
   try {
-    return await db.workspace_plan_details.destroy({ where });
+    return await db.account_plan_details.destroy({ where });
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error deleting plan details: ${err.message}`);
@@ -64,23 +64,26 @@ export const deletePlanDetails = async(where) => {
   }
 };
 
-export const fetchWorkspaceContactMailboxCount = async(workspaceId) => {
+export const fetchUserContactMailboxCount = async(userId) => {
   const logger = Container.get('logger');
   try {
-    logger.info(`Fetching workspace mailboxes and contacts live count for workspace ID: ${workspaceId}`);
+    logger.info(`Fetching user mailboxes and contacts live count for user ID: ${userId}`);
+    // NOTE: If your mailboxes and contacts tables are also moving to user-level,
+    // update the columns below from user_id instead of workspace_id.
+
     // const query = `SELECT
-    //       (SELECT COUNT(*) FROM mailboxes WHERE workspace_id = :workspaceId AND is_deleted = false') AS mailboxes_count,
-    //       (SELECT COUNT(*) FROM contacts WHERE workspace_id = :workspaceId AND is_deleted = false' ) AS contacts_count`;
+    //       (SELECT COUNT(*) FROM mailboxes WHERE user_id = :userId AND is_deleted = false) AS mailboxes_count,
+    //       (SELECT COUNT(*) FROM contacts WHERE user_id = :userId) AS contacts_count`;
 
     // return (await db.sequelize.query(query, {
-    //   replacements: { workspaceId },
+    //   replacements: { userId },
     //   type: QueryTypes.SELECT,
     // }))[0] || {};
 
     return { mailboxes_count: 0, contacts_count: 0 };
 
   } catch (err) {
-    logger.error(`Error while fetching workspace mailboxes and contacts live count ${err.message}`);
+    logger.error(`Error while fetching user mailboxes and contacts live count ${err.message}`);
     throw err;
   }
 };

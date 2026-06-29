@@ -203,7 +203,7 @@ export const updateUserInfo = async(req, res) => {
         .send({ message: 'User not found' });
     }
 
-    const updateUserData = { name: userData.name, profile_url: userData.profile_url, timezone: userData.timezone };
+    const updateUserData = { name: userData.name, profile_url: userData.profile_url };
 
     await UserModelHandler.updateUser(updateUserData, { id: user.id });
 

@@ -4,7 +4,7 @@ import { Container } from 'typedi';
 
 export const getSubscriptionItemsByWhere = async(where) => {
   try {
-    return await db.workspace_subscription_items.findAll({
+    return await db.account_subscription_items.findAll({
       where,
       raw: true
     });
@@ -17,7 +17,7 @@ export const getSubscriptionItemsByWhere = async(where) => {
 
 export const getSubscriptionItemByWhere = async(where) => {
   try {
-    return await db.workspace_subscription_items.findOne({
+    return await db.account_subscription_items.findOne({
       where,
       raw: true
     });
@@ -30,7 +30,7 @@ export const getSubscriptionItemByWhere = async(where) => {
 
 export const createSubscriptionItem = async(data) => {
   try {
-    return await db.workspace_subscription_items.create(data);
+    return await db.account_subscription_items.create(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error creating subscription item: ${err.message}`);
@@ -40,7 +40,7 @@ export const createSubscriptionItem = async(data) => {
 
 export const bulkCreateSubscriptionItems = async(data) => {
   try {
-    return await db.workspace_subscription_items.bulkCreate(data);
+    return await db.account_subscription_items.bulkCreate(data);
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error bulk creating subscription items: ${err.message}`);
@@ -51,8 +51,8 @@ export const bulkCreateSubscriptionItems = async(data) => {
 export const deleteAndBulkAddSubscriptionItemDetails = async(itemsData, where) => {
   const transaction = await db.sequelize.transaction();
   try {
-    await db.workspace_subscription_items.destroy({ where, transaction });
-    const createdItems = await db.workspace_subscription_items.bulkCreate(itemsData, { transaction });
+    await db.account_subscription_items.destroy({ where, transaction });
+    const createdItems = await db.account_subscription_items.bulkCreate(itemsData, { transaction });
     await transaction.commit();
     return createdItems;
   } catch (err) {
@@ -65,7 +65,7 @@ export const deleteAndBulkAddSubscriptionItemDetails = async(itemsData, where) =
 
 export const updateSubscriptionItem = async(data, where) => {
   try {
-    const [_, updated] = await db.workspace_subscription_items.update(data, {
+    const [_, updated] = await db.account_subscription_items.update(data, {
       where,
       returning: true,
       raw: true
@@ -80,7 +80,7 @@ export const updateSubscriptionItem = async(data, where) => {
 
 export const deleteSubscriptionItem = async(where) => {
   try {
-    return await db.workspace_subscription_items.destroy({ where });
+    return await db.account_subscription_items.destroy({ where });
   } catch (err) {
     const logger = Container.get('logger');
     logger.error(`Error deleting subscription item: ${err.message}`);

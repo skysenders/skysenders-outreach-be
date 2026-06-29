@@ -1,76 +1,59 @@
 import { Container } from 'typedi';
 import { StatusCodes } from 'http-status-codes';
-
-export const getWorkspaceMembers = async(req, res) => {
-  const logger = Container.get('logger');
-  const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
-
-  try {
-    const user = req.user;
-    const workspaceId = req.workspace?.id;
-
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Workspace ID is missing in request header'
-      });
-    }
-
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: user.id,
-      workspaceId
-    });
-
-    if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({
-        message: 'Insufficient permissions to view workspace members'
-      });
-    }
-
-    const members = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspaceId, req.query, true);
-
-    // 3. Return Data
-    return res.status(StatusCodes.OK).send(members);
-
-  } catch (err) {
-    logger.error(`Critical error in getWorkspaceMembers (Raw Query): ${err.message}`);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({ message: 'Internal Server Error' });
-  }
-};
-
+import { db } from '../../db';
 
 export const getWorkspaceClients = async(req, res) => {
   const logger = Container.get('logger');
-  const UserWorkspaceMappingModelHandler = Container.get('UserWorkspaceMappingModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   try {
     const user = req.user;
-    const workspaceId = req.workspace?.id;
+    const workspaceId = req.params?.id;
 
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Workspace ID is missing in request header'
-      });
-    }
-
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: user.id,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: req.user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({
-        message: 'Insufficient permissions to view workspace members'
-      });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to view workspace clients' });
     }
-    // make sure role filter is set to CLIENT to fetch only clients of the workspace
-    req.query.role = ['CLIENT'];
 
-    const members = await UserWorkspaceMappingModelHandler.getWorkspaceMemberDetails(workspaceId, req.query);
+    let searchQuery = `SELECT u.id, u.name, u.email, u.role, u.status, u.created_at
+       FROM users u
+       INNER JOIN workspace_client_mappings wcm ON u.id = wcm.user_id
+       WHERE wcm.workspace_id = :workspaceId AND u.account_id = :accountId AND u.is_client = true AND u.deleted_at IS NULL
+      `;
+    const replacements = {
+      workspaceId,
+      accountId: user.account_id
+    };
+
+    if (req.query.search_text) {
+      searchQuery += ' AND (u.name ILIKE :searchText OR u.email ILIKE :searchText)';
+      replacements.searchText = `%${req.query.search_text}%`;
+    }
+
+    if (req.query.role) {
+      searchQuery += ' AND u.role IN (:roles)';
+      replacements.roles = req.query.role;
+    }
+
+    const members = await db.sequelize.query(searchQuery, {
+      replacements,
+      type: db.sequelize.QueryTypes.SELECT
+    });
 
     // 3. Return Data
-    return res.status(StatusCodes.OK).send(members);
+    return res.status(StatusCodes.OK).send(members.map(m => ({
+      user_id: m.id,
+      name: m.name,
+      email: m.email,
+      role: m.role,
+      status: m.status,
+      created_at: m.created_at
+    })));
 
   } catch (err) {
     logger.error(`Critical error in getWorkspaceMembers (Raw Query): ${err.message}`);

@@ -12,36 +12,30 @@ export const newPartnerPortalSession = async(req, res) => {
   // Date
   const LOGGER = Container.get('logger');
   // Subscription Handler
-  const WorkspaceSubscriptionModelHandler = Container.get('WorkspaceSubscriptionModelHandler');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
+  const AccountSubscriptionModelHandler = Container.get('AccountSubscriptionModelHandler');
+  const AccountWorkspaceRedisCacheHelper = Container.get('AccountWorkspaceRedisCacheHelper');
 
   // Stripe API services
   const StripeAPIServices = Container.get('StripeAPIServices');
 
   // token varaible
-  const partnerId = req.user.tenant_id;
-  const workspaceId = req.workspace?.id;
-  const userId = req.user.id;
+  const user = req.user;
+  const partnerId = user.tenant_id;
 
   try {
-    // if workspaceId is null or empty throw invalid request error
-    if (!workspaceId) {
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Invalid workspace id' });
-    }
-
-    // check
-    const hasAdminAccess = await WorkspaceRedisCacheHelper.hasAdminRoleAccess({
-      userId: userId,
-      workspaceId
+    // validate permissions for the user to invite members
+    const hasAdminAccess = await AccountWorkspaceRedisCacheHelper.hasAdminRoleAccess({
+      accountId: user.account_id,
+      userId: user.id
     });
 
     if (!hasAdminAccess) {
-      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions' });
+      return res.status(StatusCodes.FORBIDDEN).send({ message: 'Insufficient permissions to update team members role' });
     }
 
-    // Fetch subsription details by partnerId
-    const subscriptionDetails = await WorkspaceSubscriptionModelHandler.getSubscriptionByWhere({
-      workspace_id: workspaceId,
+    // Fetch subsription details by accountId
+    const subscriptionDetails = await AccountSubscriptionModelHandler.getSubscriptionByWhere({
+      account_id: user.account_id,
     });
 
     /** If found, sent the redirect url by calling stripe createCustomerPortalSession Method

@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     uuid: DataTypes.UUID,
     partner_id: DataTypes.INTEGER,
-    owner_user_id: DataTypes.INTEGER,
+    account_id: DataTypes.INTEGER,
 
     name: DataTypes.STRING,
     slug: DataTypes.STRING,
@@ -22,14 +22,10 @@ module.exports = (sequelize, DataTypes) => {
     workspace_settings: DataTypes.JSONB,
 
     custom_domain_url: DataTypes.TEXT,
-    api_key: DataTypes.TEXT,
-    api_key_created_at: DataTypes.DATE,
-    custom_api_rate_limit: DataTypes.INTEGER,
 
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE,
-    deleted_at: DataTypes.DATE,
-    is_deleted: DataTypes.BOOLEAN
+    deleted_at: DataTypes.DATE
   }, {
     tableName: 'workspaces',
     timestamps: false

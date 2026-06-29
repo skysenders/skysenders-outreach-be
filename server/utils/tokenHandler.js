@@ -34,6 +34,7 @@ export const generate = async(user) => {
         name: user.name,
         uuid: user.uuid,
         tenant_id: user.partner_id,
+        account_id: user.account_id,
         is_client: user.is_client || false
       },
       type: 'user',
@@ -41,6 +42,7 @@ export const generate = async(user) => {
         'x-hasura-allowed-roles': [ HASURA_ROLES.USERS ],
         'x-hasura-default-role': HASURA_ROLES.USERS,
         'x-hasura-tenant-id': `${user.partner_id || 0}`,
+        'x-hasura-account-id': `${user.account_id || 0}`,
         'x-hasura-user-id': `${user.id || 0}`,
         'x-hasura-user-uuid': `${user.uuid || 0}`,
         'x-hasura-user-name': `${user.name || 0}`,

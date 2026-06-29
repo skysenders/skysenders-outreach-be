@@ -12,13 +12,13 @@ export const handlePaymentIntentSucceeded = async(event, res) => {
 
     const metadata = webhookData.metadata || {};
 
-    const { workspaceId } = metadata;
+    const { accountId } = metadata;
 
-    // If no workspaceId found, ignore the webhook
-    if (!partnerId || !workspaceId) {
+    // If no accountId found, ignore the webhook
+    if (!partnerId || !accountId) {
       return res.status(StatusCodes.OK).send({
         ok: false,
-        data: { message: 'Webhook ignored - workspaceId not found' },
+        data: { message: 'Webhook ignored - accountId not found' },
       });
     }
 

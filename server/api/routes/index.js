@@ -144,27 +144,27 @@ export const registerRoutes = async(fastifyApp) => {
   // register auth
   fastifyApp.register(partners, { prefix: '/api/partners' });
   fastifyApp.register(users, { prefix: '/api/users' });
-  fastifyApp.register(workspaces, { prefix: '/api/workspaces' });
+  fastifyApp.register(workspaces, { prefix: '/api/workspace' });
   fastifyApp.register(subscription, { prefix: '/api/subscription' });
   fastifyApp.register(stripeWebhook, { prefix: '/api/stripe-webhook' });
-  fastifyApp.register(domains, { prefix: '/api/domains' });
-  fastifyApp.register(mailboxes, { prefix: '/api/mailboxes' });
-  fastifyApp.register(contacts, { prefix: '/api/contacts' });
-  fastifyApp.register(lists, { prefix: '/api/lists' });
-  fastifyApp.register(globalSuppressions, { prefix: '/api/global-suppressions' });
-  fastifyApp.register(sendingSchedules, { prefix: '/api/sending-schedules' });
+  fastifyApp.register(domains, { prefix: '/api/workspace/:workspace_id/domains' });
+  fastifyApp.register(mailboxes, { prefix: '/api/workspace/:workspace_id/mailboxes' });
+  fastifyApp.register(contacts, { prefix: '/api/workspace/:workspace_id/contacts' });
+  fastifyApp.register(lists, { prefix: '/api/workspace/:workspace_id/lists' });
+  fastifyApp.register(globalSuppressions, { prefix: '/api/workspace/:workspace_id/global-suppressions' });
+  fastifyApp.register(sendingSchedules, { prefix: '/api/workspace/:workspace_id/sending-schedules' });
   fastifyApp.register(internal, { prefix: '/api/internal' });
   fastifyApp.register(hasura, { prefix: '/api/hasura' });
 
   // register public v1 api routes
   fastifyApp.register(users, { prefix: '/api/v1/users' });
-  fastifyApp.register(workspaces, { prefix: '/api/v1/workspaces' });
-  fastifyApp.register(domains, { prefix: '/api/v1/domains' });
-  fastifyApp.register(mailboxes, { prefix: '/api/v1/mailboxes' });
-  fastifyApp.register(contacts, { prefix: '/api/v1/contacts' });
-  fastifyApp.register(lists, { prefix: '/api/v1/lists' });
-  fastifyApp.register(globalSuppressions, { prefix: '/api/v1/global-suppressions' });
-  fastifyApp.register(sendingSchedules, { prefix: '/api/v1/sending-schedules' });
+  fastifyApp.register(workspaces, { prefix: '/api/v1/workspace' });
+  fastifyApp.register(domains, { prefix: '/api/v1/workspace/:workspace_id/domains' });
+  fastifyApp.register(mailboxes, { prefix: '/api/v1/workspace/:workspace_id/mailboxes' });
+  fastifyApp.register(contacts, { prefix: '/api/v1/workspace/:workspace_id/contacts' });
+  fastifyApp.register(lists, { prefix: '/api/v1/workspace/:workspace_id/lists' });
+  fastifyApp.register(globalSuppressions, { prefix: '/api/v1/workspace/:workspace_id/global-suppressions' });
+  fastifyApp.register(sendingSchedules, { prefix: '/api/v1/workspace/:workspace_id/sending-schedules' });
   const fetchOpenApiSpec = async(url) => {
     try {
       const { data } = await axios.get(url);

@@ -186,11 +186,11 @@ export const getWorkspaceBrandingLogoUrl = async(partnerId, workspaceId, fileNam
 };
 
 // Function to create a signed URL for an S3 object
-export const getUserProfileLogoUrl = async(partnerId, userId, fileName, contentType = 'application/zip', expiresIn = 3600) => {
+export const getUserProfileLogoUrl = async(partnerId, accountId, userId, fileName, contentType = 'application/zip', expiresIn = 3600) => {
   // Set up the PutObjectCommand with ContentType and ACL
   const command = new PutObjectCommand({
     Bucket: 'outreach-partners-asserts',
-    Key: `user-profile/${partnerId}/user/${userId}/logo/${Math.random().toString(36).substring(2, 8)}/${fileName}`,
+    Key: `user-profile/${partnerId}/account/${accountId}/user/${userId}/logo/${Math.random().toString(36).substring(2, 8)}/${fileName}`,
     ContentType: contentType, // Set content type as application/zip
     ACL: 'public-read', // Make the object publicly accessible
   });

@@ -2,6 +2,7 @@
 import { QueryTypes } from 'sequelize';
 import { db } from '../index';
 import { Container } from 'typedi';
+import { USER_ROLE } from '../../config/constants';
 
 export const getWorkspacesByWhere = async(where) => {
   try {
@@ -96,17 +97,17 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
         jsonb_build_object(
           'id', pd.id,
           'plan_name', pd.plan_name,
-          'has_api_access': pd.has_api_access,
+          'has_api_access', pd.has_api_access,
           'trial_start_date', pd.trial_start_date,
           'trial_end_date', pd.trial_end_date,
           'plan_end_date', pd.plan_end_date
         ) AS plan_details
 
       FROM workspaces w
+      LEFT JOIN account_plan_details pd
+        ON pd.account_id = w.account_id
       LEFT JOIN users u
-        ON u.id = w.owner_user_id
-      LEFT JOIN workspace_plan_details pd
-        ON pd.workspace_id = w.id
+        ON u.account_id = w.account_id and u.role = '${USER_ROLE.SUPER_ADMIN}'
       WHERE w.api_key = '${apiKey}';`,
     { type: QueryTypes.SELECT });
 
@@ -118,27 +119,26 @@ export const findWorkspaceWithPlanDetailsByAPIKey = async(apiKey) => {
   }
 };
 
-export const fetchWorkspaceOwnerDetails = async(workspaceId) => {
+export const fetchWorkspaceAccountDetails = async(workspaceId) => {
   try {
-    const workspaceOwnerData = await db.sequelize.query(`
+    const workspaceAccountData = await db.sequelize.query(`
       SELECT
-        u.id,
-        u.email,
-        u.name,
-        u.uuid,
-        u.partner_id as tenant_id,
+        a.id,
+        a.email,
+        a.name,
+        a.partner_id as tenant_id,
         w.id as workspace_id,
         w.name as workspace_name
       FROM workspaces w
-      LEFT JOIN users u
-        ON u.id = w.owner_user_id
+      LEFT JOIN accounts a
+        ON a.id = w.account_id
       WHERE w.id = ${workspaceId};`,
     { type: QueryTypes.SELECT });
 
-    return workspaceOwnerData[0];
+    return workspaceAccountData[0];
   } catch (err) {
     const logger = Container.get('logger');
-    logger.error(`Error while fetching workspace owner details ${err.message}`);
+    logger.error(`Error while fetching workspace account details ${err.message}`);
     throw err;
   }
 };

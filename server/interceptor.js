@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { Container } from 'typedi';
-import { WORKSPACE_API_CACHE, EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS } from './config/constants';
+import { ACCOUNT_API_CACHE } from './config/constants';
 import { isEmpty, get } from 'lodash';
 
 const updateUserTokenDataBasedonRoute = (req, tokenData) => {
@@ -11,11 +11,13 @@ const updateUserTokenDataBasedonRoute = (req, tokenData) => {
   }
 
   req.user = tokenData.user;
+  if (req.url && (req.url.startsWith('/api/v1/workspace/') || req.url.startsWith('/api/workspace/'))) {
   // set workspace id
-  req.workspace = {
-    id: req.headers['x-workspace-id'],
-    tenant_id: tokenData.user.tenant_id // tenant_id is used as partner_id in the token
-  };
+    req.workspace = {
+      id: req.params?.workspace_id,
+      tenant_id: tokenData.user.tenant_id // tenant_id is used as partner_id in the token
+    };
+  }
   return;
 };
 
@@ -28,9 +30,8 @@ const updateUserTokenDataBasedonRoute = (req, tokenData) => {
  */
 export const verifyToken = async(req, res) => {
   const logger = Container.get('logger');
-  const WorkspaceModelHandler = Container.get('WorkspaceModelHandler');
+  const AccountsModelHandler = Container.get('AccountsModelHandler');
   const redisClient = Container.get('redisClient');
-  const WorkspaceRedisCacheHelper = Container.get('WorkspaceRedisCacheHelper');
   try {
     // check if the API path starts with /api/v1/
     if (req.url && req.url.startsWith('/api/v1')) {
@@ -42,18 +43,18 @@ export const verifyToken = async(req, res) => {
       }
 
       // Check if user info exist in redis
-      let workspace = await redisClient.get(`${WORKSPACE_API_CACHE}${apiKey}`);
+      let workspace = await redisClient.get(`${ACCOUNT_API_CACHE}${apiKey}`);
 
       if (!workspace) {
         // verify api key is valid or not
-        workspace = await WorkspaceModelHandler.findWorkspaceWithPlanDetailsByAPIKey(apiKey);
+        workspace = await AccountsModelHandler.findAccountWithPlanDetailsByAPIKey(apiKey);
 
         if (isEmpty(workspace)) {
           return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid API Key'});
         }
         // Set user data into redis
-        redisClient.set(`${WORKSPACE_API_CACHE}${apiKey}`, JSON.stringify(workspace));
-        redisClient.expire(`${WORKSPACE_API_CACHE}${apiKey}`, 24 * 60 * 60);
+        redisClient.set(`${ACCOUNT_API_CACHE}${apiKey}`, JSON.stringify(workspace));
+        redisClient.expire(`${ACCOUNT_API_CACHE}${apiKey}`, 24 * 60 * 60);
       } else {
         workspace = JSON.parse(workspace);
       }
@@ -94,20 +95,6 @@ export const verifyToken = async(req, res) => {
         const tokenData = await req.jwtVerify();
         if (!tokenData) {
           return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Invalid token'});
-        }
-        // cross check whether user has acess to workspace or not
-        if (tokenData.type !== 'partner' && tokenData.user.id && !EXCLUDE_WORKSPACE_HARD_CHECK_API_URLS[req.url]) {
-          if (req.headers['x-workspace-id']) {
-            const hasAccess = await WorkspaceRedisCacheHelper.hasWorkspaceAccess({
-              userId: tokenData.user.id,
-              workspaceId: req.headers['x-workspace-id']
-            });
-            if (!hasAccess) {
-              return res.status(StatusCodes.UNAUTHORIZED).send({message: 'Unauthorized: No access to workspace'});
-            }
-          } else {
-            return res.status(StatusCodes.BAD_REQUEST).send({message: 'Workspace ID is required in header x-workspace-id'});
-          }
         }
         // Set user data into request object
         updateUserTokenDataBasedonRoute(req, tokenData);

@@ -8,20 +8,10 @@ import { getAllWorkspaces } from '../../controller/workspaces/getAllWorkspaces';
 import { deleteWorkspace } from '../../controller/workspaces/deleteWorkspace';
 
 // team members
-import { inviteWorkspaceMembers, resendInvitation } from '../../controller/workspaces/inviteWorkspaceMembers';
 import { inviteWorkspaceClients } from '../../controller/workspaces/inviteWorkspaceClients';
-import { joinWorkspaceWithToken, joinWorkspaceWithSlug } from '../../controller/workspaces/joinWorkspaceWithToken';
-import { updateWorkspaceMember } from '../../controller/workspaces/updateWorkspaceMember';
 import { updateWorkspaceClient } from '../../controller/workspaces/updateWorkspaceClient';
-import { getWorkspaceMembers, getWorkspaceClients } from '../../controller/workspaces/getWorkspaceMembers';
-import { leaveWorkspace } from '../../controller/workspaces/leaveWorkspace';
-import { deleteWorkspaceMember } from '../../controller/workspaces/deleteWorkspaceMember';
+import { getWorkspaceClients } from '../../controller/workspaces/getWorkspaceMembers';
 import { deleteWorkspaceClient } from '../../controller/workspaces/deleteWorkspaceClient';
-
-// api key routes
-import { getWorkspaceApiKey } from '../../controller/workspaces/getWorkspaceApiKey';
-import { generateNewAPIKey } from '../../controller/workspaces/generateNewAPIKey';
-import { fetchAPIConsumedCountByAPIKey, fetchAPIRateLimitStatLeaderBoard, setWorkspaceApiCustomLimitToRedis } from '../../controller/workspaces/rateLimitAPIFetch';
 
 export default async function workspaceRoutes(fastify) {
 
@@ -34,7 +24,12 @@ export default async function workspaceRoutes(fastify) {
         summary: 'Create workspace',
         description: 'Create a new workspace',
         operationId: 'createWorkspace',
-        hide: true,
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         body: {
           type: 'object',
           required: ['name', 'slug'],
@@ -79,7 +74,7 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to get signed URL for uploading workspace logo
   fastify.post(
-    '/get-logo-signed-url',
+    '/:id/get-logo-signed-url',
     {
       schema: {
         tags: ['Workspaces'],
@@ -87,12 +82,12 @@ export default async function workspaceRoutes(fastify) {
         description: 'Returns a pre-signed S3 URL for uploading workspace logo image',
         operationId: 'getSignedUrlForWorkspaceLogo',
         hide: true,
-        headers: {
+        params: {
           type: 'object',
+          required: ['id'],
           properties: {
-            authorization: { type: 'string', description: 'Bearer token for authentication' }
-          },
-          required: [],
+            id: { type: 'integer', description: 'Workspace ID' }
+          }
         },
         body: {
           type: 'object',
@@ -134,13 +129,26 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to get workspace details by id
   fastify.get(
-    '/',
+    '/:id',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Get workspace details by ID',
         description: 'Returns workspace details for the given workspace ID',
         operationId: 'getWorkspaceById',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'number', description: 'Workspace ID' },
+          },
+        },
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         response: {
           200: {
             description: 'Workspace details retrieved successfully',
@@ -179,7 +187,7 @@ export default async function workspaceRoutes(fastify) {
     getWorkspaceById
   );
 
-  // Route to get workspace details by id
+  // Route to get workspace details by slug
   fastify.get(
     '/details',
     {
@@ -189,7 +197,7 @@ export default async function workspaceRoutes(fastify) {
         description: 'Returns workspace details for the given workspace slug',
         operationId: 'getWorkspaceBySlug',
         hide: true,
-        queryparam: {
+        querystring: {
           type: 'object',
           required: ['slug'],
           properties: {
@@ -241,7 +249,7 @@ export default async function workspaceRoutes(fastify) {
         description: 'Returns workspace details for the given custom domain url',
         operationId: 'getWorkspaceByCustomDomainUrl',
         hide: true,
-        queryparam: {
+        querystring: {
           type: 'object',
           required: ['custom_domain_url'],
           properties: {
@@ -295,9 +303,8 @@ export default async function workspaceRoutes(fastify) {
         headers: {
           type: 'object',
           properties: {
-            authorization: { type: 'string', description: 'Bearer token for authentication' }
-          },
-          required: [],
+            apikey: { type: 'string' }
+          }
         },
         response: {
           200: {
@@ -313,12 +320,8 @@ export default async function workspaceRoutes(fastify) {
                 logo_bg_color: { type: 'string' },
                 theme_color: { type: 'string' },
                 role: { type: 'string' },
-                permission: { type: 'object', additionalProperties: true },
                 status: { type: 'string' },
-                is_active: { type: 'boolean' },
-                invited_by: { type: 'integer' },
-                invited_at: { type: 'string' },
-                joined_at: { type: 'string', format: 'date-time' }
+                created_at: { type: 'string', format: 'date-time' }
               }
             }
           },
@@ -337,13 +340,20 @@ export default async function workspaceRoutes(fastify) {
 
   // update workspace details
   fastify.put(
-    '/',
+    '/:id',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Update workspace details',
         description: 'Update workspace details like name, logo, timezone, team size etc.',
         operationId: 'updateWorkspace',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' }
+          },
+        },
         body: {
           type: 'object',
           properties: {
@@ -393,7 +403,7 @@ export default async function workspaceRoutes(fastify) {
 
   // update workspace goals
   fastify.put(
-    '/goals',
+    '/:id/goals',
     {
       schema: {
         tags: ['Workspaces'],
@@ -401,6 +411,13 @@ export default async function workspaceRoutes(fastify) {
         description: 'Update workspace goals',
         operationId: 'updateWorkspaceGoals',
         hide: true,
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' }
+          },
+        },
         body: {
           type: 'object',
           properties: {
@@ -443,13 +460,26 @@ export default async function workspaceRoutes(fastify) {
 
   // Route to delete workspace
   fastify.delete(
-    '/',
+    '/:id',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Delete workspace',
         description: 'Delete a workspace and all its associated data',
         operationId: 'deleteWorkspace',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' }
+          },
+        },
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         response: {
           200: {
             type: 'object',
@@ -475,149 +505,27 @@ export default async function workspaceRoutes(fastify) {
     deleteWorkspace
   );
 
-  // invite team members to workspace
-  fastify.post('/invite-members',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Invite team members to workspace',
-        description: 'Invite team members to join the workspace by sending them an email invitation',
-        operationId: 'inviteWorkspaceMembers',
-        body: {
-          type: 'object',
-          properties: {
-            members: {
-              type: 'array',
-              minItems: 1,
-              maxItems: 10,
-              items: {
-                type: 'object',
-                properties: {
-                  email: { type: 'string' },
-                  name: { type: 'string' },
-                  role: {
-                    type: 'string',
-                    enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
-                  },
-                  re_invite: { type: 'boolean', description: 'Enable this to re-invite users with a "left" status' }
-                },
-                required: ['email', 'name', 'role']
-              }
-            }
-          },
-          required: ['members']
-        },
-        response: {
-          200: {
-            description: 'Workspace invitations processed successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-              data: {
-                type: 'object',
-                properties: {
-                  invited: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        email: { type: 'string' },
-                        status: { type: 'string' }
-                      }
-                    }
-                  },
-                  failed: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        email: { type: 'string' },
-                        reason: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          401: {
-            description: 'Unauthorized access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          422: {
-            description: 'Validation failed',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    inviteWorkspaceMembers
-  );
-
-  // resend invitation to workspace team members
-  fastify.post('/members/:userId/resend-invitation',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'resend invitation to workspace team members',
-        description: 'Resend email invitation to the wrokspace exisiting team member',
-        operationId: 'resendInvitationForTeamMember',
-        params: {
-          type: 'object',
-          properties: {
-            userId: { type: 'string' }
-          },
-          required: ['userId']
-        },
-        response: {
-          200: {
-            description: 'Invitation sent successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            }
-          },
-          401: {
-            description: 'Unauthorized access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    resendInvitation
-  );
-
   // Route to invite clients to workspace
-  fastify.post('/invite-clients',
+  fastify.post('/:id/invite-clients',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Invite clients to workspace',
         description: 'Invite clients to join the workspace by sending them an email invitation',
         operationId: 'inviteWorkspaceClients',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' }
+          },
+        },
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         body: {
           type: 'object',
           properties: {
@@ -631,9 +539,12 @@ export default async function workspaceRoutes(fastify) {
                   email: { type: 'string' },
                   name: { type: 'string' },
                   password: { type: 'string', minLength: 6 },
-                  permission: { type: 'object', additionalProperties: true }
+                  role: {
+                    type: 'string',
+                    enum: ['ACCOUNT_MANAGER', 'INBOX_MANAGER', 'VIEWER']
+                  },
                 },
-                required: ['email', 'name', 'password']
+                required: ['email', 'name', 'password', 'role']
               }
             }
           },
@@ -699,160 +610,37 @@ export default async function workspaceRoutes(fastify) {
     inviteWorkspaceClients
   );
 
-  // Route to invite members to workspace
-  fastify.post('/join',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Join workspace with token',
-        description: 'API endpoint to join workspace using invitation token',
-        operationId: 'joinWorkspaceWithToken',
-        hide: true,
-        body: {
-          type: 'object',
-          properties: {
-            token: { type: 'string' }
-          },
-          required: ['token']
-        },
-        response: {
-          200: {
-            description: 'Joined workspace successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          400: {
-            description: 'Invalid or expired token',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    }, joinWorkspaceWithToken
-  );
-
-  // Route to join workspace with slug and user should be authenticated
-  fastify.post('/join-with-slug',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Join workspace with slug',
-        description: 'API endpoint to join workspace using workspace slug. User must be authenticated to use this endpoint',
-        operationId: 'joinWorkspaceWithSlug',
-        hide: true,
-        body: {
-          type: 'object',
-          properties: {
-            slug: { type: 'string' }
-          },
-          required: ['slug']
-        },
-        response: {
-          200: {
-            description: 'Joined workspace successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          400: {
-            description: 'Invalid request',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    }, joinWorkspaceWithSlug
-  );
-
-  // Update team member role or deactivate member
-  fastify.patch('/members/:userId',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Update team member role or deactivate member',
-        description: 'API endpoint to update a team member\'s role or deactivate their account',
-        operationId: 'updateWorkspaceMember',
-        params: {
-          type: 'object',
-          properties: {
-            userId: { type: 'string' }
-          },
-          required: ['userId']
-        },
-        body: {
-          type: 'object',
-          properties: {
-            role: {
-              type: 'string',
-              enum: ['ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER']
-            },
-            is_active: { type: 'boolean' }
-          }
-        },
-        response: {
-          200: {
-            description: 'Member updated successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Member not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    updateWorkspaceMember
-  );
-
   // Route for updating client detials or deactivate from workspace
-  fastify.patch('/clients/:userId',
+  fastify.patch('/:id/clients/:userId',
     {
       schema: {
         tags: ['Workspaces'],
         summary: 'Update client details or deactivate client from workspace',
         description: 'API endpoint to update a client\'s details or deactivate their account in the workspace',
         operationId: 'updateWorkspaceClient',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         params: {
           type: 'object',
           properties: {
+            id: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['userId']
+          required: ['id', 'userId']
         },
         body: {
           type: 'object',
           properties: {
             name: { type: 'string' },
             password: { type: 'string', minLength: 6 },
-            permission: { type: 'object', additionalProperties: true },
-            is_active: { type: 'boolean' }
+            role: {
+              type: 'string',
+              enum: ['ACCOUNT_MANAGER', 'INBOX_MANAGER', 'VIEWER']
+            }
           }
         },
         response: {
@@ -876,64 +664,8 @@ export default async function workspaceRoutes(fastify) {
     updateWorkspaceClient
   );
 
-  // Route to list members of a workspace
-  fastify.get('/members',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'List workspace members',
-        description: 'API endpoint to list all members of a workspace',
-        operationId: 'getWorkspaceMembers',
-        querystring: {
-          type: 'object',
-          properties: {
-            search_text: { type: 'string', description: 'Text to search members by name or email' },
-            role: { type: 'array', items: { type: 'string', enum: ['SUPER_ADMIN', 'ADMIN', 'MEMBER', 'INBOX_MANAGER', 'VIEWER'] }, description: 'Filter members by role' },
-            status: { type: 'array', items: { type: 'string', enum: ['invitation_pending', 'invitation_accepted', 'invitation_expired', 'deleted', 'left'] }, description: 'Filter members by status' },
-          },
-        },
-        response: {
-          200: {
-            description: 'Workspace members retrieved successfully',
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                user_id: { type: 'string' },
-                name: { type: 'string' },
-                email: { type: 'string' },
-                role: { type: 'string' },
-                permission: { type: 'object', additionalProperties: true },
-                status: { type: 'string' },
-                invited_by: { type: 'integer' },
-                invited_at: { type: 'string' },
-                is_active: { type: 'boolean' },
-                joined_at: { type: 'string', format: 'date-time' }
-              }
-            }
-          },
-          403: {
-            description: 'Forbidden access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    getWorkspaceMembers
-  );
-
   // Route to list clients of a workspace
-  fastify.get('/clients',
+  fastify.get('/:id/clients',
     {
       schema: {
         tags: ['Workspaces'],
@@ -946,6 +678,12 @@ export default async function workspaceRoutes(fastify) {
             search_text: { type: 'string', description: 'Text to search clients by name or email' },
           },
         },
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
         response: {
           200: {
             description: 'Workspace clients retrieved successfully',
@@ -957,12 +695,8 @@ export default async function workspaceRoutes(fastify) {
                 name: { type: 'string' },
                 email: { type: 'string' },
                 role: { type: 'string' },
-                permission: { type: 'object', additionalProperties: true },
                 status: { type: 'string' },
-                invited_by: { type: 'integer' },
-                invited_at: { type: 'string' },
-                is_active: { type: 'boolean' },
-                joined_at: { type: 'string', format: 'date-time' }
+                created_at: { type: 'string', format: 'date-time' }
               }
             }
           },
@@ -986,51 +720,8 @@ export default async function workspaceRoutes(fastify) {
     getWorkspaceClients
   );
 
-  // delete a team member from workspace
-  fastify.delete('/members/:userId',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Delete a team member from workspace',
-        description: 'API endpoint to delete a team member from workspace',
-        operationId: 'deleteWorkspaceMember',
-        params: {
-          type: 'object',
-          properties: {
-            userId: { type: 'string' }
-          },
-          required: ['userId']
-        },
-        response: {
-          200: {
-            description: 'Member deleted successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          403: {
-            description: 'Forbidden access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Member not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    deleteWorkspaceMember
-  );
-
-  // Route to dleete a client from workspace
-  fastify.delete('/clients/:userId',
+  // Route to delete a client from workspace
+  fastify.delete('/:id/clients/:userId',
     {
       schema: {
         tags: ['Workspaces'],
@@ -1040,9 +731,16 @@ export default async function workspaceRoutes(fastify) {
         params: {
           type: 'object',
           properties: {
+            id: { type: 'string' },
             userId: { type: 'string' }
           },
-          required: ['userId']
+          required: ['id', 'userId']
+        },
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
         },
         response: {
           200: {
@@ -1071,165 +769,4 @@ export default async function workspaceRoutes(fastify) {
     },
     deleteWorkspaceClient
   );
-
-  // leave workspace
-  fastify.post('/leave',
-    {
-      schema: {
-        tags: ['Workspaces'],
-        summary: 'Leave workspace',
-        description: 'API endpoint for a member to leave the workspace',
-        operationId: 'leaveWorkspace',
-        response: {
-          200: {
-            description: 'Successfully left the workspace',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          403: {
-            description: 'Forbidden access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          },
-          404: {
-            description: 'Member not found in this workspace',
-            type: 'object',
-            properties: {
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
-    },
-    leaveWorkspace
-  );
-
-  // get workspace api key
-  fastify.get(
-    '/api-key',
-    {
-      schema: {
-        tags: ['Workspaces'], // Group under "Auth" tag
-        summary: 'Get workspace API key',
-        description: 'API endpoint to fetch workspace API key',
-        operationId: 'getWorkspaceApiKey',
-        hide: true,
-        response: {
-          200: {
-            description: 'API key retrieved successfully',
-            type: 'object',
-            properties: {
-              api_key: { type: 'string' },
-              api_key_created_at: { type: 'string', format: 'date-time' },
-              custom_api_rate_limit: { type: 'number' }
-            },
-          },
-          404: {
-            description: 'Workspace not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    getWorkspaceApiKey
-  );
-
-  // generate api key route
-  fastify.post(
-    '/generate-api-key',
-    {
-      schema: {
-        tags: ['Workspaces'], // Group under "Workspaces" tag
-        summary: 'Generate API key',
-        description: 'API endpoint to create new API key',
-        operationId: 'generateApiKey',
-        hide: true,
-        response: {
-          200: {
-            description: 'API key generated successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-              api_key: { type: 'string' }
-            },
-          },
-          406: {
-            description: 'Invalid request! Workspace not found!',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    generateNewAPIKey
-  );
-
-  // find api rate limit leader board
-  fastify.get('/redis/api-stats-leader-board', {
-    schema: {
-      hide: true,
-    }
-  }, fetchAPIRateLimitStatLeaderBoard);
-
-  // find api rate limit by api key
-  fastify.get('/redis/api-limit-by-apikey', {
-    schema: {
-      hide: true,
-    }
-  }, fetchAPIConsumedCountByAPIKey);
-
-  // update workspace api rate limit
-  fastify.post('/redis/set-custom-rate-limit',
-    {
-      schema: {
-        querystring: {
-          type: 'object',
-          properties: {
-            auth: { type: 'string' }
-          },
-          required: ['auth']
-        },
-        hide: true,
-        body: {
-          type: 'object',
-          properties: {
-            user_id: { type: 'string' },
-            custom_api_rate_limit: { type: 'number' }
-          },
-          required: ['user_id', 'custom_api_rate_limit']
-        },
-        response: {
-          200: {
-            description: 'User custom api rate limit updated successfully',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          401: {
-            description: 'Unauthorized access',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-          404: {
-            description: 'User not found',
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
-          },
-        },
-      },
-    }, setWorkspaceApiCustomLimitToRedis);
 }
