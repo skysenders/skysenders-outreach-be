@@ -338,7 +338,7 @@ export default async function domainsRoutes(fastify) {
     }, bulkCheckDomainDns
   );
   // route to bulk delete domains by IDs
-  fastify.put(
+  fastify.delete(
     '/bulk-delete',
     {
       schema: {

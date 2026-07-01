@@ -6,7 +6,7 @@ export const createGlobalSuppression = async(data) => {
   try {
     return await db.global_suppressions.create({
       ...data,
-      email: data.email?.trim()?.toLowerCase()
+      value: data.value?.trim()?.toLowerCase()
     });
   } catch (err) {
     Container.get('logger').error(
@@ -59,7 +59,7 @@ export const getAllGlobalSuppressionsByWhere = async(
     }
 
     if (search) {
-      finalWhere.email = {
+      finalWhere.value = {
         [Op.iRegexp]: search
       };
     }
@@ -93,7 +93,7 @@ export const countGlobalSuppressionsByWhere = async(
     }
 
     if (search) {
-      finalWhere.email = {
+      finalWhere.value = {
         [Op.iRegexp]: search
       };
     }
@@ -119,7 +119,7 @@ export const isEmailSuppressed = async(workspaceId, email) => {
     const emailBlocked = await db.global_suppressions.findOne({
       where: {
         workspace_id: workspaceId,
-        email: normalized
+        value: normalized
       },
       attributes: ['id'],
       raw: true
@@ -131,7 +131,7 @@ export const isEmailSuppressed = async(workspaceId, email) => {
     const domainBlocked = await db.global_suppressions.findOne({
       where: {
         workspace_id: workspaceId,
-        email: {
+        value: {
           [Op.iLike]: `%@${domain}`
         },
         suppression_type: {

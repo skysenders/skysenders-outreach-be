@@ -184,7 +184,7 @@ export default async function suppressionRoutes(fastify) {
     bulkImportGlobalSuppressions
   );
 
-  fastify.post(
+  fastify.delete(
     '/bulk-delete',
     {
       schema: {
@@ -202,12 +202,6 @@ export default async function suppressionRoutes(fastify) {
           type: 'object',
           required: ['suppression_type'],
           properties: {
-            values: {
-              type: 'array',
-              items: { type: 'string' },
-              minItems: 1,
-              maxItems: 10000
-            },
             search_text: {
               type: 'string',
               description: 'Optional text to search within values for deletion'

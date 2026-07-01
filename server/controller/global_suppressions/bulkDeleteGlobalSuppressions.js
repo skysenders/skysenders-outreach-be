@@ -13,42 +13,14 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
 
   try {
     let {
-      values = [],
       suppression_type: suppressionType,
       search_text: searchText
     } = req.body;
-
-    if ((!Array.isArray(values) || values.length === 0) && !searchText) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Values or search text are required'
-      });
-    }
-
-    // throw error if both values and searchText are provided to avoid ambiguity
-    if (Array.isArray(values) && values.length > 0 && searchText) {
-      return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Provide either values or search text, not both'
-      });
-    }
 
     // 1. Build where clause
     const whereClause = {
       workspace_id: workspaceId,
     };
-
-    // Normalize + dedupe
-    if (values.length > 0) {
-      const normalizedValues = [
-        ...new Set(
-          values
-            .map(v => v?.trim()?.toLowerCase())
-            .filter(Boolean)
-        )
-      ];
-      whereClause.value = {
-        [Op.in]: normalizedValues
-      };
-    }
 
     if (suppressionType) {
       whereClause.suppression_type = suppressionType;
