@@ -64,7 +64,7 @@ export default async function suppressionRoutes(fastify) {
                   type: 'object',
                   properties: {
                     id: { type: 'number' },
-                    email: { type: 'string' },
+                    value: { type: 'string' },
                     suppression_type: { type: 'string' },
                     reason: { type: ['string', 'null'] },
                     sequence_id: { type: ['number', 'null'] },
@@ -90,7 +90,7 @@ export default async function suppressionRoutes(fastify) {
       schema: {
         tags: ['Global Suppressions'],
         summary: 'Create global suppression',
-        description: 'Add an email to global suppression list',
+        description: 'Add an email/value to global suppression list',
         operationId: 'createGlobalSuppression',
         headers: {
           type: 'object',
@@ -100,9 +100,9 @@ export default async function suppressionRoutes(fastify) {
         },
         body: {
           type: 'object',
-          required: ['email', 'suppression_type'],
+          required: ['value', 'suppression_type'],
           properties: {
-            email: { type: 'string', format: 'email' },
+            value: { type: 'string' },
             suppression_type: {
               type: 'string',
               enum: [
@@ -122,7 +122,7 @@ export default async function suppressionRoutes(fastify) {
             type: 'object',
             properties: {
               id: { type: 'number' },
-              email: { type: 'string' },
+              value: { type: 'string' },
               suppression_type: { type: 'string' },
               created_at: { type: 'string' }
             }
@@ -148,11 +148,11 @@ export default async function suppressionRoutes(fastify) {
         },
         body: {
           type: 'object',
-          required: ['emails', 'suppression_type'],
+          required: ['values', 'suppression_type'],
           properties: {
-            emails: {
+            values: {
               type: 'array',
-              items: { type: 'string', format: 'email' },
+              items: { type: 'string' },
               minItems: 1
             },
             suppression_type: {
@@ -202,15 +202,15 @@ export default async function suppressionRoutes(fastify) {
           type: 'object',
           required: ['suppression_type'],
           properties: {
-            emails: {
+            values: {
               type: 'array',
-              items: { type: 'string', format: 'email' },
+              items: { type: 'string' },
               minItems: 1,
               maxItems: 10000
             },
             search_text: {
               type: 'string',
-              description: 'Optional text to search within emails for deletion'
+              description: 'Optional text to search within values for deletion'
             },
             suppression_type: {
               type: 'string',

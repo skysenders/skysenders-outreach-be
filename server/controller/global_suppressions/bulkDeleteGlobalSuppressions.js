@@ -13,21 +13,21 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
 
   try {
     let {
-      emails = [],
+      values = [],
       suppression_type: suppressionType,
       search_text: searchText
     } = req.body;
 
-    if ((!Array.isArray(emails) || emails.length === 0) && !searchText) {
+    if ((!Array.isArray(values) || values.length === 0) && !searchText) {
       return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Emails or search text are required'
+        message: 'Values or search text are required'
       });
     }
 
-    // throw error if both emails and searchText are provided to avoid ambiguity
-    if (Array.isArray(emails) && emails.length > 0 && searchText) {
+    // throw error if both values and searchText are provided to avoid ambiguity
+    if (Array.isArray(values) && values.length > 0 && searchText) {
       return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Provide either emails or search text, not both'
+        message: 'Provide either values or search text, not both'
       });
     }
 
@@ -37,16 +37,16 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
     };
 
     // Normalize + dedupe
-    if (emails.length > 0) {
-      const normalizedEmails = [
+    if (values.length > 0) {
+      const normalizedValues = [
         ...new Set(
-          emails
-            .map(e => e?.trim()?.toLowerCase())
+          values
+            .map(v => v?.trim()?.toLowerCase())
             .filter(Boolean)
         )
       ];
-      whereClause.email = {
-        [Op.in]: normalizedEmails
+      whereClause.value = {
+        [Op.in]: normalizedValues
       };
     }
 
@@ -55,7 +55,7 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
     }
 
     if (searchText) {
-      whereClause.email = {
+      whereClause.value = {
         [Op.iLike]: `%${searchText}%`
       };
     }

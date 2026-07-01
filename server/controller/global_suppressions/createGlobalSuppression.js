@@ -14,23 +14,23 @@ export const createGlobalSuppression = async(req, res) => {
 
   try {
     const {
-      email,
+      value,
       suppression_type: suppressionType,
       reason,
     } = req.body;
 
-    const normalizedEmail = email?.trim()?.toLowerCase();
+    const normalizedValue = value?.trim()?.toLowerCase();
 
-    if (!normalizedEmail) {
+    if (!normalizedValue) {
       return res.status(StatusCodes.BAD_REQUEST).send({
-        message: 'Email is required'
+        message: 'Value is required'
       });
     }
 
     // Idempotency check (avoid duplicates)
     const existing = await GlobalSuppressionsModelHandler.getGlobalSuppressionByWhere({
       workspace_id: workspaceId,
-      email: normalizedEmail,
+      value: normalizedValue,
       suppression_type: suppressionType
     });
 
@@ -41,7 +41,7 @@ export const createGlobalSuppression = async(req, res) => {
     const suppression = await GlobalSuppressionsModelHandler.createGlobalSuppression({
       partner_id: partnerId,
       workspace_id: workspaceId,
-      email: normalizedEmail,
+      value: normalizedValue,
       suppression_type: suppressionType,
       reason: reason || null,
       created_by: createdBy || null

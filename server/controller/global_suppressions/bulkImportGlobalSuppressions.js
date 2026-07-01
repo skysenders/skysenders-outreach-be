@@ -15,34 +15,34 @@ export const bulkImportGlobalSuppressions = async(req, res) => {
 
   try {
     let {
-      emails = [],
+      values = [],
       suppression_type: suppressionType,
       reason
     } = req.body;
 
     // 1. Normalize + dedupe in-memory
-    const normalizedEmails = [
-      ...new Set(emails.map(e => e?.trim()?.toLowerCase()).filter(Boolean))
+    const normalizedValues = [
+      ...new Set(values.map(v => v?.trim()?.toLowerCase()).filter(Boolean))
     ];
 
     // 2. Fetch existing suppressions in ONE query
     const existing = await GlobalSuppressionsModelHandler.getAllGlobalSuppressions({
       workspace_id: workspaceId,
       suppression_type: suppressionType,
-      email: {
-        [Op.in]: normalizedEmails
+      value: {
+        [Op.in]: normalizedValues
       }
     });
 
-    const existingSet = new Set(existing.map(e => e.email));
+    const existingSet = new Set(existing.map(e => e.value));
 
-    // 3. Filter only new emails
-    const newRecords = normalizedEmails
-      .filter(email => !existingSet.has(email))
-      .map(email => ({
+    // 3. Filter only new values
+    const newRecords = normalizedValues
+      .filter(value => !existingSet.has(value))
+      .map(value => ({
         partner_id: partnerId,
         workspace_id: workspaceId,
-        email,
+        value,
         suppression_type: suppressionType,
         reason: reason || null,
         created_by: createdBy || null
@@ -58,8 +58,8 @@ export const bulkImportGlobalSuppressions = async(req, res) => {
 
     return res.status(StatusCodes.OK).send({
       inserted: insertedCount,
-      skipped: normalizedEmails.length - insertedCount,
-      total: normalizedEmails.length
+      skipped: normalizedValues.length - insertedCount,
+      total: normalizedValues.length
     });
 
   } catch (error) {

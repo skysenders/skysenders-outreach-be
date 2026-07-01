@@ -27,6 +27,10 @@ export const encrypt = (password) => {
  */
 export const compare = (password, hash) => {
   const logger = Container.get('logger');
+  if (!hash) {
+    logger.error('Error while comparing password, hash is null');
+    throw new Error('Password login is not enabled for this user, try oAuth login.');
+  }
   try {
     return bcrypt.compareSync(password, hash);
   } catch (err) {
