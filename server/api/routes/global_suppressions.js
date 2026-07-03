@@ -200,8 +200,12 @@ export default async function suppressionRoutes(fastify) {
         },
         body: {
           type: 'object',
-          required: ['suppression_type'],
           properties: {
+            ids: {
+              type: 'array',
+              items: { type: 'integer' },
+              minItems: 1
+            },
             search_text: {
               type: 'string',
               description: 'Optional text to search within values for deletion'
@@ -216,6 +220,10 @@ export default async function suppressionRoutes(fastify) {
                 'SPAM_COMPLAINT',
                 'INVALID_EMAIL'
               ]
+            },
+            select_all: {
+              type: 'boolean',
+              description: 'If true, all suppressions matching the filters will be deleted'
             }
           }
         },

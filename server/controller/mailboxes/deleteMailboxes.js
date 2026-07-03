@@ -47,6 +47,7 @@ export const bulkDeleteMailboxes = async(req, res) => {
       search_text: searchText,
       provider,
       status,
+      select_all: selectAll,
       warmup_enabled: warmupEnabled,
     } = req.body || {};
 
@@ -82,9 +83,9 @@ export const bulkDeleteMailboxes = async(req, res) => {
       isFilterProvided = true;
     }
 
-    if (!isFilterProvided) {
+    if (!isFilterProvided && !selectAll) {
       logger.warn('No filter provided for bulk delete');
-      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter must be provided for bulk delete.' });
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter or select_all must be provided for bulk delete.' });
     }
 
     // bulk delete mailboxes

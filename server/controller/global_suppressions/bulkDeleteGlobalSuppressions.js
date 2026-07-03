@@ -13,8 +13,10 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
 
   try {
     let {
+      ids,
       suppression_type: suppressionType,
-      search_text: searchText
+      search_text: searchText,
+      select_all: selectAll
     } = req.body;
 
     // 1. Build where clause
@@ -22,14 +24,28 @@ export const bulkDeleteGlobalSuppressions = async(req, res) => {
       workspace_id: workspaceId,
     };
 
+    let isFilterProvided = false;
+
+    if (ids && ids.length > 0) {
+      whereClause.id = ids;
+      isFilterProvided = true;
+    }
+
     if (suppressionType) {
       whereClause.suppression_type = suppressionType;
+      isFilterProvided = true;
     }
 
     if (searchText) {
       whereClause.value = {
         [Op.iLike]: `%${searchText}%`
       };
+      isFilterProvided = true;
+    }
+
+    if (!isFilterProvided && !selectAll) {
+      logger.warn('No filter provided for bulk delete');
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'At least one filter or select_all must be provided for bulk delete.' });
     }
 
     // 3. Delete in single query

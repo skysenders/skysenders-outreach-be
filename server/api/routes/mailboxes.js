@@ -556,6 +556,7 @@ export default async function mailboxRoutes(fastify) {
             provider: { type: 'string', enum: Object.values(MAILBOX_TYPE) },
             warmup_enabled: { type: 'boolean' },
             status: { type: 'string', enum: Object.values(MAILBOX_STATUS) },
+            select_all: { type: 'boolean' },
           },
         },
         response: {
