@@ -3,6 +3,14 @@ export const truncateString = (str, maxLength) => {
   return str && str.length > maxLength ? str.substring(0, maxLength) : str;
 };
 
+export const normalizeCustomFieldKey = (key) => (
+  key
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_') // replace spaces & special chars
+    .replace(/^_+|_+$/g, '') // remove leading/trailing _
+);
+
 const USER_MASK = 0x5A9F33;
 const MAILBOX_MASK = 0x8C12AA55;
 const THREAD_MASK = 0xA55AA55AA5n;

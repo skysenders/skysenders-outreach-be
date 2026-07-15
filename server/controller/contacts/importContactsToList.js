@@ -8,6 +8,8 @@ export const importContactsToList = async(req, reply) => {
   const GlobalSuppressionsModelHandler = Container.get('GlobalSuppressionsModelHandler');
   const DetectESPHelper = Container.get('DetectESPHelper');
   const ContactsModelHandler = Container.get('ContactsModelHandler');
+  const ListsModelHandler = Container.get('ListsModelHandler');
+  const StringHelper = Container.get('StringHelper');
 
   const workspaceId = req.workspace.id;
   const partnerId = req.user.tenant_id;
@@ -34,6 +36,7 @@ export const importContactsToList = async(req, reply) => {
   };
 
   let jobId;
+  const customFieldKeys = {}; // Use an object to store unique custom field keys
 
   try {
     // 1. Create Import Job (ONLY metadata, no processing)
@@ -91,7 +94,7 @@ export const importContactsToList = async(req, reply) => {
       const [ globalSuppressions, espProviderEmailMap ] = await Promise.all([
         GlobalSuppressionsModelHandler.getAllGlobalSuppressions({
           workspace_id: workspaceId,
-          email: globalSuppressionsEmailList
+          value: globalSuppressionsEmailList
         }),
         DetectESPHelper.detectBulkESP(globalSuppressionsEmailList)
       ]);
@@ -131,13 +134,25 @@ export const importContactsToList = async(req, reply) => {
           city: contact.city,
           state: contact.state,
           country: contact.country,
-          custom_fields: contact.custom_fields,
           unsubscribed_at: suppressionInfo?.UNSUBSCRIBE || null,
           bounced_at: suppressionInfo?.HARD_BOUNCE || suppressionInfo?.SOFT_BOUNCE || null,
           blocked_at: suppressionInfo?.MANUAL_BLOCK || suppressionInfo?.SPAM_COMPLAINT || null,
           esp_provider: espProviderEmailMap[contact.email] || 'OTHERS',
           list_id: listId
         };
+
+        // normalize custom field keys and values
+        if (contact.custom_fields && typeof contact.custom_fields === 'object') {
+          const normalizedCustomFields = {};
+          for (const [key, value] of Object.entries(contact.custom_fields)) {
+            const normalizedKey = StringHelper.normalizeCustomFieldKey(key);
+            if (normalizedKey) {
+              normalizedCustomFields[normalizedKey] = value;
+              customFieldKeys[normalizedKey] = true;
+            }
+          }
+          contactObj.custom_fields = normalizedCustomFields;
+        }
 
         // increment the result count
         resultSummary.processed_rows += 1;
@@ -168,14 +183,17 @@ export const importContactsToList = async(req, reply) => {
       }
 
       // update the job summary after every batch
-      await ListImportJobsModelHandler.updateListImportJob(
-        {
-          ...resultSummary,
-          status: i + 1000 >= contacts.length ? 'COMPLETED' : 'PROCESSING',
-          completed_at: new Date()
-        },
-        { id: job.id }
-      );
+      await Promise.all([
+        ListImportJobsModelHandler.updateListImportJob(
+          {
+            ...resultSummary,
+            status: i + 1000 >= contacts.length ? 'COMPLETED' : 'PROCESSING',
+            completed_at: new Date()
+          },
+          { id: job.id }
+        ),
+        ListsModelHandler.updateListTotalContacts(workspaceId, listId, customFieldKeys)
+      ]);
     }
 
   } catch (err) {
@@ -185,14 +203,18 @@ export const importContactsToList = async(req, reply) => {
     });
     if (jobId) {
       // update the job summary after every batch
-      await ListImportJobsModelHandler.updateListImportJob(
-        {
-          ...resultSummary,
-          status: 'FAILED',
-          completed_at: new Date()
-        },
-        { id: jobId }
-      );
+      await Promise.all([
+        ListImportJobsModelHandler.updateListImportJob(
+          {
+            ...resultSummary,
+            status: 'FAILED',
+            completed_at: new Date()
+          },
+          { id: jobId }
+        ),
+        ListsModelHandler.updateListTotalContacts(workspaceId, listId, customFieldKeys)
+      ]);
+
     }
     if (!reply.sent) {
       return reply.code(StatusCodes.INTERNAL_SERVER_ERROR).send({

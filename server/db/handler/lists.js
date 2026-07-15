@@ -107,3 +107,21 @@ export const softDeleteList = async(where) => {
     throw err;
   }
 };
+
+export const updateListTotalContacts = async(workspaceId, listId, customFieldMap = {}) => {
+  try {
+    await db.sequelize.query(
+      `UPDATE lists
+       SET total_contacts = (SELECT COUNT(*) FROM contact_list_mappings WHERE workspace_id = :workspaceId and list_id = :listId)
+       , custom_fields_map = custom_fields_map || :customFieldMap::jsonb
+        WHERE id = :listId`,
+      {
+        replacements: { workspaceId, listId, customFieldMap: JSON.stringify(customFieldMap) },
+        type: db.sequelize.QueryTypes.UPDATE
+      }
+    );
+  } catch (err) {
+    Container.get('logger').error(`Error updating list total contacts: ${err.message}`);
+    throw err;
+  }
+};
