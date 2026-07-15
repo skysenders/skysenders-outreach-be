@@ -20,10 +20,10 @@ const templates = {
 const getFromAddress = (partnerId) => {
   // skysenders
   if (partnerId === 1) {
-    return 'Sky Senders <noreply@skysendershq.com>';
+    return 'Mail Delivery <noreply@relay-grid.com>';
   }
   // all others
-  return 'Sky Senders <noreply@skysendershq.com>';
+  return 'Mail Delivery <noreply@relay-grid.com>';
 };
 
 export const sendMail = async({

@@ -8,6 +8,7 @@ export const importContactsToList = async(req, reply) => {
   const GlobalSuppressionsModelHandler = Container.get('GlobalSuppressionsModelHandler');
   const DetectESPHelper = Container.get('DetectESPHelper');
   const ContactsModelHandler = Container.get('ContactsModelHandler');
+  const ContactListMappingsModelHandler = Container.get('ContactListMappingsModelHandler');
   const ListsModelHandler = Container.get('ListsModelHandler');
   const StringHelper = Container.get('StringHelper');
 
@@ -112,6 +113,7 @@ export const importContactsToList = async(req, reply) => {
 
       // frame the bulk insert contact objects based on merge strategy and suppression check
       const contactsToUpsert = [];
+      const contactIds = [];
 
       await Promise.all(batch.map((contact) => {
         // skip invalid emails
@@ -180,6 +182,9 @@ export const importContactsToList = async(req, reply) => {
         } else if (typeof eachContact.inserted === 'boolean' && !eachContact.inserted) {
           resultSummary.already_existing_count += 1;
         }
+        if (eachContact.id) {
+          contactIds.push(eachContact.id);
+        }
       }
 
       // update the job summary after every batch
@@ -192,7 +197,8 @@ export const importContactsToList = async(req, reply) => {
           },
           { id: job.id }
         ),
-        ListsModelHandler.updateListTotalContacts(workspaceId, listId, customFieldKeys)
+        ListsModelHandler.updateListTotalContacts(workspaceId, listId, customFieldKeys),
+        ContactListMappingsModelHandler.addContactsToList(workspaceId, listId, contactIds)
       ]);
     }
 
@@ -208,6 +214,7 @@ export const importContactsToList = async(req, reply) => {
           {
             ...resultSummary,
             status: 'FAILED',
+            error_message: err.message,
             completed_at: new Date()
           },
           { id: jobId }

@@ -5,6 +5,8 @@ import { createList } from '../../controller/contacts/createList';
 import { updateList } from '../../controller/contacts/updateList';
 import { listContactsInList } from '../../controller/contacts/listContactsInList';
 import { importContactsToList } from '../../controller/contacts/importContactsToList';
+// list jobs
+import { getListImportJobById, getListImportJobs } from '../../controller/contacts/getListJobs';
 
 export default async function authRoutes(fastify) {
   fastify.get(
@@ -446,5 +448,172 @@ export default async function authRoutes(fastify) {
       }
     },
     importContactsToList
+  );
+  // api to fetch all jobs for a list
+  fastify.get(
+    '/:id/import-jobs',
+    {
+      schema: {
+        tags: ['Lists'],
+        summary: 'Get all import jobs for a list',
+        operationId: 'getListImportJobs',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' }
+          }
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            offset: {
+              type: 'integer',
+              minimum: 0,
+              default: 0
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 20
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Jobs fetched successfully',
+            type: 'object',
+            properties: {
+              count: { type: 'integer' },
+              offset: { type: 'integer' },
+              limit: { type: 'integer' },
+              has_next: { type: 'boolean' },
+              has_prev: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'number' },
+                    list_id: { type: 'integer' },
+                    source: { type: 'string' },
+                    status: { type: 'string' },
+                    source_file_name: { type: 'string' },
+                    import_settings: { type: 'object', additionalProperties: true },
+                    total_rows: { type: 'integer' },
+                    valid_count: { type: 'integer' },
+                    duplicate_count: { type: 'integer' },
+                    unsubscribed_count: { type: 'integer' },
+                    bounced_count: { type: 'integer' },
+                    blocked_count: { type: 'integer' },
+                    invalid_count: { type: 'integer' },
+                    already_existing_count: { type: 'integer' },
+                    started_at: { type: 'string' },
+                    completed_at: { type: 'string' },
+                    error_message: { type: 'string' },
+                    created_by: { type: 'integer' },
+                  }
+                }
+              }
+            }
+          },
+          404: {
+            description: 'List not found',
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string'
+              }
+            }
+          },
+          500: {
+            description: 'Failed to fetch list jobs',
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    getListImportJobs
+  );
+
+  // api to fetch a specific job for a list
+  fastify.get(
+    '/:id/import-jobs/:jobId',
+    {
+      schema: {
+        tags: ['Lists'],
+        summary: 'Get a specific import job for a list',
+        operationId: 'getListImportJobById',
+        headers: {
+          type: 'object',
+          properties: {
+            apikey: { type: 'string' }
+          }
+        },
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            jobId: { type: 'number' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Job fetched successfully',
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              list_id: { type: 'integer' },
+              source: { type: 'string' },
+              status: { type: 'string' },
+              source_file_name: { type: 'string' },
+              import_settings: { type: 'object', additionalProperties: true },
+              total_rows: { type: 'integer' },
+              valid_count: { type: 'integer' },
+              duplicate_count: { type: 'integer' },
+              unsubscribed_count: { type: 'integer' },
+              bounced_count: { type: 'integer' },
+              blocked_count: { type: 'integer' },
+              invalid_count: { type: 'integer' },
+              already_existing_count: { type: 'integer' },
+              started_at: { type: 'string' },
+              completed_at: { type: 'string' },
+              error_message: { type: 'string' },
+              created_by: { type: 'integer' },
+            }
+          },
+          404: {
+            description: 'Job not found',
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string'
+              }
+            }
+          },
+          500: {
+            description: 'Failed to fetch list job',
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    getListImportJobById
   );
 }
