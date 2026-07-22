@@ -64,7 +64,6 @@ export default async function authRoutes(fastify) {
                     created_at: { type: 'string' },
                     updated_at: { type: 'string' },
                     created_by: { type: 'integer' },
-                    custom_fields_map: { type: 'object', additionalProperties: true }
                   }
                 }
               }

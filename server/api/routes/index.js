@@ -15,6 +15,8 @@ import contacts from './contacts';
 import lists from './lists';
 import globalSuppressions from './global_suppressions';
 import sendingSchedules from './sending_schedules';
+// sequences
+import sequences from './sequences';
 
 import internal from './internal';
 import hasura from './hasura_events';
@@ -112,6 +114,7 @@ export const initialize = async(fastifyApp, redisClient) => {
         { name: 'Domains', description: 'Endpoints for managing domains' },
         { name: 'Mailboxes', description: 'Endpoints for managing mailboxes' },
         { name: 'Warmup', description: 'Endpoints for managing warmup processes' },
+        { name: 'Sequences', description: 'Endpoints for managing sequences' },
         { name: 'Contacts', description: 'Endpoints for managing contacts' },
         { name: 'Lists', description: 'Endpoints for managing contact lists' },
         { name: 'Global Suppressions', description: 'Endpoints for managing global suppressions' },
@@ -155,6 +158,7 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(sendingSchedules, { prefix: '/api/workspace/:workspace_id/sending-schedules' });
   fastifyApp.register(internal, { prefix: '/api/internal' });
   fastifyApp.register(hasura, { prefix: '/api/hasura' });
+  fastifyApp.register(sequences, { prefix: '/api/workspace/:workspace_id/sequences' });
 
   // register public v1 api routes
   fastifyApp.register(users, { prefix: '/api/v1/users' });
@@ -165,6 +169,8 @@ export const registerRoutes = async(fastifyApp) => {
   fastifyApp.register(lists, { prefix: '/api/v1/workspace/:workspace_id/lists' });
   fastifyApp.register(globalSuppressions, { prefix: '/api/v1/workspace/:workspace_id/global-suppressions' });
   fastifyApp.register(sendingSchedules, { prefix: '/api/v1/workspace/:workspace_id/sending-schedules' });
+  fastifyApp.register(sequences, { prefix: '/api/v1/workspace/:workspace_id/sequences' });
+
   const fetchOpenApiSpec = async(url) => {
     try {
       const { data } = await axios.get(url);

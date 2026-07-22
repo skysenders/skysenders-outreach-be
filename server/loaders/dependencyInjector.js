@@ -26,6 +26,16 @@ import * as ListImportJobsModelHandler from '../db/handler/list_import_jobs';
 import * as GlobalSuppressionsModelHandler from '../db/handler/global_suppressions';
 import * as SendingSchedulesModelHandler from '../db/handler/sending_schedules';
 import * as SendingScheduleWindowsModelHandler from '../db/handler/sending_schedule_windows';
+// sequences
+import * as SequencesModelHandler from '../db/handler/sequences';
+import * as SeqStepsModelHandler from '../db/handler/seq_steps';
+import * as SeqStepBranchesModelHandler from '../db/handler/seq_step_branches';
+import * as SeqStepVariantsModelHandler from '../db/handler/seq_step_variants';
+import * as SeqStepAbTestsModelHandler from '../db/handler/seq_step_ab_tests';
+import * as SeqListMappingsModelHandler from '../db/handler/seq_list_mappings';
+import * as SeqContactMappingsModelHandler from '../db/handler/seq_contact_mappings';
+import * as SeqMailboxMappingsModelHandler from '../db/handler/seq_mailbox_mappings';
+import * as SeqSettingsModelHandler from '../db/handler/seq_settings';
 
 // Billing Modules
 import * as AccountPlanDetailsModelHandler from '../db/handler/account_plan_details';
@@ -94,6 +104,17 @@ const injectorInstance = async() => {
     Container.set('GlobalSuppressionsModelHandler', GlobalSuppressionsModelHandler);
     Container.set('SendingSchedulesModelHandler', SendingSchedulesModelHandler);
     Container.set('SendingScheduleWindowsModelHandler', SendingScheduleWindowsModelHandler);
+    // sequences
+    Container.set('SequencesModelHandler', SequencesModelHandler);
+    Container.set('SeqStepsModelHandler', SeqStepsModelHandler);
+    Container.set('SeqStepBranchesModelHandler', SeqStepBranchesModelHandler);
+    Container.set('SeqStepVariantsModelHandler', SeqStepVariantsModelHandler);
+    Container.set('SeqStepAbTestsModelHandler', SeqStepAbTestsModelHandler);
+    Container.set('SeqListMappingsModelHandler', SeqListMappingsModelHandler);
+    Container.set('SeqContactMappingsModelHandler', SeqContactMappingsModelHandler);
+    Container.set('SeqMailboxMappingsModelHandler', SeqMailboxMappingsModelHandler);
+    Container.set('SeqSettingsModelHandler', SeqSettingsModelHandler);
+
     // Services
     Container.set('AwsService', AwsService);
     Container.set('StripeAPIServices', StripeAPIServices);

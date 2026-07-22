@@ -191,6 +191,30 @@ export const countContactsByList = async({ workspaceId, listId, searchText = '',
   return result[0].count;
 };
 
+export const getContactsBasicDetails = async(workspaceId, listIds, attributes = ['id', 'email']) => {
+  try {
+    const query = `
+      SELECT ${attributes.map(attr => `c.${attr}`).join(', ')}, clm.list_id
+      FROM contact_list_mappings clm
+      JOIN contacts c
+        ON c.workspace_id = clm.workspace_id
+       AND c.id = clm.contact_id
+      WHERE clm.workspace_id = :workspaceId
+        AND clm.list_id IN (:listIds)
+        AND c.deleted_at IS NULL
+    `;
+    return await db.sequelize.query(query, {
+      type: QueryTypes.SELECT,
+      replacements: { workspaceId, listIds }
+    });
+  } catch (err) {
+    Container.get('logger').error(
+      `Error fetching contacts basic details: ${err.message}`
+    );
+    throw err;
+  }
+};
+
 export const isContactInList = async(
   workspaceId,
   listId,

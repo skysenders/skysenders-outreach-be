@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT
     },
 
-    sequence_id: {
+    seq_id: {
       type: DataTypes.BIGINT
     },
 

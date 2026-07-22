@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
 
     total_contacts: {
       type: DataTypes.INTEGER,
-      defaultValue: 0,
       allowNull: false
     },
 

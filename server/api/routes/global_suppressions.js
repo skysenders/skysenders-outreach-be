@@ -67,7 +67,7 @@ export default async function suppressionRoutes(fastify) {
                     value: { type: 'string' },
                     suppression_type: { type: 'string' },
                     reason: { type: ['string', 'null'] },
-                    sequence_id: { type: ['number', 'null'] },
+                    seq_id: { type: ['number', 'null'] },
                     step_id: { type: ['number', 'null'] },
                     mailbox_id: { type: ['number', 'null'] },
                     message_id: { type: ['string', 'null'] },

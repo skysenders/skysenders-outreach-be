@@ -48,6 +48,22 @@ export const getAllContactsByWhere = async(
   }
 };
 
+export const getAllActiveContacts = async(
+  where,
+  attributes = DEFAULT_CONTACT_ATTRIBUTES
+) => {
+  try {
+    return await db.contacts.findAll({
+      where,
+      attributes,
+      raw: true
+    });
+  } catch (err) {
+    Container.get('logger').error(`Error fetching all contacts: ${err.message}`);
+    throw err;
+  }
+};
+
 export const countContactsByWhere = async(where) => {
   try {
     return await db.contacts.count({ where });

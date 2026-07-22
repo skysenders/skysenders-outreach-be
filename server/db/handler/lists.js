@@ -16,13 +16,16 @@ export const getListByWhere = async(where) => {
 export const getAllListsByWhere = async(
   where,
   offset = 0,
-  limit = 100
+  limit = 100,
+  attributes = ['id', 'name', 'description', 'workspace_id', 'total_contacts', 'created_at', 'updated_at', 'created_by']
 ) => {
   try {
     return await db.lists.findAll({
       where,
       offset,
       limit,
+      attributes,
+      order: [['id', 'DESC']],
       raw: true
     });
   } catch (err) {

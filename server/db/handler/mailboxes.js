@@ -78,7 +78,7 @@ export const getAllMailboxesByWhere = async(where, offset = 0, limit = 1000, ord
   }
 };
 
-export const getAllInternalMailboxesByWhere = async(where, offset = 0, limit = 1000, order = [['id', 'DESC']]) => {
+export const getAllInternalMailboxesByWhere = async(where, offset = 0, limit = 10000, order = [['id', 'DESC']]) => {
   try {
     return await db.mailboxes.findAll({ where, raw: true, offset, limit, order, attributes: ['id', 'domain_id', 'email', 'name', 'provider', 'status', 'warmup_enabled'] });
   } catch (err) {
